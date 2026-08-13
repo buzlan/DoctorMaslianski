@@ -181,7 +181,9 @@ Do not add libraries simply because they may be useful in the future.
 
 ## Current development stage
 
-Milestone 0 — Foundation.
+Milestone 1 — Application Foundation.
+
+Milestone 0 — Foundation is complete.
 
 Currently implemented:
 
@@ -193,3 +195,5 @@ Currently implemented:
 - empty initial application screen
 
 No product functionality is implemented yet.
+
+The development backlog lives in `docs/ROADMAP.md` and `docs/tasks/`. The next implementation task is TASK-001.
