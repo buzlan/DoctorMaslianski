@@ -1,6 +1,6 @@
 # TASK-002 — Basic UI primitives
 
-Status: NOT STARTED
+Status: DONE
 
 Milestone: M1 — Application Foundation
 

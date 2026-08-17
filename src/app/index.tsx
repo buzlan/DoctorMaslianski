@@ -1,26 +1,20 @@
-import { StyleSheet, Text, useColorScheme, View } from "react-native";
+import { StyleSheet } from "react-native";
 
-import { getColors, theme } from "@/shared/theme";
+import { AppText, Screen, Stack } from "@/shared/ui";
 
 export default function HomeScreen() {
-  const colors = getColors(useColorScheme());
-
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <Text style={[styles.title, { color: colors.textPrimary }]}>
-        Doctor Maslianski
-      </Text>
-    </View>
+    <Screen style={styles.content}>
+      <Stack>
+        <AppText variant="title">Doctor Maslianski</AppText>
+      </Stack>
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
+  content: {
     alignItems: "center",
     justifyContent: "center",
-  },
-  title: {
-    ...theme.typography.title,
   },
 });
