@@ -8,7 +8,7 @@ Milestone: M7 — Progress Photos
 
 Browse saved progress photos for the active treatment from existing surfaces (for example Diary, stage details, or a nested screen pushed from those).
 
-**Still no Photos tab.**
+Uploads are TASK-032. This task is local gallery only. Still no Photos tab.
 
 ## Why this task is needed
 

@@ -1,8 +1,10 @@
 # TASK-016 — Guided capture
 
-Status: NOT STARTED
+Status: POST-MVP — not part of the Pilot MVP
 
-Milestone: M7 — Progress Photos
+Milestone: Post-MVP (was M7)
+
+Do **not** implement during the Pilot MVP. Primary navigation stays Today, Treatment, Diary. No Photos tab.
 
 ## Goal
 

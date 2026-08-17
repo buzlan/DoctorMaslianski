@@ -2,46 +2,52 @@
 
 Status: NOT STARTED
 
-Milestone: M2 — Treatment Domain
+Milestone: M2 — Pilot domain
 
 ## Goal
 
-Pure TypeScript models and functions for Patient, Treatment, TreatmentStage, TreatmentTask, and status. Introduce Jest because domain logic is now testable.
+Pure TypeScript models and functions for the Pilot MVP domain. Introduce Jest because domain logic is now testable.
+
+Models:
+
+- Patient (including fields for later cohort and consent; values may be unset until TASK-033)
+- PilotProtocol (`kind`: sclerotherapy | telangiectasia; **`version`** monotonic)
+- Treatment (`protocolId`, **`protocolVersion`**, **immutable protocol snapshot**, start date, status)
+- TreatmentStage (from the **snapshot**, not from the latest clinic protocol)
+- TreatmentTask
+- status helpers
 
 ## Why this task is needed
 
-“What should I do today?” and Timeline must share one domain, not screen-local shapes.
+Today and Timeline must share one domain. Protocol versioning must exist before fixtures and assignments so later clinic edits cannot silently change an in-flight journey.
 
 ## Dependencies
 
-- TASK-003 (keeps sequence linear; this task does not need tabs)
+- TASK-003 (sequence)
+- TASK-026 (clinic-authored protocol content for realistic shapes; domain types can land in parallel but must not invent clinical field values)
 
 ## Requirements
 
-- `src/modules/treatment/domain/` (only this module).
-- Stage kinds aligned with PROJECT.md, as data, not hardcoded UI:
-  - consultation
-  - ultrasound
-  - diagnosis
-  - preparation
-  - procedure
-  - day 1 / day 3 / day 7
-  - month 1 / month 3
-  - follow-up
-- Pure helpers: current stage, tasks for a calendar date, progress summary.
-- No medical thresholds — only protocol data already on the model.
+- `src/modules/treatment/domain/` (only this module in this task).
+- Models are generic containers. **Do not** hardcode the old generic phlebology stage list (consultation, ultrasound, EVLT, month 3, …) as a product requirement.
+- `PilotProtocol.version` is required. Editing clinic content is a **new version**, not a mutation of a version that already has treatments.
+- Assigning a treatment copies an **immutable snapshot** of that protocol version (stages, tasks, check-in defs, photo checkpoints, restrictions, appointments as data).
+- Pure helpers: current stage, tasks for a calendar date, progress summary — computed from the **snapshot**.
+- No medical thresholds in code — only protocol data already on the snapshot.
 - Jest via Expo’s current unit-testing setup: https://docs.expo.dev/versions/v57.0.0/develop/unit-testing/
-- Tests next to domain files.
+- Tests next to domain files, including: snapshot is independent of a later protocol version change.
 
 ## Out of scope
 
 - Repository
-- Mock JSON / fixtures
+- Mock JSON / fixtures (TASK-005)
 - React UI
 - Persistence
 - Diagnosing, prescribing, or changing treatment
+- Inventing clinical protocol content
 - Environment configuration
 - Backend
+- ProductEvent implementation (TASK-027)
 
 ## Expected files or areas affected
 
@@ -55,11 +61,12 @@ Yes — only the Expo-recommended test runner packages.
 
 ## Plan Mode
 
-Yes (first product module and first dependency since foundation).
+Yes (first product module, versioning/snapshot rules, first dependency since foundation).
 
 ## Acceptance criteria
 
-- Types and tested helpers exist.
+- Types and tested helpers exist, including protocol version + treatment snapshot.
+- Changing a protocol fixture version does not alter an already constructed Treatment snapshot in tests.
 - No UI change is required.
 - `npm test` (or the agreed test script) passes.
 - The application remains runnable.

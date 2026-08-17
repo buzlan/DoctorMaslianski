@@ -4,6 +4,8 @@ Status: NOT STARTED
 
 Milestone: M1 — Application Foundation
 
+Pilot MVP: this task is unchanged in intent.
+
 ## Goal
 
 Tiny shared primitives: `Screen`, `AppText`, and a layout spacer/stack.

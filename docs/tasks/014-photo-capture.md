@@ -8,9 +8,11 @@ Milestone: M7 — Progress Photos
 
 Permission → capture or pick → preview → retry → confirm. Save locally with metadata and treatment/stage association.
 
-Reach capture from relevant existing surfaces (Today when the protocol requests a photo, and/or Treatment stage details, and/or Diary).
+Reach capture from relevant existing surfaces (Today when the snapshot requests a photo, and/or Treatment stage details, and/or Diary).
 
 **Do not add a dedicated Photos tab.**
+
+Uploads to Supabase are TASK-032.
 
 ## Why this task is needed
 
@@ -19,24 +21,25 @@ Progress photos are a core follow-up artifact after diary, without expanding pri
 ## Dependencies
 
 - TASK-010 (storage patterns)
-- Sequence after TASK-013 so Diary and stage details already exist as entry points. Can theoretically start after TASK-009 for stage-details-only entry; prefer after Diary so Today, Diary, and stage details can all host the flow.
+- Sequence after TASK-013 so Diary and stage details already exist as entry points.
 
 ## Requirements
 
 - Expo-compatible camera/picker chosen in Plan Mode against Expo SDK 57 docs: https://docs.expo.dev/versions/v57.0.0/
 - Hide native APIs behind an application-owned port in the photos module.
 - No on-device diagnosis from images.
-- Keep the tab bar unchanged (Today, Treatment, Diary at this point).
+- Keep the tab bar unchanged (Today, Treatment, Diary).
 - Capture UI may be a stack or modal route, not a tab.
-- Photos are a capability, not a primary navigation destination.
+- Camera plugins may require an EAS development build (TASK-036) for device verification; simulators may be limited.
+- ProductEvent `photo_checkpoint_requested` / `photo_checkpoint_completed` may use checkpoint **ids** only. **Do not** put photo URLs or image content in event metadata.
 
 ## Out of scope
 
 - Dedicated Photos tab
-- Guided overlay
+- Guided overlay (TASK-016, POST-MVP)
 - Before/after slider
-- Uploads
-- Cloud
+- Uploads / cloud (TASK-032)
+- HealthKit / Activity
 
 ## Expected files or areas affected
 
@@ -56,8 +59,8 @@ Yes (native + permissions + which surfaces host capture).
 ## Acceptance criteria
 
 - Capture/confirm works on simulator/emulator as far as cameras allow.
-- Metadata is stored.
-- The patient can start capture from at least one existing surface (Today and/or stage details and/or Diary).
+- Metadata is stored locally.
+- The patient can start capture from at least one existing surface.
 - **No new top-level tab.**
 - The application remains runnable.
 - The app does not interpret photos medically.
@@ -69,6 +72,6 @@ npx tsc --noEmit
 npm run lint
 ```
 
-Verify iOS and Android permission and capture paths.
+Verify iOS and Android permission and capture paths as far as the current build type allows.
 
 Confirm the tab bar still has no Photos item.

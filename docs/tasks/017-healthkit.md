@@ -1,8 +1,10 @@
 # TASK-017 — HealthKit daily steps (iOS)
 
-Status: NOT STARTED
+Status: POST-MVP — not part of the Pilot MVP
 
-Milestone: M8 — Activity
+Milestone: Post-MVP (HealthKit / Activity)
+
+Do **not** implement during the Pilot MVP. There is no Activity tab and no HealthKit requirement for the sclerotherapy / telangiectasia pilot.
 
 ## Goal
 

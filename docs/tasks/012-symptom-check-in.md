@@ -6,7 +6,9 @@ Milestone: M6 — Symptom Diary
 
 ## Goal
 
-The patient submits a check-in. Add the **Diary** tab (intended third of the five primary sections: Today, Treatment, Diary, Activity, Doctor). Today shows a check-in entry point when the protocol requests it.
+The patient submits a check-in. Add the **Diary** tab. This is the **third and final primary navigation destination** for the Pilot MVP (Today, Treatment, Diary).
+
+Today shows a check-in entry point when the **snapshot** requests it.
 
 ## Why this task is needed
 
@@ -21,8 +23,9 @@ Vertical slice: collect symptoms, do not just model them.
 - Form with local React state (no form library unless Plan Mode proves need).
 - Persist locally.
 - Russian copy.
-- Today CTA only when the mock protocol says so — the app does not decide that a check-in is medically required.
+- Today CTA only when the snapshot says so — the app does not decide that a check-in is medically required.
 - Collect structured patient information. Do not diagnose or give emergency conclusions.
+- ProductEvent `checkin_requested` / `checkin_submitted` may count completion only. **Do not** put raw answers in event metadata.
 
 ## Out of scope
 
@@ -30,6 +33,7 @@ Vertical slice: collect symptoms, do not just model them.
 - Doctor review
 - Alerts such as “go to ER”
 - Photos tab
+- Activity or Doctor tabs
 
 ## Expected files or areas affected
 
@@ -48,10 +52,10 @@ Yes.
 
 ## Acceptance criteria
 
-- Submit from Diary and from Today when requested by the protocol.
+- Submit from Diary and from Today when requested by the snapshot.
 - Data survives restart.
-- Third tab (Diary) is visible.
-- Primary navigation remains compact. No Photos tab.
+- Third tab (Diary) is visible and is the last primary tab for the pilot.
+- No Photos, Activity, or Doctor tab.
 - The application remains runnable.
 
 ## Verification

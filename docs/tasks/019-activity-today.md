@@ -1,8 +1,10 @@
 # TASK-019 — Activity on Today and Activity tab
 
-Status: NOT STARTED
+Status: POST-MVP — not part of the Pilot MVP
 
-Milestone: M8 — Activity
+Milestone: Post-MVP (Activity)
+
+Do **not** implement during the Pilot MVP. Pilot primary navigation is Today, Treatment, Diary only.
 
 ## Goal
 

@@ -1,10 +1,12 @@
 # TASK-025 — Notifications
 
-Status: NOT STARTED (coarse placeholder)
+Status: POST-MVP — not part of the Pilot MVP
 
-Milestone: M11 — Notifications
+Milestone: Post-MVP (Notifications)
 
-This task is **intentionally coarse**. It is not an implementation spec.
+Do **not** implement during the Pilot MVP. Push notifications are not required for the first pilot.
+
+This file remains a coarse placeholder for later work.
 
 Notification contracts and backend schedules do not exist yet. **Do not implement this task from this file alone.**
 

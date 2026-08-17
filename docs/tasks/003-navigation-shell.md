@@ -8,6 +8,8 @@ Milestone: M1 — Application Foundation
 
 Expo Router tabs for **Today** and **Treatment**, plus a typed Russian copy catalog with no i18n library.
 
+Pilot MVP primary navigation is **Today, Treatment, Diary**. Diary is added in TASK-012. This task ships the first two tabs only.
+
 ## Why this task is needed
 
 This is the core information architecture, the first patient-visible Russian chrome, and a copy shape that allows a later English catalog without installing an i18n library now.
@@ -34,9 +36,9 @@ This is the core information architecture, the first patient-visible Russian chr
 
 ## Out of scope
 
-- Diary tab
-- Activity tab
-- Doctor tab
+- Diary tab (TASK-012)
+- Activity tab (POST-MVP)
+- Doctor tab (not in Pilot MVP)
 - A Photos tab (photos are never a default top-level destination)
 - Treatment data
 - Authentication
@@ -62,7 +64,7 @@ Yes (navigation architecture).
 - Switching tabs works.
 - The application remains runnable.
 - English is not installed as a runtime locale.
-- No Photos tab.
+- No Photos, Activity, or Doctor tab.
 
 ## Verification
 

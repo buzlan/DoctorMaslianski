@@ -1,8 +1,10 @@
 # TASK-018 — Health Connect daily steps (Android)
 
-Status: NOT STARTED
+Status: POST-MVP — not part of the Pilot MVP
 
-Milestone: M8 — Activity
+Milestone: Post-MVP (Health Connect / Activity)
+
+Do **not** implement during the Pilot MVP. There is no Activity tab and no Health Connect requirement for the sclerotherapy / telangiectasia pilot.
 
 ## Goal
 

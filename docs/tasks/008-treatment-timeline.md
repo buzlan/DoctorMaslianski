@@ -20,7 +20,7 @@ Treatment Timeline is the core product concept after Today.
 
 - Thin `src/app/(tabs)/treatment.tsx`.
 - Timeline presentation in `src/modules/treatment/presentation`.
-- Same repository as Today.
+- Same repository as Today; stages come from the **treatment snapshot**.
 - No app-generated medical commentary.
 
 ## Out of scope

@@ -4,6 +4,8 @@ Status: NOT STARTED
 
 Milestone: M1 — Application Foundation
 
+Pilot MVP: this task is unchanged in intent. Primary navigation will be Today, Treatment, and (later) Diary.
+
 ## Goal
 
 Shared visual constants (color, spacing, typography, radii) used by later UI.

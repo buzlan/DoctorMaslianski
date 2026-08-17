@@ -12,6 +12,8 @@ The patient can mark a today’s task complete or incomplete. The UI updates wit
 
 Completing tasks is the first write path. It proves repository mutation before persistence.
 
+Pilot MVP: completions apply to tasks on the **treatment snapshot**. Optional ProductEvent `task_completed` may include task **id** only — no clinical text.
+
 ## Dependencies
 
 - TASK-006

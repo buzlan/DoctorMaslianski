@@ -18,9 +18,10 @@ Diary is incomplete without looking back.
 
 ## Requirements
 
-- Read-only list in Diary.
+- Read-only list in Diary of protocol-defined check-ins.
 - No charts unless trivial.
 - No trend-based medical conclusions.
+- Do not copy raw answers into ProductEvent metadata.
 
 ## Out of scope
 

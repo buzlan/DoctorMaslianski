@@ -1,22 +1,12 @@
 # TASK-022 — Authentication infrastructure
 
-Status: NOT STARTED (coarse placeholder)
+Status: NOT STARTED
 
-Milestone: M9 — Backend Integration / M10 — Patient Onboarding
+Milestone: M9 — Supabase + sync
 
-This task is **intentionally coarse**. It is not an implementation spec.
+## Goal
 
-Backend and auth contracts do not exist yet. **Do not implement this task from this file alone.**
-
-Before implementation:
-
-1. Re-enter Plan Mode against the real auth contract.
-2. Split into smaller tasks if this placeholder is still too large (for example secure storage vs session vs login UI).
-3. Do not treat the bullets below as frozen file lists or dependency choices.
-
-## Goal (coarse)
-
-Session/token storage and a logged-out vs logged-in gate, shaped by the actual auth contract.
+Patient session against **Supabase Auth**, shaped by the closed-pilot invite flow in [TASK-033](033-pilot-invite.md).
 
 ## Why this task is needed
 
@@ -24,35 +14,47 @@ Remote patient data cannot be fetched anonymously.
 
 ## Dependencies
 
-- TASK-021, or whatever split the re-plan produces
+- TASK-030 (Supabase client)
+- Schema/auth allowlists from TASK-029
 
-## Out of scope until re-planned
+## Requirements
 
-- Full invite UX (TASK-024)
-- Social login unless the contract requires it
+- Logged-out vs logged-in gate.
+- Secure session storage via Expo-compatible secure storage if required by Supabase/Expo.
+- No silent production backdoor.
+- Invite/activation UX is TASK-033; this task is session infrastructure.
+- Patient record must be able to hold consent timestamps and document version (populated in TASK-033).
+
+## Out of scope
+
+- Full invite UX (TASK-033)
+- Social login unless the pilot contract requires it
+- Clinic staff login (other repo)
 
 ## Expected files or areas affected
 
-Unknown until re-plan. Secure storage and session handling are likely.
+- `src/core/` auth/session only if justified
+- App root gate
 
 ## New dependencies
 
-Unknown until re-plan.
+Maybe `expo-secure-store`. Justify in Plan Mode.
 
 ## Plan Mode
 
-Yes — **required re-plan**.
+Yes.
 
-## Acceptance criteria (indicative)
+## Acceptance criteria
 
-Final criteria come from the re-plan.
-
-Indicative:
-
-- An authenticated session is possible.
-- No silent production backdoor.
+- An authenticated session is possible in a configured env.
+- The app still has a safe logged-out state.
 - The application remains runnable.
 
 ## Verification
 
-Defined in the re-plan.
+```bash
+npx tsc --noEmit
+npm run lint
+```
+
+Both platforms.

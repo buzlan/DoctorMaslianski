@@ -6,7 +6,7 @@ Milestone: M5 — Local State and Persistence
 
 ## Goal
 
-Task completion survives restart. Choose the smallest Expo-compatible store at plan time (likely an AsyncStorage overlay of completion IDs on the mock treatment — not a second source of truth for the protocol).
+Task completion survives restart. Choose the smallest Expo-compatible store at plan time (likely an overlay of completion IDs on the **treatment snapshot** — not a second source of truth for the protocol, and not a rewrite of protocol fixtures).
 
 ## Why this task is needed
 
