@@ -33,7 +33,8 @@ export const theme = {
 } as const;
 
 export type Theme = typeof theme;
-export type SemanticColors = Theme["colors"]["light"];
+export type SemanticColors =
+  Theme["colors"][keyof Theme["colors"]];
 
 export function getColors(
   scheme: "light" | "dark" | "unspecified" | null | undefined,
