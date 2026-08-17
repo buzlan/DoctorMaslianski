@@ -1,6 +1,6 @@
 # TASK-001 — Design tokens
 
-Status: NOT STARTED
+Status: DONE
 
 Milestone: M1 — Application Foundation
 

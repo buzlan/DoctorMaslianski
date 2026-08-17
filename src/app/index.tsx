@@ -1,9 +1,15 @@
-import { StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Text, useColorScheme, View } from "react-native";
+
+import { getColors, theme } from "@/shared/theme";
 
 export default function HomeScreen() {
+  const colors = getColors(useColorScheme());
+
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Doctor Maslianski</Text>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <Text style={[styles.title, { color: colors.textPrimary }]}>
+        Doctor Maslianski
+      </Text>
     </View>
   );
 }
@@ -15,7 +21,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   title: {
-    fontSize: 24,
-    fontWeight: "600",
+    ...theme.typography.title,
   },
 });
