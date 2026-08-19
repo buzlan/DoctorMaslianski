@@ -1,6 +1,6 @@
 # TASK-004 — Treatment domain models and test harness
 
-Status: NOT STARTED
+Status: DONE
 
 Milestone: M2 — Pilot domain
 
