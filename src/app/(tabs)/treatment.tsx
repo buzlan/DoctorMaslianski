@@ -1,0 +1,22 @@
+import { StyleSheet } from "react-native";
+
+import { copy } from "@/shared/copy";
+import { theme } from "@/shared/theme";
+import { AppText, Screen, Stack } from "@/shared/ui";
+
+export default function TreatmentScreen() {
+  return (
+    <Screen edges={["top", "left", "right"]} style={styles.content}>
+      <Stack gap="md">
+        <AppText variant="title">{copy.treatment.title}</AppText>
+        <AppText tone="secondary">{copy.treatment.body}</AppText>
+      </Stack>
+    </Screen>
+  );
+}
+
+const styles = StyleSheet.create({
+  content: {
+    padding: theme.spacing.md,
+  },
+});

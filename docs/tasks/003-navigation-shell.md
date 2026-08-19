@@ -1,6 +1,6 @@
 # TASK-003 — Navigation shell and Russian copy catalog
 
-Status: NOT STARTED
+Status: DONE
 
 Milestone: M1 — Application Foundation
 
