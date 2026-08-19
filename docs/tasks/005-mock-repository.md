@@ -1,6 +1,6 @@
 # TASK-005 — Mock treatment repository and fixtures
 
-Status: NOT STARTED
+Status: DONE
 
 Milestone: M2 — Pilot domain
 
@@ -15,7 +15,7 @@ Today and Timeline must not import fixture objects directly. Fixtures must demon
 ## Dependencies
 
 - TASK-004
-- TASK-026 (clinic-authored content; until the clinic delivers text, use clearly marked placeholders that are not presented as medical advice invented by engineering)
+- TASK-026 (clinic-authored content; until the clinic delivers text, executable fixtures use empty structural collections and omit optional clinical strings. Do not copy intake markers such as "TBD by clinic" into patient-facing runtime fields.)
 
 ## Requirements
 
@@ -23,8 +23,8 @@ Today and Timeline must not import fixture objects directly. Fixtures must demon
 - Singleton or composition-root instance so Today and Timeline share mutations later.
 - Two `PilotProtocol` records with `kind` + `version`.
 - Creating the active `Treatment` copies an immutable snapshot of that version.
-- Fixture content (tasks, recommendations, check-in defs, photo checkpoints, step/restriction text, appointment) comes from TASK-026, as protocol fields, not app-invented advice.
-- Doctor-defined protocol text is Russian (patients see it).
+- Fixture content comes from TASK-026 as protocol fields, not app-invented advice. Until clinic-authored text exists, collections are empty and optional clinical strings are omitted. Do not invent Russian treatment instructions or copy documentation placeholders into runtime fields.
+- Doctor-defined protocol text is Russian (patients see it) when the clinic supplies it.
 - No backend.
 
 ## Out of scope
@@ -34,7 +34,7 @@ Today and Timeline must not import fixture objects directly. Fixtures must demon
 - Authentication
 - Extra modules
 - Environment configuration
-- Inventing clinical protocols if TASK-026 is still empty — use labelled placeholders only
+- Inventing clinical protocols if TASK-026 is still empty — use empty collections, not labelled placeholders in runtime fields
 
 ## Expected files or areas affected
 
@@ -55,7 +55,7 @@ Yes (data-access boundary + snapshot assignment).
 - Unit tests cover the mock and snapshot isolation from a newer protocol version.
 - UI is still placeholders.
 - The application remains runnable.
-- Recommendations and thresholds in the fixture originate from the (placeholder or clinic) protocol, not from app logic.
+- Recommendations and thresholds in the fixture originate from the protocol, not from app logic. Until clinic content exists, those fields are absent or empty.
 
 ## Verification
 
