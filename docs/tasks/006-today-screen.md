@@ -1,6 +1,6 @@
 # TASK-006 — Today screen (read-only)
 
-Status: NOT STARTED
+Status: DONE
 
 Milestone: M3 — Today
 

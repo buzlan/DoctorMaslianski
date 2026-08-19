@@ -7,7 +7,13 @@ export const copy: AppCopy = {
   },
   today: {
     title: "Сегодня",
-    body: "Здесь появится план на сегодня.",
+    loading: "Загрузка…",
+    noActiveTreatment: "Сейчас нет активного лечения.",
+    noActionsForToday: "На сегодня в приложении нет доступных действий.",
+    currentStageLabel: "Текущий этап",
+    tasksLabel: "Задачи на сегодня",
+    loadError: "Не удалось загрузить данные.",
+    retry: "Повторить",
   },
   treatment: {
     title: "Лечение",

@@ -5,7 +5,13 @@ export type AppCopy = {
   };
   today: {
     title: string;
-    body: string;
+    loading: string;
+    noActiveTreatment: string;
+    noActionsForToday: string;
+    currentStageLabel: string;
+    tasksLabel: string;
+    loadError: string;
+    retry: string;
   };
   treatment: {
     title: string;
