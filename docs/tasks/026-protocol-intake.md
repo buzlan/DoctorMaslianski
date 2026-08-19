@@ -1,6 +1,6 @@
 # TASK-026 — Clinic protocol intake
 
-Status: NOT STARTED
+Status: DONE
 
 Milestone: M2 — Pilot domain
 
