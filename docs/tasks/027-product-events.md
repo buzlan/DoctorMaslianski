@@ -1,6 +1,6 @@
 # TASK-027 — ProductEvent domain and local sink
 
-Status: NOT STARTED
+Status: DONE
 
 Milestone: M3 — Today (port before TASK-006)
 
