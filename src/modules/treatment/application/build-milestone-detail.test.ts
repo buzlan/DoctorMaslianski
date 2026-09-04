@@ -55,6 +55,7 @@ describe('buildMilestoneDetail', () => {
         title: 'synthetic-visit',
         occurredOn: ON_DATE,
       },
+      doctorPhotos: { status: 'ready', items: [] },
     });
   });
 
@@ -74,6 +75,7 @@ describe('buildMilestoneDetail', () => {
         id: 'untitled',
         occurredOn: ON_DATE,
       },
+      doctorPhotos: { status: 'ready', items: [] },
     });
     if (detail.kind !== 'ready') {
       return;
@@ -125,7 +127,60 @@ describe('buildMilestoneDetail', () => {
     });
   });
 
-  it('does not project assignments, completions, appointments, or photos', () => {
+  it('projects doctor photos for the visit and does not invent captions', () => {
+    const detail = buildMilestoneDetail(
+      create({
+        milestones: [{ id: 'visit-1', title: 'synthetic-visit', occurredOn: ON_DATE }],
+      }),
+      'visit-1',
+      {
+        status: 'ready',
+        items: [{ id: 'photo-1', displayUri: 'https://example.test/doctor-1.jpg' }],
+      },
+    );
+
+    expect(detail).toEqual({
+      kind: 'ready',
+      patientId: 'patient-1',
+      treatmentId: 'treatment-1',
+      milestone: {
+        id: 'visit-1',
+        title: 'synthetic-visit',
+        occurredOn: ON_DATE,
+      },
+      doctorPhotos: {
+        status: 'ready',
+        items: [{ id: 'photo-1', displayUri: 'https://example.test/doctor-1.jpg' }],
+      },
+    });
+    expect(JSON.stringify(detail)).not.toContain('caption');
+    expect(JSON.stringify(detail)).not.toContain('before');
+    expect(JSON.stringify(detail)).not.toContain('after');
+  });
+
+  it('keeps the visit ready when doctor photos are unavailable', () => {
+    expect(
+      buildMilestoneDetail(
+        create({
+          milestones: [{ id: 'visit-1', title: 'synthetic-visit', occurredOn: ON_DATE }],
+        }),
+        'visit-1',
+        { status: 'unavailable' },
+      ),
+    ).toEqual({
+      kind: 'ready',
+      patientId: 'patient-1',
+      treatmentId: 'treatment-1',
+      milestone: {
+        id: 'visit-1',
+        title: 'synthetic-visit',
+        occurredOn: ON_DATE,
+      },
+      doctorPhotos: { status: 'unavailable' },
+    });
+  });
+
+  it('does not project assignments, completions, appointments, or PatientPhoto rows', () => {
     const detail = buildMilestoneDetail(
       create({
         milestones: [{ id: 'visit-1', title: 'synthetic-visit', occurredOn: ON_DATE }],
@@ -157,6 +212,8 @@ describe('buildMilestoneDetail', () => {
     expect(detail).not.toHaveProperty('photos');
     expect(JSON.stringify(detail)).not.toContain('synthetic-assignment');
     expect(JSON.stringify(detail)).not.toContain('Preparation');
+    expect(JSON.stringify(detail)).not.toContain('localFileRef');
+    expect(JSON.stringify(detail)).not.toContain('submittedOn');
   });
 
   it('does not invent a milestone for the empty development fixture', () => {

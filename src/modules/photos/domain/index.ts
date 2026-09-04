@@ -9,6 +9,17 @@ export {
 export type { CreatePatientPhotoInput } from './create-patient-photo';
 
 export {
+  createDoctorMilestonePhoto,
+  InvalidDoctorMilestonePhotoError,
+} from './create-doctor-milestone-photo';
+export type {
+  CreateDoctorMilestonePhotoInput,
+  DoctorMilestonePhoto,
+} from './create-doctor-milestone-photo';
+
+export { doctorPhotosForMilestone } from './doctor-milestone-photo-helpers';
+
+export {
   canAddPatientPhotoOnDate,
   countPatientPhotosOnDate,
   getPatientPhotosOnDate,

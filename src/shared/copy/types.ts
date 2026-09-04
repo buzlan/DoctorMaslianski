@@ -48,6 +48,10 @@ export type AppCopy = {
     back: string;
     milestoneDetailTitle: string;
     milestoneNotFound: string;
+    doctorPhotosLabel: string;
+    doctorPhotosEmpty: string;
+    doctorPhotosUnavailable: string;
+    doctorPhotoAccessibilityLabel: string;
   };
   photos: {
     title: string;

@@ -11,6 +11,15 @@ export type MilestoneDetailItem = {
   occurredOn?: CalendarDate;
 };
 
+export type MilestoneDoctorPhotoItem = {
+  id: string;
+  displayUri: string;
+};
+
+export type MilestoneDoctorPhotos =
+  | { status: 'ready'; items: readonly MilestoneDoctorPhotoItem[] }
+  | { status: 'unavailable' };
+
 export type MilestoneDetail =
   | { kind: 'not_found' }
   | {
@@ -18,6 +27,7 @@ export type MilestoneDetail =
       patientId: string;
       treatmentId: string;
       milestone: MilestoneDetailItem;
+      doctorPhotos: MilestoneDoctorPhotos;
     };
 
 function isBlankMilestoneId(milestoneId: string): boolean {
@@ -38,9 +48,12 @@ function mapMilestone(milestone: TreatmentMilestone): MilestoneDetailItem {
   return item;
 }
 
+const EMPTY_DOCTOR_PHOTOS: MilestoneDoctorPhotos = { status: 'ready', items: [] };
+
 export function buildMilestoneDetail(
   treatment: Treatment | null,
   milestoneId: string,
+  doctorPhotos: MilestoneDoctorPhotos = EMPTY_DOCTOR_PHOTOS,
 ): MilestoneDetail {
   if (treatment === null || !isActiveTreatment(treatment) || isBlankMilestoneId(milestoneId)) {
     return { kind: 'not_found' };
@@ -57,5 +70,6 @@ export function buildMilestoneDetail(
     patientId: treatment.patientId,
     treatmentId: treatment.id,
     milestone: mapMilestone(milestone),
+    doctorPhotos,
   };
 }

@@ -2,6 +2,8 @@ export { buildMilestoneDetail } from './build-milestone-detail';
 export type {
   MilestoneDetail,
   MilestoneDetailItem,
+  MilestoneDoctorPhotoItem,
+  MilestoneDoctorPhotos,
 } from './build-milestone-detail';
 export { buildTreatmentTimeline } from './build-treatment-timeline';
 export type {

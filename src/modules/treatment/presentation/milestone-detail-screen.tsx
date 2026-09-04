@@ -1,3 +1,4 @@
+import { Image } from "expo-image";
 import { useRouter } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 import { ScrollView, StyleSheet } from "react-native";
@@ -6,6 +7,7 @@ import {
   loadSharedMilestoneDetail,
   type MilestoneDetail,
   type MilestoneDetailLoadResult,
+  type MilestoneDoctorPhotos,
 } from "@/modules/treatment/application";
 import { copy } from "@/shared/copy";
 import { theme } from "@/shared/theme";
@@ -56,6 +58,35 @@ function goBack(router: ReturnType<typeof useRouter>) {
 
 function requestLoad(id: string) {
   return loadSharedMilestoneDetail(id);
+}
+
+function doctorPhotoLabel(index: number): string {
+  return `${copy.treatment.doctorPhotoAccessibilityLabel} ${index + 1}`;
+}
+
+function DoctorPhotosSection({ doctorPhotos }: { doctorPhotos: MilestoneDoctorPhotos }) {
+  return (
+    <Stack gap="sm">
+      <AppText>{copy.treatment.doctorPhotosLabel}</AppText>
+      {doctorPhotos.status === "unavailable" ? (
+        <AppText tone="secondary">{copy.treatment.doctorPhotosUnavailable}</AppText>
+      ) : null}
+      {doctorPhotos.status === "ready" && doctorPhotos.items.length === 0 ? (
+        <AppText tone="secondary">{copy.treatment.doctorPhotosEmpty}</AppText>
+      ) : null}
+      {doctorPhotos.status === "ready"
+        ? doctorPhotos.items.map((photo, index) => (
+            <Image
+              key={photo.id}
+              source={{ uri: photo.displayUri }}
+              style={styles.photo}
+              contentFit="contain"
+              accessibilityLabel={doctorPhotoLabel(index)}
+            />
+          ))
+        : null}
+    </Stack>
+  );
 }
 
 type MilestoneDetailScreenProps = {
@@ -119,13 +150,16 @@ export function MilestoneDetailScreen({ milestoneId }: MilestoneDetailScreenProp
             style={styles.scroll}
             contentContainerStyle={styles.scrollContent}
           >
-            <Stack gap="xs">
-              <AppText variant="title">{headingFor(viewState.detail)}</AppText>
-              {viewState.detail.milestone.occurredOn !== undefined ? (
-                <AppText variant="caption" tone="secondary">
-                  {formatCalendarDate(viewState.detail.milestone.occurredOn)}
-                </AppText>
-              ) : null}
+            <Stack gap="md">
+              <Stack gap="xs">
+                <AppText variant="title">{headingFor(viewState.detail)}</AppText>
+                {viewState.detail.milestone.occurredOn !== undefined ? (
+                  <AppText variant="caption" tone="secondary">
+                    {formatCalendarDate(viewState.detail.milestone.occurredOn)}
+                  </AppText>
+                ) : null}
+              </Stack>
+              <DoctorPhotosSection doctorPhotos={viewState.detail.doctorPhotos} />
             </Stack>
           </ScrollView>
         ) : null}
@@ -146,5 +180,10 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flexGrow: 1,
+  },
+  photo: {
+    width: "100%",
+    height: 280,
+    backgroundColor: "transparent",
   },
 });

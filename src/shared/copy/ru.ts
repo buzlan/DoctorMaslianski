@@ -50,6 +50,10 @@ export const copy: AppCopy = {
     back: "Назад",
     milestoneDetailTitle: "Этап лечения",
     milestoneNotFound: "Этот этап лечения не найден.",
+    doctorPhotosLabel: "Фотографии визита",
+    doctorPhotosEmpty: "Пока нет фотографий этого визита.",
+    doctorPhotosUnavailable: "Не удалось загрузить фотографии.",
+    doctorPhotoAccessibilityLabel: "Фотография визита",
   },
   photos: {
     title: "Фото",

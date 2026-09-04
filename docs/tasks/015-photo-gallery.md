@@ -1,6 +1,6 @@
 # TASK-015 — Doctor milestone photos on Treatment
 
-Status: NOT STARTED
+Status: DONE
 
 Milestone: M7 — Photos
 
