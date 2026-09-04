@@ -40,7 +40,7 @@ export async function confirmPatientPhoto(
     return { status: 'error' };
   }
 
-  if (result.status === 'recorded') {
+  if (result.status === 'recorded' && result.analyticsHandled !== true) {
     const now = deps.now ?? (() => new Date());
     const pilotCohort = deps.pilotCohort ?? DEVELOPMENT_PILOT_COHORT;
     await deps.eventSink.append({

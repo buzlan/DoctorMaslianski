@@ -100,9 +100,12 @@ type PhotoCheckpointCompletedEvent = {
   name: 'photo_checkpoint_completed';
 } & EntityTreatmentEvent;
 /**
- * Standing patient-photo confirm on Today. entityId is PatientPhoto.id.
+ * Standing patient-photo confirm on Today. entityId is PatientPhoto.id (UUID).
  * Not a doctor-defined photo checkpoint. Do not emit photo_checkpoint_*.
- * Do not put localFileRef, URI, bytes, or MIME metadata on this event.
+ * Do not put localFileRef, URI, bytes, MIME, or storage path on this event.
+ * Product metrics must deduplicate patient_photo_added by entityId (and treatmentId),
+ * not by raw event row count: a crash between ProductEvent outbox accept and
+ * photo-outbox ack may append another event for the same photo.
  */
 type PatientPhotoAddedEvent = ProductEventBase & {
   name: 'patient_photo_added';

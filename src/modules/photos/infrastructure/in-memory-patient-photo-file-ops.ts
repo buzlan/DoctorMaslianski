@@ -7,6 +7,7 @@ export type InMemoryPatientPhotoFileOps = PatientPhotoFileOps & {
 
 export function createInMemoryPatientPhotoFileOps(options?: {
   onCopy?: (sourceUri: string, treatmentId: string, localFileRef: string) => void;
+  size?: number | null;
 }): InMemoryPatientPhotoFileOps {
   const files = new Map<string, string>();
   const copied: string[] = [];
@@ -27,6 +28,15 @@ export function createInMemoryPatientPhotoFileOps(options?: {
       files.delete(key);
       removed.push(key);
       return Promise.resolve();
+    },
+    getSize() {
+      if (options?.size === undefined) {
+        return Promise.resolve(1024);
+      }
+      return Promise.resolve(options.size);
+    },
+    fileUri(treatmentId, localFileRef) {
+      return `memory://${treatmentId}/${localFileRef}`;
     },
   };
 }

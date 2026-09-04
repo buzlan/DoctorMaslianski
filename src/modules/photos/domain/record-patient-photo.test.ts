@@ -1,6 +1,6 @@
 import { calendarDate, createTreatment, type TreatmentStatus } from '@/modules/treatment/domain';
 
-import { createPatientPhoto, patientPhotoIdFor } from './create-patient-photo';
+import { createPatientPhoto } from './create-patient-photo';
 import { countPatientPhotosOnDate, nextPatientPhotoSlot } from './helpers';
 import { recordPatientPhoto } from './record-patient-photo';
 import type { PatientPhoto } from './types';
@@ -19,11 +19,11 @@ function create(options: { status?: TreatmentStatus } = {}) {
 
 function photo(slot: 1 | 2 | 3, onDate = ON_DATE): PatientPhoto {
   return createPatientPhoto({
+    id: `photo-${slot}-${onDate.day}`,
     treatmentId: 'treatment-1',
     patientId: 'patient-1',
     submittedOn: onDate,
     slot,
-    localFileRef: `photo-${slot}.jpg`,
   });
 }
 
@@ -65,10 +65,11 @@ describe('recordPatientPhoto', () => {
     expect(countPatientPhotosOnDate(third.photos, ON_DATE)).toBe(3);
     expect(nextPatientPhotoSlot(third.photos, ON_DATE)).toBeNull();
     expect(third.photos.map((item) => item.id)).toEqual([
-      patientPhotoIdFor('treatment-1', ON_DATE, 1),
-      patientPhotoIdFor('treatment-1', ON_DATE, 2),
-      patientPhotoIdFor('treatment-1', ON_DATE, 3),
+      'photo-1-19',
+      'photo-2-19',
+      'photo-3-19',
     ]);
+    expect(third.photos.map((item) => item.slot)).toEqual([1, 2, 3]);
   });
 
   it('refuses a fourth photo on the same civil date', () => {

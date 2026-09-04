@@ -7,7 +7,6 @@ export {
   InvalidDoctorMilestonePhotoError,
   InvalidPatientPhotoError,
   MAX_PATIENT_PHOTOS_PER_CIVIL_DATE,
-  patientPhotoIdFor,
   recordPatientPhoto,
 } from './domain';
 export type {

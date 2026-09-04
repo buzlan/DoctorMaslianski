@@ -66,7 +66,7 @@ export function PatientPhotoCaptureScreen() {
         await loadCivilTodayDate(),
         captured,
       );
-      if (result.status === "recorded") {
+      if (result.status === "recorded" || result.status === "queued") {
         goBack();
         return;
       }

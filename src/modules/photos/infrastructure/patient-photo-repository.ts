@@ -6,10 +6,15 @@ export type RecordCapturedPatientPhotoResult =
   | {
       status: 'recorded';
       photo: PatientPhoto;
+      analyticsHandled?: boolean;
+    }
+  | {
+      status: 'queued';
+      photo: PatientPhoto;
     }
   | {
       status: 'ignored';
-      reason: 'no_active_treatment' | 'daily_cap_reached' | 'invalid_source';
+      reason: 'no_active_treatment' | 'daily_cap_reached' | 'invalid_source' | 'file_too_large';
     };
 
 export type PatientPhotoRepository = {

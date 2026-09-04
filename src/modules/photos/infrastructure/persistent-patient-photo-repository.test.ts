@@ -1,5 +1,7 @@
 import { calendarDate, createTreatment } from '@/modules/treatment/domain';
 
+import { PATIENT_PHOTO_MAX_BYTES } from '../domain';
+
 import { createPersistentPatientPhotoRepository } from './persistent-patient-photo-repository';
 import { createInMemoryPatientPhotoFileOps } from './in-memory-patient-photo-file-ops';
 import { createInMemoryPatientPhotoStore } from './in-memory-patient-photo-store';
@@ -42,21 +44,31 @@ describe('createPersistentPatientPhotoRepository', () => {
   });
 
   it('keeps the source extension instead of renaming to jpg', async () => {
+    const fileOps = createInMemoryPatientPhotoFileOps();
     const repository = createPersistentPatientPhotoRepository({
       store: createInMemoryPatientPhotoStore(),
-      fileOps: createInMemoryPatientPhotoFileOps(),
+      fileOps,
+      createId: () => 'photo-id',
     });
 
     const png = await repository.recordPhoto(treatment(), ON_DATE, captured('png'));
-    const heic = await repository.recordPhoto(treatment(), ON_DATE, captured('heic'));
 
     expect(png).toMatchObject({
       status: 'recorded',
-      photo: { localFileRef: expect.stringMatching(/\.png$/) },
+      photo: { id: 'photo-id', slot: 1 },
     });
-    expect(heic).toMatchObject({
-      status: 'recorded',
-      photo: { localFileRef: expect.stringMatching(/\.heic$/) },
+    expect(fileOps.copied[0]).toMatch(/\.png$/);
+  });
+
+  it('ignores files over the storage size limit', async () => {
+    const repository = createPersistentPatientPhotoRepository({
+      store: createInMemoryPatientPhotoStore(),
+      fileOps: createInMemoryPatientPhotoFileOps({ size: PATIENT_PHOTO_MAX_BYTES + 1 }),
+    });
+
+    await expect(repository.recordPhoto(treatment(), ON_DATE, captured('png'))).resolves.toEqual({
+      status: 'ignored',
+      reason: 'file_too_large',
     });
   });
 

@@ -2,8 +2,6 @@ import { calendarDate, type CalendarDate } from '@/modules/treatment/domain';
 
 import type { PatientPhoto, PatientPhotoSlot } from './types';
 
-const ALLOWED_EXTENSIONS = new Set(['jpg', 'jpeg', 'png', 'heic', 'heif', 'webp']);
-
 export class InvalidPatientPhotoError extends Error {
   constructor(message: string) {
     super(message);
@@ -12,22 +10,22 @@ export class InvalidPatientPhotoError extends Error {
 }
 
 export type CreatePatientPhotoInput = {
+  id: string;
   treatmentId: string;
   patientId: string;
   submittedOn: CalendarDate;
   slot: PatientPhotoSlot;
-  localFileRef: string;
 };
 
-export function patientPhotoIdFor(
-  treatmentId: string,
-  onDate: CalendarDate,
-  slot: PatientPhotoSlot,
-): string {
-  return `${treatmentId}:${onDate.year}-${onDate.month}-${onDate.day}:${slot}`;
-}
-
 export function createPatientPhoto(input: CreatePatientPhotoInput): PatientPhoto {
+  if (typeof input.id !== 'string' || input.id.length === 0) {
+    throw new InvalidPatientPhotoError('invalid field: id');
+  }
+
+  if (input.id.includes('://') || input.id.includes('..') || input.id.includes('/') || input.id.includes('\\')) {
+    throw new InvalidPatientPhotoError('invalid field: id');
+  }
+
   if (typeof input.treatmentId !== 'string' || input.treatmentId.length === 0) {
     throw new InvalidPatientPhotoError('invalid field: treatmentId');
   }
@@ -47,27 +45,10 @@ export function createPatientPhoto(input: CreatePatientPhotoInput): PatientPhoto
   );
 
   return {
-    id: patientPhotoIdFor(input.treatmentId, submittedOn, input.slot),
+    id: input.id,
     treatmentId: input.treatmentId,
     patientId: input.patientId,
     submittedOn,
-    localFileRef: parseLocalFileRef(input.localFileRef),
+    slot: input.slot,
   };
-}
-
-function parseLocalFileRef(value: string): string {
-  if (typeof value !== 'string' || value.length === 0) {
-    throw new InvalidPatientPhotoError('invalid field: localFileRef');
-  }
-
-  if (value.includes('://') || value.includes('..') || value.startsWith('/') || value.includes('\\')) {
-    throw new InvalidPatientPhotoError('invalid field: localFileRef');
-  }
-
-  const extension = value.split('.').pop()?.toLowerCase();
-  if (extension === undefined || !ALLOWED_EXTENSIONS.has(extension)) {
-    throw new InvalidPatientPhotoError('invalid field: localFileRef');
-  }
-
-  return value;
 }

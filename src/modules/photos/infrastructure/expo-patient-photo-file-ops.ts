@@ -37,5 +37,19 @@ export function createExpoPatientPhotoFileOps(): PatientPhotoFileOps {
         idempotent: true,
       });
     },
+    async getSize(uri) {
+      try {
+        const info = await FileSystem.getInfoAsync(uri);
+        if (!info.exists || typeof info.size !== 'number') {
+          return null;
+        }
+        return info.size;
+      } catch {
+        return null;
+      }
+    },
+    fileUri(treatmentId, localFileRef) {
+      return patientPhotoFileUri(treatmentId, localFileRef);
+    },
   };
 }

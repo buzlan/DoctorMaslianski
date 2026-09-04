@@ -14,7 +14,7 @@ export {
   createInMemoryPatientPhotoFileOps,
 } from './in-memory-patient-photo-file-ops';
 export type { InMemoryPatientPhotoFileOps } from './in-memory-patient-photo-file-ops';
-export type { PatientPhotoStore } from './patient-photo-store';
+export type { PatientPhotoStore, StoredPatientPhoto } from './patient-photo-store';
 export type { PatientPhotoFileOps } from './patient-photo-file-ops';
 export type { PatientPhotoCapturePort, PatientPhotoCaptureResult } from './patient-photo-capture-port';
 export { createExpoImagePickerCapture } from './expo-image-picker-capture';

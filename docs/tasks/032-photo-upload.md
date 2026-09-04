@@ -1,6 +1,6 @@
 # TASK-032 — Photo upload to Supabase Storage
 
-Status: NOT STARTED
+Status: DONE
 
 Milestone: M9 — Supabase + sync
 
@@ -63,6 +63,7 @@ Yes (native + storage + RLS; two object kinds).
 ```bash
 npx tsc --noEmit
 npm run lint
+npm test
 ```
 
 iOS and Android upload paths for patient photos.

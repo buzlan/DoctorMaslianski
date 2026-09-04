@@ -32,6 +32,7 @@ describe('confirmPatientPhoto', () => {
         photoRepository: createPersistentPatientPhotoRepository({
           store: createInMemoryPatientPhotoStore(),
           fileOps: createInMemoryPatientPhotoFileOps(),
+          createId: () => 'photo-uuid-1',
         }),
         eventSink,
         now: () => new Date(AT),
@@ -48,12 +49,79 @@ describe('confirmPatientPhoto', () => {
         pilotCohort: DEVELOPMENT_PILOT_COHORT,
         patientId: 'patient-1',
         treatmentId: 'treatment-1',
-        entityId: 'treatment-1:2026-8-19:1',
+        entityId: 'photo-uuid-1',
       },
     ]);
     expect(eventSink.getAll()[0]).not.toHaveProperty('localFileRef');
     expect(eventSink.getAll()[0]).not.toHaveProperty('uri');
     expect(eventSink.getAll()[0]).not.toHaveProperty('mimeType');
+  });
+
+  it('does not emit when remote analytics already handled the durable ack', async () => {
+    const eventSink = createInMemoryProductEventSink();
+    const result = await confirmPatientPhoto(
+      {
+        treatmentRepository: createInMemoryTreatmentRepository({ treatment: activeTreatment() }),
+        photoRepository: {
+          listPhotos() {
+            return Promise.resolve([]);
+          },
+          recordPhoto() {
+            return Promise.resolve({
+              status: 'recorded',
+              analyticsHandled: true,
+              photo: {
+                id: 'photo-uuid-1',
+                treatmentId: 'treatment-1',
+                patientId: 'patient-1',
+                submittedOn: ON_DATE,
+                slot: 1,
+              },
+            });
+          },
+        },
+        eventSink,
+        now: () => new Date(AT),
+      },
+      ON_DATE,
+      { sourceUri: 'file:///cache/a.png', fileName: 'a.png' },
+    );
+
+    expect(result.status).toBe('recorded');
+    expect(eventSink.getAll()).toEqual([]);
+  });
+
+  it('does not emit an event when the upload is only queued', async () => {
+    const eventSink = createInMemoryProductEventSink();
+    const result = await confirmPatientPhoto(
+      {
+        treatmentRepository: createInMemoryTreatmentRepository({ treatment: activeTreatment() }),
+        photoRepository: {
+          listPhotos() {
+            return Promise.resolve([]);
+          },
+          recordPhoto() {
+            return Promise.resolve({
+              status: 'queued',
+              photo: {
+                id: 'photo-uuid-1',
+                treatmentId: 'treatment-1',
+                patientId: 'patient-1',
+                submittedOn: ON_DATE,
+                slot: 1,
+              },
+            });
+          },
+        },
+        eventSink,
+        now: () => new Date(AT),
+      },
+      ON_DATE,
+      { sourceUri: 'file:///cache/a.png', fileName: 'a.png' },
+    );
+
+    expect(result.status).toBe('queued');
+    expect(eventSink.getAll()).toEqual([]);
   });
 
   it('does not emit an event when the daily cap is reached', async () => {

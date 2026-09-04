@@ -4,6 +4,9 @@ import { createDoctorMilestonePhoto, type DoctorMilestonePhoto } from '../domain
 
 import type { DoctorMilestonePhotoRepository } from './doctor-milestone-photo-repository';
 
+export const DOCTOR_PHOTO_SIGNED_URL_TTL_SECONDS = 300;
+export const DOCTOR_PHOTO_SIGNED_URL_REFRESH_SKEW_MS = 30_000;
+
 export type DoctorMilestonePhotoRemoteGateway = {
   listPhotos(treatmentId: string): Promise<
     readonly {
@@ -13,6 +16,7 @@ export type DoctorMilestonePhotoRemoteGateway = {
       storage_path: string;
     }[]
   >;
+  createSignedUrl(storagePath: string, expiresInSeconds: number): Promise<string | null>;
 };
 
 export function createSupabaseDoctorMilestonePhotoGateway(
@@ -31,12 +35,43 @@ export function createSupabaseDoctorMilestonePhotoGateway(
 
       return data ?? [];
     },
+    async createSignedUrl(storagePath, expiresInSeconds) {
+      const { data, error } = await client.storage
+        .from('doctor-milestone-photos')
+        .createSignedUrl(storagePath, expiresInSeconds);
+
+      if (error || data?.signedUrl === undefined || data.signedUrl.length === 0) {
+        return null;
+      }
+
+      return data.signedUrl;
+    },
   };
 }
 
+type CachedSignedUrl = {
+  url: string;
+  expiresAtMs: number;
+};
+
 export function createRemoteDoctorMilestonePhotoRepository(options: {
   gateway: DoctorMilestonePhotoRemoteGateway;
+  readAuthUserId?: () => string | null;
+  now?: () => number;
 }): DoctorMilestonePhotoRepository {
+  const cache = new Map<string, CachedSignedUrl>();
+  let cacheUserId: string | null = null;
+  const readAuthUserId = options.readAuthUserId ?? (() => null);
+  const now = options.now ?? (() => Date.now());
+
+  function resetCacheIfUserChanged(): void {
+    const userId = readAuthUserId();
+    if (cacheUserId !== userId) {
+      cache.clear();
+      cacheUserId = userId;
+    }
+  }
+
   return {
     async listPhotos(treatmentId) {
       const rows = await options.gateway.listPhotos(treatmentId);
@@ -53,14 +88,40 @@ export function createRemoteDoctorMilestonePhotoRepository(options: {
             }),
           );
         } catch {
-          // Skip malformed metadata. Display URIs remain TASK-032.
+          // Skip malformed metadata.
         }
       }
 
       return photos;
     },
-    resolveDisplayUri() {
-      return Promise.resolve(null);
+    async resolveDisplayUri(photo) {
+      resetCacheIfUserChanged();
+      const cached = cache.get(photo.storageRef);
+      const currentMs = now();
+      if (
+        cached !== undefined &&
+        cached.expiresAtMs - currentMs > DOCTOR_PHOTO_SIGNED_URL_REFRESH_SKEW_MS
+      ) {
+        return cached.url;
+      }
+
+      try {
+        const signedUrl = await options.gateway.createSignedUrl(
+          photo.storageRef,
+          DOCTOR_PHOTO_SIGNED_URL_TTL_SECONDS,
+        );
+        if (signedUrl === null || signedUrl.length === 0) {
+          return null;
+        }
+
+        cache.set(photo.storageRef, {
+          url: signedUrl,
+          expiresAtMs: currentMs + DOCTOR_PHOTO_SIGNED_URL_TTL_SECONDS * 1000,
+        });
+        return signedUrl;
+      } catch {
+        return null;
+      }
     },
   };
 }

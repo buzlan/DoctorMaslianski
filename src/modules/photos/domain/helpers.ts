@@ -1,7 +1,6 @@
 import { isSameCalendarDate, type CalendarDate } from '@/modules/treatment/domain';
 
 import type { PatientPhoto, PatientPhotoSlot } from './types';
-import { MAX_PATIENT_PHOTOS_PER_CIVIL_DATE } from './types';
 
 export function getPatientPhotosOnDate(
   photos: readonly PatientPhoto[],
@@ -21,11 +20,17 @@ export function nextPatientPhotoSlot(
   photos: readonly PatientPhoto[],
   onDate: CalendarDate,
 ): PatientPhotoSlot | null {
-  const count = countPatientPhotosOnDate(photos, onDate);
-  if (count >= MAX_PATIENT_PHOTOS_PER_CIVIL_DATE) {
-    return null;
+  const occupied = new Set(
+    getPatientPhotosOnDate(photos, onDate).map((photo) => photo.slot),
+  );
+
+  for (const slot of [1, 2, 3] as const) {
+    if (!occupied.has(slot)) {
+      return slot;
+    }
   }
-  return (count + 1) as PatientPhotoSlot;
+
+  return null;
 }
 
 export function canAddPatientPhotoOnDate(

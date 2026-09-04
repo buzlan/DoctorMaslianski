@@ -220,6 +220,7 @@ Currently implemented (code):
 - completed-treatment shell: when `Treatment.status` is `completed`, main tabs are hidden; completion screen reuses clinic contact and optional local feedback survey
 - Supabase public env + shared JS client in `src/core/` (no repository swap)
 - Auth session foundation (TASK-022): persisted session restore, confirmed-only applySession/signOut, generation-based SecureStore, root auth gate. Unauthenticated → access screen; production unavailable → service-unavailable copy; `__DEV__` + missing env still uses local treatment shells.
-- Remote repositories (TASK-031): authenticated sessions use Supabase behind existing ports (treatment, diary, clinic contact, doctor-photo metadata, feedback, ProductEvent insert) with a user-scoped FIFO outbox and process-local last-read snapshots. Patient photo bytes remain local until TASK-032. `__DEV__` without auth/env keeps local fixtures.
+- Remote repositories (TASK-031): authenticated sessions use Supabase behind existing ports (treatment, diary, clinic contact, doctor-photo metadata, feedback, ProductEvent insert) with a user-scoped FIFO outbox and process-local last-read snapshots. `__DEV__` without auth/env keeps local fixtures.
+- Patient photo upload (TASK-032): confirmed Today photos upload to private `patient-photos` (metadata row + Storage object) with a session-scoped pending outbox; doctor visit photos resolve short-lived signed URLs from private `doctor-milestone-photos`. No patient gallery and no public URLs.
 
-The development backlog lives in `docs/ROADMAP.md` and `docs/tasks/`. The next implementation task is **TASK-032** (photo upload to Supabase Storage).
+The development backlog lives in `docs/ROADMAP.md` and `docs/tasks/`. The next implementation task is **TASK-033** (pilot invite).

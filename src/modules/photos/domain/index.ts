@@ -1,12 +1,16 @@
-export { MAX_PATIENT_PHOTOS_PER_CIVIL_DATE } from './types';
+export {
+  MAX_PATIENT_PHOTOS_PER_CIVIL_DATE,
+  PATIENT_PHOTO_MAX_BYTES,
+} from './types';
 export type { PatientPhoto, PatientPhotoSlot } from './types';
 
 export {
   createPatientPhoto,
   InvalidPatientPhotoError,
-  patientPhotoIdFor,
 } from './create-patient-photo';
 export type { CreatePatientPhotoInput } from './create-patient-photo';
+
+export { contentTypeForExtension } from './patient-photo-content-type';
 
 export {
   createDoctorMilestonePhoto,

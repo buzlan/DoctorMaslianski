@@ -14,10 +14,14 @@ import { createRemoteDiaryRepository } from '@/modules/diary/infrastructure/remo
 import type { FeedbackSurveyRepository } from '@/modules/feedback/infrastructure/feedback-survey-repository';
 import { createRemoteFeedbackSurveyRepository, createSupabaseFeedbackGateway } from '@/modules/feedback/infrastructure/remote-feedback-survey-repository';
 import type { DoctorMilestonePhotoRepository } from '@/modules/photos/infrastructure/doctor-milestone-photo-repository';
+import { createExpoPatientPhotoFileOps } from '@/modules/photos/infrastructure/expo-patient-photo-file-ops';
+import type { PatientPhotoRepository } from '@/modules/photos/infrastructure/patient-photo-repository';
 import {
   createRemoteDoctorMilestonePhotoRepository,
   createSupabaseDoctorMilestonePhotoGateway,
 } from '@/modules/photos/infrastructure/remote-doctor-milestone-photo-repository';
+import { createSupabasePatientPhotoGateway } from '@/modules/photos/infrastructure/patient-photo-remote-gateway';
+import { createRemotePatientPhotoRepository } from '@/modules/photos/infrastructure/remote-patient-photo-repository';
 import {
   createRemoteProductEventSink,
   createSupabaseProductEventGateway,
@@ -46,6 +50,7 @@ type RemoteAdapters = {
   diary: DiaryRepository;
   clinicContact: ClinicContactRepository;
   doctorPhotos: DoctorMilestonePhotoRepository;
+  patientPhotos: PatientPhotoRepository;
   feedback: FeedbackSurveyRepository;
   productEvents: FlushableProductEventSink;
 };
@@ -90,13 +95,24 @@ export function getRemoteAdapters(): RemoteAdapters | null {
     readAuthUserId,
   });
 
+  const patientPhotos = createRemotePatientPhotoRepository({
+    gateway: createSupabasePatientPhotoGateway(client),
+    resolveContext,
+    outboxStore: createAsyncStorageWriteOutboxStore('remote.outbox.v1.patient-photos'),
+    readAuthUserId,
+    fileOps: createExpoPatientPhotoFileOps(),
+    eventSink: productEvents,
+  });
+
   adapters = {
     treatment,
     diary,
     clinicContact: createRemoteClinicContactRepository({ resolveContext }),
     doctorPhotos: createRemoteDoctorMilestonePhotoRepository({
       gateway: createSupabaseDoctorMilestonePhotoGateway(client),
+      readAuthUserId,
     }),
+    patientPhotos,
     feedback,
     productEvents,
   };
@@ -108,6 +124,7 @@ export function getRemoteAdapters(): RemoteAdapters | null {
       await Promise.all([
         diary.listEntries(current.id),
         feedback.getSurvey(current.id),
+        patientPhotos.listPhotos(current.id),
       ]);
     }
   });
