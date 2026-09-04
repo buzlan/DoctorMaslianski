@@ -9,6 +9,7 @@ import {
 
 import {
   sharedDiaryLoader,
+  type DiaryHistoryItem,
   type DiaryTodayResult,
 } from "@/modules/diary/application";
 import type { VasScore, Wellbeing } from "@/modules/diary/domain";
@@ -18,17 +19,18 @@ import { getColors, theme } from "@/shared/theme";
 import { AppText, Screen, Stack } from "@/shared/ui";
 
 import { DailyDiaryForm } from "./daily-diary-form";
+import { DiaryHistoryList } from "./diary-history-list";
 
 type DiaryViewState =
   | { status: "loading" }
   | { status: "error" }
   | { status: "no_active_treatment" }
-  | { status: "open" }
-  | { status: "completed" };
+  | { status: "open"; history: readonly DiaryHistoryItem[] }
+  | { status: "completed"; history: readonly DiaryHistoryItem[] };
 
 function toViewState(result: DiaryTodayResult): DiaryViewState {
   if (result.status === "open" || result.status === "completed") {
-    return { status: result.status };
+    return { status: result.status, history: result.history };
   }
   return result;
 }
@@ -81,6 +83,9 @@ export function DiaryScreen() {
       });
   }
 
+  const showHistory =
+    viewState.status === "open" || viewState.status === "completed";
+
   return (
     <Screen edges={["top", "left", "right"]} style={styles.content}>
       <Stack gap="md" style={styles.body}>
@@ -117,12 +122,17 @@ export function DiaryScreen() {
         {viewState.status === "completed" ? (
           <AppText tone="secondary">{copy.diary.completedToday}</AppText>
         ) : null}
-        {viewState.status === "open" ? (
+        {showHistory ? (
           <ScrollView
             style={styles.scroll}
             contentContainerStyle={styles.scrollContent}
           >
-            <DailyDiaryForm submitting={submitting} onSubmit={submit} />
+            <Stack gap="md">
+              {viewState.status === "open" ? (
+                <DailyDiaryForm submitting={submitting} onSubmit={submit} />
+              ) : null}
+              <DiaryHistoryList items={viewState.history} />
+            </Stack>
           </ScrollView>
         ) : null}
       </Stack>

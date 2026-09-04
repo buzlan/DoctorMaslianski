@@ -15,9 +15,11 @@ import { createCheckinEventSession } from './checkin-events';
 import { createDiaryLoader } from './create-diary-loader';
 import { loadDiaryToday } from './load-diary-today';
 
+const EARLIER_DATE = calendarDate(2026, 8, 18);
 const ON_DATE = calendarDate(2026, 8, 19);
 const NEXT_DATE = calendarDate(2026, 8, 20);
 const AT = '2026-08-19T15:00:00.000Z';
+const HISTORY_ITEM_KEYS = ['id', 'submittedOn', 'pain', 'swelling', 'wellbeing'];
 
 function activeTreatment() {
   return createTreatment({
@@ -27,8 +29,22 @@ function activeTreatment() {
   });
 }
 
-function answers(pain = 3) {
-  return { pain, swelling: 4, wellbeing: 'unchanged' as const };
+function answers(pain = 3, wellbeing: 'better' | 'unchanged' | 'worse' = 'unchanged') {
+  return { pain, swelling: 4, wellbeing };
+}
+
+function historyItem(
+  onDate: typeof ON_DATE,
+  pain: number,
+  wellbeing: 'better' | 'unchanged' | 'worse' = 'unchanged',
+) {
+  return {
+    id: diaryEntryIdFor('treatment-1', onDate),
+    submittedOn: onDate,
+    pain,
+    swelling: 4,
+    wellbeing,
+  };
 }
 
 function rejectingTreatmentRepository(): TreatmentRepository {
@@ -57,6 +73,7 @@ describe('loadDiaryToday', () => {
       status: 'open',
       patientId: 'patient-1',
       treatmentId: 'treatment-1',
+      history: [],
     });
   });
 
@@ -75,10 +92,57 @@ describe('loadDiaryToday', () => {
       status: 'completed',
       patientId: 'patient-1',
       treatmentId: 'treatment-1',
+      history: [historyItem(ON_DATE, 3)],
     });
   });
 
-  it('returns open again on the next civil date', async () => {
+  it('returns previous days newest-first when today is still open', async () => {
+    const diaryRepository = createInMemoryDiaryRepository();
+    const treatment = activeTreatment();
+    await diaryRepository.submitEntry(treatment, EARLIER_DATE, answers(1, 'better'));
+
+    const result = await loadDiaryToday(
+      createInMemoryTreatmentRepository({ treatment }),
+      diaryRepository,
+      ON_DATE,
+    );
+
+    expect(result).toEqual({
+      status: 'open',
+      patientId: 'patient-1',
+      treatmentId: 'treatment-1',
+      history: [historyItem(EARLIER_DATE, 1, 'better')],
+    });
+    if (result.status === 'open') {
+      expect(Object.keys(result.history[0]!)).toEqual(HISTORY_ITEM_KEYS);
+    }
+  });
+
+  it('includes today as the newest completed row and keeps previous days after it', async () => {
+    const diaryRepository = createInMemoryDiaryRepository();
+    const treatment = activeTreatment();
+    await diaryRepository.submitEntry(treatment, EARLIER_DATE, answers(1, 'better'));
+    await diaryRepository.submitEntry(treatment, ON_DATE, answers(5, 'worse'));
+
+    const result = await loadDiaryToday(
+      createInMemoryTreatmentRepository({ treatment }),
+      diaryRepository,
+      ON_DATE,
+    );
+
+    expect(result).toEqual({
+      status: 'completed',
+      patientId: 'patient-1',
+      treatmentId: 'treatment-1',
+      history: [historyItem(ON_DATE, 5, 'worse'), historyItem(EARLIER_DATE, 1, 'better')],
+    });
+    if (result.status === 'completed') {
+      expect(Object.keys(result.history[0]!)).toEqual(HISTORY_ITEM_KEYS);
+      expect(Object.keys(result.history[1]!)).toEqual(HISTORY_ITEM_KEYS);
+    }
+  });
+
+  it('returns open again on the next civil date with previous days in history', async () => {
     const diaryRepository = createInMemoryDiaryRepository();
     const treatment = activeTreatment();
     await diaryRepository.submitEntry(treatment, ON_DATE, answers());
@@ -89,7 +153,12 @@ describe('loadDiaryToday', () => {
         diaryRepository,
         NEXT_DATE,
       ),
-    ).resolves.toMatchObject({ status: 'open' });
+    ).resolves.toEqual({
+      status: 'open',
+      patientId: 'patient-1',
+      treatmentId: 'treatment-1',
+      history: [historyItem(ON_DATE, 3)],
+    });
   });
 
   it('returns no_active_treatment when treatment is missing or not active', async () => {
@@ -114,16 +183,24 @@ describe('loadDiaryToday', () => {
         ON_DATE,
       ),
     ).resolves.toEqual({ status: 'no_active_treatment' });
+
+    const missing = await loadDiaryToday(
+      createInMemoryTreatmentRepository({ empty: true }),
+      createInMemoryDiaryRepository(),
+      ON_DATE,
+    );
+    expect(missing).not.toHaveProperty('history');
   });
 
   it('returns error when the treatment repository rejects', async () => {
-    await expect(
-      loadDiaryToday(
-        rejectingTreatmentRepository(),
-        createInMemoryDiaryRepository(),
-        ON_DATE,
-      ),
-    ).resolves.toEqual({ status: 'error' });
+    const result = await loadDiaryToday(
+      rejectingTreatmentRepository(),
+      createInMemoryDiaryRepository(),
+      ON_DATE,
+    );
+
+    expect(result).toEqual({ status: 'error' });
+    expect(result).not.toHaveProperty('history');
   });
 });
 
@@ -190,8 +267,12 @@ describe('createDiaryLoader', () => {
       status: 'completed',
       patientId: 'patient-1',
       treatmentId: 'treatment-1',
+      history: [historyItem(ON_DATE, 2)],
     });
     expect(second).toEqual(first);
+    if (first.status === 'completed') {
+      expect(Object.keys(first.history[0]!)).toEqual(HISTORY_ITEM_KEYS);
+    }
     expect(sink.getAll().map((event) => event.name)).toEqual([
       'checkin_requested',
       'checkin_submitted',

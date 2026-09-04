@@ -33,6 +33,7 @@ export const copy: AppCopy = {
     wellbeingWorse: "Хуже",
     submit: "Отправить",
     completedToday: "Дневник за сегодня заполнен.",
+    entriesLabel: "Записи",
   },
   treatment: {
     title: "Лечение",

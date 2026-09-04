@@ -1,6 +1,6 @@
 # TASK-013 — Symptom history
 
-Status: NOT STARTED
+Status: DONE
 
 Milestone: M6 — Symptom Diary
 

@@ -31,6 +31,7 @@ export type AppCopy = {
     wellbeingWorse: string;
     submit: string;
     completedToday: string;
+    entriesLabel: string;
   };
   treatment: {
     title: string;

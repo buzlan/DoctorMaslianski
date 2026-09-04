@@ -46,9 +46,5 @@ export async function submitDiaryToday(
     });
   }
 
-  return {
-    status: 'completed',
-    patientId: treatment.patientId,
-    treatmentId: treatment.id,
-  };
+  return loadDiaryToday(deps.treatmentRepository, deps.diaryRepository, onDate);
 }

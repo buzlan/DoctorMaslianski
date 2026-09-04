@@ -4,9 +4,23 @@ import type { TreatmentRepository } from '@/modules/treatment/infrastructure';
 import { isDiaryOpenOnDate } from '../domain';
 import type { DiaryRepository } from '../infrastructure';
 
+import { buildDiaryHistory, type DiaryHistoryItem } from './build-diary-history';
+
+export type { DiaryHistoryItem };
+
 export type DiaryTodayResult =
-  | { status: 'open'; patientId: string; treatmentId: string }
-  | { status: 'completed'; patientId: string; treatmentId: string }
+  | {
+      status: 'open';
+      patientId: string;
+      treatmentId: string;
+      history: readonly DiaryHistoryItem[];
+    }
+  | {
+      status: 'completed';
+      patientId: string;
+      treatmentId: string;
+      history: readonly DiaryHistoryItem[];
+    }
   | { status: 'no_active_treatment' }
   | { status: 'error' };
 
@@ -27,6 +41,7 @@ export async function loadDiaryToday(
         status: 'open',
         patientId: treatment.patientId,
         treatmentId: treatment.id,
+        history: buildDiaryHistory(entries, { excludeDate: onDate }),
       };
     }
 
@@ -34,6 +49,7 @@ export async function loadDiaryToday(
       status: 'completed',
       patientId: treatment.patientId,
       treatmentId: treatment.id,
+      history: buildDiaryHistory(entries),
     };
   } catch {
     return { status: 'error' };
