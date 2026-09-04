@@ -1,6 +1,6 @@
 # TASK-010 — Persist assignment completion
 
-Status: NOT STARTED
+Status: DONE
 
 Milestone: M5 — Local State and Persistence
 
@@ -40,7 +40,15 @@ This is the first real offline requirement. There is still no backend.
 
 ## New dependencies
 
-Maybe yes (storage library). Justify in this task’s Plan Mode.
+`@react-native-async-storage/async-storage` (SDK 57 compatible, installed with `npx expo install`).
+
+AsyncStorage is used because this task persists only the completion overlay:
+
+- `treatmentId`
+- `assignmentId`
+- `completedOn`
+
+Do not treat this as a decision to store future diary answers, patient photos, or other clinical payloads in AsyncStorage. Local-at-rest storage requirements must be reviewed before real-patient rollout.
 
 ## Plan Mode
 

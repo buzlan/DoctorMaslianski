@@ -1,9 +1,9 @@
 /**
- * In-memory TreatmentRepository for development.
+ * In-memory TreatmentRepository test double.
  *
- * Stores an already-created patient Treatment. getActiveTreatment() does
- * not load a clinic action catalog. Completions are an in-memory overlay
- * and are lost when the process exits.
+ * Stores an already-created patient Treatment. Completions are an in-memory
+ * overlay and are lost when the process exits. The app singleton is the
+ * persistent repository in shared-treatment-repository.ts.
  */
 
 import {
@@ -86,5 +86,3 @@ export function createInMemoryTreatmentRepository(
 
   return new InMemoryTreatmentRepository(seed.treatment ?? createDevelopmentTreatment());
 }
-
-export const sharedTreatmentRepository = createInMemoryTreatmentRepository();

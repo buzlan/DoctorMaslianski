@@ -7,10 +7,8 @@ import {
   developmentPatient,
 } from './fixtures/pilot-patient';
 import { createDevelopmentTreatment } from './fixtures/pilot-treatment';
-import {
-  createInMemoryTreatmentRepository,
-  sharedTreatmentRepository,
-} from './in-memory-treatment-repository';
+import { createInMemoryTreatmentRepository } from './in-memory-treatment-repository';
+import { sharedTreatmentRepository } from './shared-treatment-repository';
 
 const INTAKE_MARKERS = [
   'TBD by clinic',

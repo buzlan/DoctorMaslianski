@@ -3,7 +3,10 @@ import {
   type ProductEventSink,
 } from '@/modules/product-events';
 import type { CalendarDate, PilotCohort } from '@/modules/treatment/domain';
-import type { TreatmentRepository } from '@/modules/treatment/infrastructure';
+import type {
+  CompleteAssignmentResult,
+  TreatmentRepository,
+} from '@/modules/treatment/infrastructure';
 
 import { loadTodayOverview, type TodayLoadResult } from './load-today-overview';
 
@@ -19,7 +22,13 @@ export async function completeTodayAssignment(
   assignmentId: string,
   onDate: CalendarDate,
 ): Promise<TodayLoadResult> {
-  const result = await deps.repository.completeAssignment(assignmentId, onDate);
+  let result: CompleteAssignmentResult;
+
+  try {
+    result = await deps.repository.completeAssignment(assignmentId, onDate);
+  } catch {
+    return loadTodayOverview(deps.repository, onDate);
+  }
 
   if (result.status === 'recorded' && !result.alreadyPresent) {
     const now = deps.now ?? (() => new Date());
@@ -42,6 +51,11 @@ export async function uncompleteTodayAssignment(
   assignmentId: string,
   onDate: CalendarDate,
 ): Promise<TodayLoadResult> {
-  await deps.repository.uncompleteAssignment(assignmentId, onDate);
+  try {
+    await deps.repository.uncompleteAssignment(assignmentId, onDate);
+  } catch {
+    // Persist failed; in-memory completion state is unchanged.
+  }
+
   return loadTodayOverview(deps.repository, onDate);
 }
