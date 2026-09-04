@@ -1,3 +1,4 @@
+import { useRouter } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 import {
   Pressable,
@@ -13,11 +14,12 @@ import {
   type TreatmentTimeline,
   type TreatmentTimelineLoadResult,
 } from "@/modules/treatment/application";
-import type { CalendarDate } from "@/modules/treatment/domain";
 import { copy } from "@/shared/copy";
 import { toLocalCalendarDate } from "@/shared/date/to-local-calendar-date";
 import { getColors, theme } from "@/shared/theme";
 import { AppText, Screen, Stack } from "@/shared/ui";
+
+import { formatCalendarDate } from "./format-calendar-date";
 
 type ReadyTimeline = Extract<TreatmentTimeline, { kind: "ready" }>;
 
@@ -43,14 +45,6 @@ function requestTimelineLoad() {
   return loadSharedTreatmentTimeline(todayDate());
 }
 
-function pad2(value: number): string {
-  return String(value).padStart(2, "0");
-}
-
-function formatCalendarDate(date: CalendarDate): string {
-  return `${pad2(date.day)}.${pad2(date.month)}.${date.year}`;
-}
-
 function formatPeriodRange(period: TimelinePeriod): string {
   if (period.endedOn === undefined) {
     return formatCalendarDate(period.startedOn);
@@ -66,16 +60,41 @@ function hasMilestoneRows(timeline: ReadyTimeline): boolean {
   );
 }
 
+function milestoneAccessibilityLabel(milestone: TimelineMilestone): string {
+  if (milestone.title !== undefined && milestone.title.length > 0) {
+    return milestone.title;
+  }
+
+  if (milestone.occurredOn !== undefined) {
+    return formatCalendarDate(milestone.occurredOn);
+  }
+
+  return copy.treatment.milestoneDetailTitle;
+}
+
 function MilestoneRow({ milestone }: { milestone: TimelineMilestone }) {
+  const router = useRouter();
+
   return (
-    <Stack gap="xs">
-      {milestone.title !== undefined ? <AppText>{milestone.title}</AppText> : null}
-      {milestone.occurredOn !== undefined ? (
-        <AppText variant="caption" tone="secondary">
-          {formatCalendarDate(milestone.occurredOn)}
-        </AppText>
-      ) : null}
-    </Stack>
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={milestoneAccessibilityLabel(milestone)}
+      onPress={() => {
+        router.push({
+          pathname: "/treatment/[milestoneId]",
+          params: { milestoneId: milestone.id },
+        });
+      }}
+    >
+      <Stack gap="xs">
+        {milestone.title !== undefined ? <AppText>{milestone.title}</AppText> : null}
+        {milestone.occurredOn !== undefined ? (
+          <AppText variant="caption" tone="secondary">
+            {formatCalendarDate(milestone.occurredOn)}
+          </AppText>
+        ) : null}
+      </Stack>
+    </Pressable>
   );
 }
 

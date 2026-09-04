@@ -1,1 +1,1 @@
-export { TreatmentScreen } from "./presentation";
+export { MilestoneDetailScreen, TreatmentScreen } from "./presentation";

@@ -23,5 +23,8 @@ export type AppCopy = {
     retry: string;
     periodDayLabel: string;
     emptyMilestones: string;
+    back: string;
+    milestoneDetailTitle: string;
+    milestoneNotFound: string;
   };
 };

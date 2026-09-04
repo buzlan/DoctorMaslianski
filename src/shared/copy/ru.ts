@@ -25,5 +25,8 @@ export const copy: AppCopy = {
     retry: "Повторить",
     periodDayLabel: "День",
     emptyMilestones: "Пока нет визитов в ходе лечения.",
+    back: "Назад",
+    milestoneDetailTitle: "Этап лечения",
+    milestoneNotFound: "Этот этап лечения не найден.",
   },
 };
