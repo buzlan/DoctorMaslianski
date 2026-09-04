@@ -1,10 +1,14 @@
 import type { CalendarDate } from './calendar-date';
 
-export type ProtocolKind = 'sclerotherapy' | 'telangiectasia';
+export type TreatmentContext = 'sclerotherapy';
 
 export type PilotCohort = 'internal_dry_run' | 'closed_beta' | 'clinic_pilot';
 
 export type TreatmentStatus = 'active' | 'completed' | 'cancelled';
+
+export type ActionAssignmentStatus = 'active' | 'disabled';
+
+export type AppointmentRecordStatus = 'current' | 'superseded';
 
 export type Patient = {
   id: string;
@@ -14,82 +18,49 @@ export type Patient = {
   consentDocumentVersion?: string;
 };
 
-export type ProtocolStage = {
+export type TreatmentPeriod = {
   id: string;
-  order: number;
+  startedOn: CalendarDate;
+  endedOn?: CalendarDate;
+};
+
+export type TreatmentMilestone = {
+  id: string;
+  kind?: string;
   title?: string;
-  summary?: string;
-  timingRule?: string;
-  startDayOffset?: number;
-  endDayOffset?: number;
+  occurredOn?: CalendarDate;
 };
 
-export type ProtocolTask = {
+export type ActionAssignment = {
   id: string;
-  stageId: string;
-  title?: string;
-  instruction?: string;
-  scheduleRule?: string;
-  dayOffsets: readonly number[];
-};
-
-export type CheckInDefinition = {
-  id: string;
-  stageId?: string;
-};
-
-export type PhotoCheckpoint = {
-  id: string;
-  stageId?: string;
-  title?: string;
-  when?: string;
-  captureNotes?: string;
-};
-
-export type Restriction = {
-  id: string;
+  catalogItemId: string;
   title?: string;
   instruction?: string;
-  appliesWhen?: string;
+  startDate: CalendarDate;
+  endDate: CalendarDate;
+  status: ActionAssignmentStatus;
 };
 
-export type AppointmentPatternItem = {
+export type ActionCompletion = {
   id: string;
-  label?: string;
-  when?: string;
+  assignmentId: string;
+  completedOn: CalendarDate;
 };
 
-export type ProtocolContent = {
-  kind: ProtocolKind;
-  version: number;
-  stages: readonly ProtocolStage[];
-  tasks: readonly ProtocolTask[];
-  checkInDefinitions: readonly CheckInDefinition[];
-  photoCheckpoints: readonly PhotoCheckpoint[];
-  restrictions: readonly Restriction[];
-  appointmentPattern: readonly AppointmentPatternItem[];
-};
-
-export type PilotProtocol = ProtocolContent & {
+export type Appointment = {
   id: string;
+  at?: string;
+  status: AppointmentRecordStatus;
 };
-
-export type TreatmentSnapshot = ProtocolContent;
 
 export type Treatment = {
   id: string;
   patientId: string;
-  protocolId: string;
-  protocolVersion: number;
-  snapshot: TreatmentSnapshot;
-  startDate: CalendarDate;
+  treatmentContext: TreatmentContext;
   status: TreatmentStatus;
-};
-
-export type ProgressSummary = {
-  stageCount: number;
-  currentStageId: string | null;
-  currentStageOrder: number | null;
-  taskCount: number;
-  completedTaskCount: number;
+  periods: readonly TreatmentPeriod[];
+  milestones: readonly TreatmentMilestone[];
+  assignments: readonly ActionAssignment[];
+  completions: readonly ActionCompletion[];
+  appointments: readonly Appointment[];
 };

@@ -51,8 +51,6 @@ function createAppOpenedEvent(args: {
       pilotCohort: args.pilotCohort,
       patientId: args.result.overview.patientId,
       treatmentId: args.result.overview.treatmentId,
-      protocolKind: args.result.overview.protocolKind,
-      protocolVersion: args.result.overview.protocolVersion,
     };
   }
 

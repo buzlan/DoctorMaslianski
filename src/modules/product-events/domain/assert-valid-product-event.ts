@@ -24,8 +24,6 @@ const APP_OPENED_KEYS = new Set([
   ...BASE_KEYS,
   'patientId',
   'treatmentId',
-  'protocolKind',
-  'protocolVersion',
 ]);
 
 const PROTOCOL_ASSIGNED_KEYS = new Set([
@@ -110,7 +108,7 @@ export function assertValidProductEvent(input: unknown): ProductEvent {
   }
 
   assertProtocolPair(record);
-  assertTreatmentIdCoherence(record);
+  assertTreatmentIdCoherence(record, eventName);
 
   if (eventName === 'app_opened') {
     assertAppOpenedContext(record);
@@ -229,12 +227,19 @@ function assertProtocolPair(record: Record<string, unknown>): void {
   }
 }
 
-function assertTreatmentIdCoherence(record: Record<string, unknown>): void {
+function assertTreatmentIdCoherence(
+  record: Record<string, unknown>,
+  eventName: ProductEventName,
+): void {
   if (!isPresent(record, 'treatmentId')) {
     return;
   }
 
-  if (!isPresent(record, 'patientId') || !isPresent(record, 'protocolKind')) {
+  if (!isPresent(record, 'patientId')) {
+    throw new InvalidProductEventError('unsupported event field: treatmentId');
+  }
+
+  if (eventName !== 'app_opened' && !isPresent(record, 'protocolKind')) {
     throw new InvalidProductEventError('unsupported event field: treatmentId');
   }
 }
@@ -242,27 +247,11 @@ function assertTreatmentIdCoherence(record: Record<string, unknown>): void {
 function assertAppOpenedContext(record: Record<string, unknown>): void {
   const hasPatientId = isPresent(record, 'patientId');
   const hasTreatmentId = isPresent(record, 'treatmentId');
-  const hasProtocolKind = isPresent(record, 'protocolKind');
-  const hasProtocolVersion = isPresent(record, 'protocolVersion');
-  const hasAnyTreatmentField = hasTreatmentId || hasProtocolKind || hasProtocolVersion;
 
-  if (!hasAnyTreatmentField) {
-    assertOptionalString(record, 'patientId');
-    return;
+  if (hasTreatmentId && !hasPatientId) {
+    throw new InvalidProductEventError('missing event field: patientId');
   }
 
-  if (!hasPatientId || !hasTreatmentId || !hasProtocolKind || !hasProtocolVersion) {
-    const incompleteKey = !hasTreatmentId
-      ? 'treatmentId'
-      : !hasPatientId
-        ? 'patientId'
-        : !hasProtocolKind
-          ? 'protocolKind'
-          : 'protocolVersion';
-    throw new InvalidProductEventError(`missing event field: ${incompleteKey}`);
-  }
-
-  assertRequiredString(record, 'patientId');
-  assertRequiredString(record, 'treatmentId');
-  assertRequiredProtocol(record);
+  assertOptionalString(record, 'patientId');
+  assertOptionalString(record, 'treatmentId');
 }

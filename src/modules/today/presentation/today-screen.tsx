@@ -37,42 +37,32 @@ function requestTodayLoad() {
 }
 
 function ReadyContent({ overview }: { overview: ReadyOverview }) {
-  const hasStage = overview.currentStage !== null;
-  const hasTasks = overview.tasks.length > 0;
+  const hasAssignments = overview.assignments.length > 0;
 
   return (
     <Stack gap="md">
-      {!hasStage && !hasTasks ? (
+      {overview.periodDayNumber !== null ? (
+        <AppText>
+          {copy.today.periodDayLabel} {overview.periodDayNumber}
+        </AppText>
+      ) : null}
+      {!hasAssignments ? (
         <AppText tone="secondary">{copy.today.noActionsForToday}</AppText>
-      ) : null}
-      {overview.currentStage ? (
-        <Stack gap="sm">
-          <AppText variant="caption" tone="secondary">
-            {copy.today.currentStageLabel}
-          </AppText>
-          {overview.currentStage.title ? (
-            <AppText>{overview.currentStage.title}</AppText>
-          ) : null}
-          {overview.currentStage.summary ? (
-            <AppText tone="secondary">{overview.currentStage.summary}</AppText>
-          ) : null}
-        </Stack>
-      ) : null}
-      {hasTasks ? (
+      ) : (
         <Stack gap="sm">
           <AppText variant="caption" tone="secondary">
             {copy.today.tasksLabel}
           </AppText>
-          {overview.tasks.map((task) => (
-            <Stack key={task.id} gap="xs">
-              {task.title ? <AppText>{task.title}</AppText> : null}
-              {task.instruction ? (
-                <AppText tone="secondary">{task.instruction}</AppText>
+          {overview.assignments.map((assignment) => (
+            <Stack key={assignment.id} gap="xs">
+              {assignment.title ? <AppText>{assignment.title}</AppText> : null}
+              {assignment.instruction ? (
+                <AppText tone="secondary">{assignment.instruction}</AppText>
               ) : null}
             </Stack>
           ))}
         </Stack>
-      ) : null}
+      )}
     </Stack>
   );
 }

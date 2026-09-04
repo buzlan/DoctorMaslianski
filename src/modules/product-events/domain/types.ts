@@ -1,6 +1,9 @@
-import type { PilotCohort, ProtocolKind } from '@/modules/treatment/domain';
+import type { PilotCohort } from '@/modules/treatment/domain';
 
-export type { PilotCohort, ProtocolKind };
+export type { PilotCohort };
+
+/** Leftover snapshot context on unemitted event types. Not catalog version. */
+export type ProtocolKind = 'sclerotherapy' | 'telangiectasia';
 
 export const DEVELOPMENT_PILOT_COHORT: PilotCohort = 'internal_dry_run';
 
@@ -43,7 +46,7 @@ export type ProtocolAssignedContext = ProductEventBase & {
 export type AppOpenedEvent =
   | ({ name: 'app_opened' } & ProductEventBase)
   | ({ name: 'app_opened' } & ProductEventBase & { patientId: string })
-  | ({ name: 'app_opened' } & TreatmentEventContext);
+  | ({ name: 'app_opened' } & ProductEventBase & { patientId: string; treatmentId: string });
 
 type PatientInvitedEvent = { name: 'patient_invited' } & ProtocolAssignedContext;
 

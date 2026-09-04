@@ -2,29 +2,27 @@ export { calendarDate, dayIndex } from './calendar-date';
 export type { CalendarDate } from './calendar-date';
 
 export {
-  getCurrentStage,
-  getProgressSummary,
-  getTasksForDate,
+  getAssignmentsForDate,
+  getCurrentPeriod,
+  getPeriodDayNumber,
   isActiveTreatment,
+  isDateInInclusiveRange,
 } from './helpers';
 
-export { assignTreatment } from './snapshot';
-export type { AssignTreatmentInput } from './snapshot';
+export { createTreatment } from './create-treatment';
+export type { CreateTreatmentInput } from './create-treatment';
 
 export type {
-  AppointmentPatternItem,
-  CheckInDefinition,
+  ActionAssignment,
+  ActionAssignmentStatus,
+  ActionCompletion,
+  Appointment,
+  AppointmentRecordStatus,
   Patient,
-  PhotoCheckpoint,
   PilotCohort,
-  PilotProtocol,
-  ProgressSummary,
-  ProtocolContent,
-  ProtocolKind,
-  ProtocolStage,
-  ProtocolTask,
-  Restriction,
   Treatment,
-  TreatmentSnapshot,
+  TreatmentContext,
+  TreatmentMilestone,
+  TreatmentPeriod,
   TreatmentStatus,
 } from './types';

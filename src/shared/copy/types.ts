@@ -8,7 +8,7 @@ export type AppCopy = {
     loading: string;
     noActiveTreatment: string;
     noActionsForToday: string;
-    currentStageLabel: string;
+    periodDayLabel: string;
     tasksLabel: string;
     loadError: string;
     retry: string;

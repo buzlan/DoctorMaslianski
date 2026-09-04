@@ -1,6 +1,6 @@
 # TASK-041 — Patient-specific treatment domain
 
-Status: NOT STARTED
+Status: DONE
 
 Milestone: M2 — Pilot domain (code follow-on after TASK-040)
 

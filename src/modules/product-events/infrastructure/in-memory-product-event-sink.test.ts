@@ -121,7 +121,10 @@ describe('app_opened context', () => {
     });
     await sink.append({
       name: 'app_opened',
-      ...treatmentContext(),
+      at: AT,
+      pilotCohort: DEVELOPMENT_PILOT_COHORT,
+      patientId: 'patient-1',
+      treatmentId: 'treatment-1',
     });
 
     expect(sink.getAll()).toHaveLength(3);
@@ -130,12 +133,32 @@ describe('app_opened context', () => {
     expect(sink.getAll()[2]).toMatchObject({
       patientId: 'patient-1',
       treatmentId: 'treatment-1',
-      protocolKind: 'sclerotherapy',
-      protocolVersion: 1,
+    });
+    expect(sink.getAll()[2]).not.toHaveProperty('protocolKind');
+    expect(sink.getAll()[2]).not.toHaveProperty('protocolVersion');
+  });
+
+  it('accepts treatmentId without protocolKind or protocolVersion', async () => {
+    const sink = createInMemoryProductEventSink();
+
+    await sink.append({
+      name: 'app_opened',
+      at: AT,
+      pilotCohort: DEVELOPMENT_PILOT_COHORT,
+      patientId: 'patient-1',
+      treatmentId: 'treatment-1',
+    });
+
+    expect(sink.getAll()[0]).toEqual({
+      name: 'app_opened',
+      at: AT,
+      pilotCohort: DEVELOPMENT_PILOT_COHORT,
+      patientId: 'patient-1',
+      treatmentId: 'treatment-1',
     });
   });
 
-  it('rejects treatmentId without protocol context', async () => {
+  it('rejects protocolKind and protocolVersion on app_opened', async () => {
     const sink = createInMemoryProductEventSink();
 
     await expect(
@@ -145,20 +168,8 @@ describe('app_opened context', () => {
         pilotCohort: DEVELOPMENT_PILOT_COHORT,
         patientId: 'patient-1',
         treatmentId: 'treatment-1',
-      } as ProductEvent),
-    ).rejects.toThrow(InvalidProductEventError);
-  });
-
-  it('rejects protocolKind without protocolVersion', async () => {
-    const sink = createInMemoryProductEventSink();
-
-    await expect(
-      sink.append({
-        name: 'app_opened',
-        at: AT,
-        pilotCohort: DEVELOPMENT_PILOT_COHORT,
-        patientId: 'patient-1',
         protocolKind: 'sclerotherapy',
+        protocolVersion: 1,
       } as ProductEvent),
     ).rejects.toThrow(InvalidProductEventError);
   });

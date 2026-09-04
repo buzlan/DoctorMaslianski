@@ -2,7 +2,7 @@ import {
   createInMemoryProductEventSink,
   DEVELOPMENT_PILOT_COHORT,
 } from '@/modules/product-events';
-import { calendarDate, type PilotProtocol } from '@/modules/treatment/domain';
+import { calendarDate, createTreatment } from '@/modules/treatment/domain';
 import {
   createInMemoryTreatmentRepository,
   type TreatmentRepository,
@@ -12,21 +12,6 @@ import { createTodayLoader, loadTodayOverview } from './load-today-overview';
 
 const ON_DATE = calendarDate(2026, 8, 1);
 const AT = '2026-08-19T15:00:00.000Z';
-
-function createProtocol(overrides: Partial<PilotProtocol> = {}): PilotProtocol {
-  return {
-    id: 'protocol-sclerotherapy',
-    kind: 'sclerotherapy',
-    version: 1,
-    stages: [],
-    tasks: [],
-    checkInDefinitions: [],
-    photoCheckpoints: [],
-    restrictions: [],
-    appointmentPattern: [],
-    ...overrides,
-  };
-}
 
 function rejectingRepository(): TreatmentRepository {
   return {
@@ -39,12 +24,21 @@ function rejectingRepository(): TreatmentRepository {
 describe('loadTodayOverview', () => {
   it('returns ready when the repository resolves an active treatment', async () => {
     const repository = createInMemoryTreatmentRepository({
-      protocol: createProtocol({
-        stages: [{ id: 'early', order: 1, title: 'synthetic-early', startDayOffset: 0, endDayOffset: 2 }],
-        tasks: [{ id: 'on-start', stageId: 'early', title: 'synthetic-start', dayOffsets: [0] }],
+      treatment: createTreatment({
+        id: 'treatment-1',
+        patientId: 'dev-patient-1',
+        periods: [{ id: 'current', startedOn: ON_DATE }],
+        assignments: [
+          {
+            id: 'on-start',
+            catalogItemId: 'catalog-1',
+            title: 'synthetic-start',
+            startDate: ON_DATE,
+            endDate: ON_DATE,
+            status: 'active',
+          },
+        ],
       }),
-      treatmentId: 'treatment-1',
-      startDate: ON_DATE,
     });
 
     await expect(loadTodayOverview(repository, ON_DATE)).resolves.toEqual({
@@ -53,10 +47,8 @@ describe('loadTodayOverview', () => {
         kind: 'ready',
         patientId: 'dev-patient-1',
         treatmentId: 'treatment-1',
-        protocolKind: 'sclerotherapy',
-        protocolVersion: 1,
-        currentStage: { id: 'early', title: 'synthetic-early' },
-        tasks: [{ id: 'on-start', title: 'synthetic-start' }],
+        periodDayNumber: 1,
+        assignments: [{ id: 'on-start', title: 'synthetic-start' }],
       },
     });
   });
@@ -83,9 +75,11 @@ describe('createTodayLoader', () => {
     const sink = createInMemoryProductEventSink();
     const loader = createTodayLoader({
       repository: createInMemoryTreatmentRepository({
-        protocol: createProtocol(),
-        treatmentId: 'treatment-1',
-        startDate: ON_DATE,
+        treatment: createTreatment({
+          id: 'treatment-1',
+          patientId: 'dev-patient-1',
+          periods: [{ id: 'current', startedOn: ON_DATE }],
+        }),
       }),
       eventSink: sink,
       now,
@@ -99,8 +93,6 @@ describe('createTodayLoader', () => {
         pilotCohort: DEVELOPMENT_PILOT_COHORT,
         patientId: 'dev-patient-1',
         treatmentId: 'treatment-1',
-        protocolKind: 'sclerotherapy',
-        protocolVersion: 1,
       },
     ]);
   });
@@ -171,33 +163,26 @@ describe('createTodayLoader', () => {
     });
   });
 
-  it('does not include clinical or free-text fields on app_opened', async () => {
+  it('does not include protocol snapshot fields or clinical text on app_opened', async () => {
     const sink = createInMemoryProductEventSink();
     const loader = createTodayLoader({
       repository: createInMemoryTreatmentRepository({
-        protocol: createProtocol({
-          stages: [
-            {
-              id: 'early',
-              order: 1,
-              title: 'synthetic-clinical-title',
-              summary: 'synthetic-clinical-summary',
-              startDayOffset: 0,
-              endDayOffset: 2,
-            },
-          ],
-          tasks: [
+        treatment: createTreatment({
+          id: 'treatment-1',
+          patientId: 'dev-patient-1',
+          periods: [{ id: 'current', startedOn: ON_DATE }],
+          assignments: [
             {
               id: 'on-start',
-              stageId: 'early',
+              catalogItemId: 'catalog-1',
               title: 'synthetic-task-title',
               instruction: 'synthetic-task-instruction',
-              dayOffsets: [0],
+              startDate: ON_DATE,
+              endDate: ON_DATE,
+              status: 'active',
             },
           ],
         }),
-        treatmentId: 'treatment-1',
-        startDate: ON_DATE,
       }),
       eventSink: sink,
       now,
@@ -212,15 +197,13 @@ describe('createTodayLoader', () => {
       pilotCohort: DEVELOPMENT_PILOT_COHORT,
       patientId: 'dev-patient-1',
       treatmentId: 'treatment-1',
-      protocolKind: 'sclerotherapy',
-      protocolVersion: 1,
     });
+    expect(event).not.toHaveProperty('protocolKind');
+    expect(event).not.toHaveProperty('protocolVersion');
     expect(event).not.toHaveProperty('title');
     expect(event).not.toHaveProperty('instruction');
-    expect(event).not.toHaveProperty('summary');
     expect(event).not.toHaveProperty('answers');
     expect(event).not.toHaveProperty('photoUrl');
-    expect(JSON.stringify(event)).not.toContain('synthetic-clinical');
     expect(JSON.stringify(event)).not.toContain('synthetic-task');
   });
 });

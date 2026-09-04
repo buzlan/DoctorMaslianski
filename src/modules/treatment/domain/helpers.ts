@@ -1,63 +1,55 @@
 import { dayIndex } from './calendar-date';
 import type { CalendarDate } from './calendar-date';
-import type { ProgressSummary, ProtocolStage, ProtocolTask, Treatment } from './types';
+import type { ActionAssignment, Treatment, TreatmentPeriod } from './types';
 
-export function getCurrentStage(
-  treatment: Treatment,
-  onDate: CalendarDate,
-): ProtocolStage | null {
-  const index = dayIndex(treatment.startDate, onDate);
-  let current: ProtocolStage | null = null;
+export function getCurrentPeriod(treatment: Treatment): TreatmentPeriod | null {
+  let current: TreatmentPeriod | null = null;
 
-  for (const stage of treatment.snapshot.stages) {
-    if (stage.startDayOffset === undefined || stage.endDayOffset === undefined) {
+  for (const period of treatment.periods) {
+    if (period.endedOn !== undefined) {
       continue;
     }
 
-    if (index < stage.startDayOffset || index > stage.endDayOffset) {
-      continue;
-    }
-
-    if (current === null || stage.order < current.order) {
-      current = stage;
+    if (current === null || dayIndex(current.startedOn, period.startedOn) > 0) {
+      current = period;
     }
   }
 
   return current;
 }
 
-export function getTasksForDate(
-  treatment: Treatment,
+export function getPeriodDayNumber(
+  period: TreatmentPeriod,
   onDate: CalendarDate,
-): readonly ProtocolTask[] {
-  const index = dayIndex(treatment.startDate, onDate);
-  return treatment.snapshot.tasks.filter((task) => task.dayOffsets.includes(index));
-}
-
-export function getProgressSummary(
-  treatment: Treatment,
-  onDate: CalendarDate,
-  completedTaskIds?: ReadonlySet<string>,
-): ProgressSummary {
-  const current = getCurrentStage(treatment, onDate);
-  const snapshotTaskIds = new Set(treatment.snapshot.tasks.map((task) => task.id));
-  let completedTaskCount = 0;
-
-  if (completedTaskIds) {
-    for (const taskId of completedTaskIds) {
-      if (snapshotTaskIds.has(taskId)) {
-        completedTaskCount += 1;
-      }
-    }
+): number | null {
+  if (dayIndex(period.startedOn, onDate) < 0) {
+    return null;
   }
 
-  return {
-    stageCount: treatment.snapshot.stages.length,
-    currentStageId: current?.id ?? null,
-    currentStageOrder: current?.order ?? null,
-    taskCount: treatment.snapshot.tasks.length,
-    completedTaskCount,
-  };
+  if (period.endedOn !== undefined && dayIndex(onDate, period.endedOn) < 0) {
+    return null;
+  }
+
+  return 1 + dayIndex(period.startedOn, onDate);
+}
+
+export function isDateInInclusiveRange(
+  onDate: CalendarDate,
+  startDate: CalendarDate,
+  endDate: CalendarDate,
+): boolean {
+  return dayIndex(startDate, onDate) >= 0 && dayIndex(onDate, endDate) >= 0;
+}
+
+export function getAssignmentsForDate(
+  treatment: Treatment,
+  onDate: CalendarDate,
+): readonly ActionAssignment[] {
+  return treatment.assignments.filter(
+    (assignment) =>
+      assignment.status === 'active' &&
+      isDateInInclusiveRange(onDate, assignment.startDate, assignment.endDate),
+  );
 }
 
 export function isActiveTreatment(treatment: Treatment): boolean {

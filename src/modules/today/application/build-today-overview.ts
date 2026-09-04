@@ -1,21 +1,13 @@
 import {
-  getCurrentStage,
-  getTasksForDate,
+  getAssignmentsForDate,
+  getCurrentPeriod,
+  getPeriodDayNumber,
   isActiveTreatment,
   type CalendarDate,
-  type ProtocolKind,
-  type ProtocolStage,
-  type ProtocolTask,
   type Treatment,
 } from '@/modules/treatment/domain';
 
-export type TodayStageItem = {
-  id: string;
-  title?: string;
-  summary?: string;
-};
-
-export type TodayTaskItem = {
+export type TodayAssignmentItem = {
   id: string;
   title?: string;
   instruction?: string;
@@ -27,35 +19,23 @@ export type TodayOverview =
       kind: 'ready';
       patientId: string;
       treatmentId: string;
-      protocolKind: ProtocolKind;
-      protocolVersion: number;
-      currentStage: TodayStageItem | null;
-      tasks: readonly TodayTaskItem[];
+      periodDayNumber: number | null;
+      assignments: readonly TodayAssignmentItem[];
     };
 
-function mapStage(stage: ProtocolStage): TodayStageItem {
-  const item: TodayStageItem = { id: stage.id };
+function mapAssignment(assignment: {
+  id: string;
+  title?: string;
+  instruction?: string;
+}): TodayAssignmentItem {
+  const item: TodayAssignmentItem = { id: assignment.id };
 
-  if (stage.title !== undefined) {
-    item.title = stage.title;
+  if (assignment.title !== undefined) {
+    item.title = assignment.title;
   }
 
-  if (stage.summary !== undefined) {
-    item.summary = stage.summary;
-  }
-
-  return item;
-}
-
-function mapTask(task: ProtocolTask): TodayTaskItem {
-  const item: TodayTaskItem = { id: task.id };
-
-  if (task.title !== undefined) {
-    item.title = task.title;
-  }
-
-  if (task.instruction !== undefined) {
-    item.instruction = task.instruction;
+  if (assignment.instruction !== undefined) {
+    item.instruction = assignment.instruction;
   }
 
   return item;
@@ -69,15 +49,15 @@ export function buildTodayOverview(
     return { kind: 'no_active_treatment' };
   }
 
-  const current = getCurrentStage(treatment, onDate);
+  const currentPeriod = getCurrentPeriod(treatment);
+  const periodDayNumber =
+    currentPeriod === null ? null : getPeriodDayNumber(currentPeriod, onDate);
 
   return {
     kind: 'ready',
     patientId: treatment.patientId,
     treatmentId: treatment.id,
-    protocolKind: treatment.snapshot.kind,
-    protocolVersion: treatment.protocolVersion,
-    currentStage: current === null ? null : mapStage(current),
-    tasks: getTasksForDate(treatment, onDate).map(mapTask),
+    periodDayNumber,
+    assignments: getAssignmentsForDate(treatment, onDate).map(mapAssignment),
   };
 }

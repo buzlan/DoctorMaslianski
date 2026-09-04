@@ -1,207 +1,239 @@
 import { calendarDate } from './calendar-date';
+import { createTreatment } from './create-treatment';
 import {
-  getCurrentStage,
-  getProgressSummary,
-  getTasksForDate,
+  getAssignmentsForDate,
+  getCurrentPeriod,
+  getPeriodDayNumber,
   isActiveTreatment,
+  isDateInInclusiveRange,
 } from './helpers';
-import { assignTreatment } from './snapshot';
-import type { PilotProtocol, ProtocolStage, ProtocolTask, TreatmentStatus } from './types';
+import type { ActionAssignment, TreatmentStatus } from './types';
 
-function createProtocol(overrides: Partial<PilotProtocol> = {}): PilotProtocol {
-  return {
-    id: 'protocol-telangiectasia',
-    kind: 'telangiectasia',
-    version: 1,
-    stages: [],
-    tasks: [],
-    checkInDefinitions: [],
-    photoCheckpoints: [],
-    restrictions: [],
-    appointmentPattern: [],
-    ...overrides,
-  };
-}
-
-function assign(
-  protocol: PilotProtocol,
-  options: { status?: TreatmentStatus } = {},
-) {
-  return assignTreatment({
+function create(options: {
+  status?: TreatmentStatus;
+  periods?: Parameters<typeof createTreatment>[0]['periods'];
+  assignments?: readonly ActionAssignment[];
+  completions?: Parameters<typeof createTreatment>[0]['completions'];
+} = {}) {
+  return createTreatment({
     id: 'treatment-1',
     patientId: 'patient-1',
-    protocol,
-    startDate: calendarDate(2026, 8, 1),
     status: options.status,
+    periods: options.periods,
+    assignments: options.assignments,
+    completions: options.completions,
   });
 }
 
-describe('getCurrentStage', () => {
-  const stages: ProtocolStage[] = [
-    { id: 'early', order: 2, startDayOffset: 0, endDayOffset: 2 },
-    { id: 'later', order: 3, startDayOffset: 3, endDayOffset: 6 },
-  ];
+describe('getCurrentPeriod', () => {
+  it('returns the open period with no endedOn', () => {
+    const treatment = create({
+      periods: [
+        {
+          id: 'past',
+          startedOn: calendarDate(2026, 7, 1),
+          endedOn: calendarDate(2026, 7, 31),
+        },
+        { id: 'current', startedOn: calendarDate(2026, 8, 1) },
+      ],
+    });
 
-  it('returns the stage whose window contains the day index', () => {
-    const treatment = assign(createProtocol({ stages }));
-
-    expect(getCurrentStage(treatment, calendarDate(2026, 8, 1))?.id).toBe('early');
-    expect(getCurrentStage(treatment, calendarDate(2026, 8, 4))?.id).toBe('later');
+    expect(getCurrentPeriod(treatment)?.id).toBe('current');
   });
 
-  it('returns null when no window matches', () => {
-    const treatment = assign(createProtocol({ stages }));
-    expect(getCurrentStage(treatment, calendarDate(2026, 8, 20))).toBeNull();
+  it('returns null when every period has endedOn', () => {
+    const treatment = create({
+      periods: [
+        {
+          id: 'past',
+          startedOn: calendarDate(2026, 7, 1),
+          endedOn: calendarDate(2026, 7, 31),
+        },
+      ],
+    });
+
+    expect(getCurrentPeriod(treatment)).toBeNull();
   });
 
-  it('returns null when stages are empty', () => {
-    const treatment = assign(createProtocol());
-    expect(getCurrentStage(treatment, calendarDate(2026, 8, 1))).toBeNull();
+  it('keeps a past period when a later current period is added', () => {
+    const treatment = create({
+      periods: [
+        {
+          id: 'first',
+          startedOn: calendarDate(2026, 7, 1),
+          endedOn: calendarDate(2026, 7, 31),
+        },
+        { id: 'second', startedOn: calendarDate(2026, 8, 1) },
+      ],
+    });
+
+    expect(treatment.periods.map((period) => period.id)).toEqual(['first', 'second']);
+    expect(getCurrentPeriod(treatment)?.id).toBe('second');
   });
 
-  it('ignores stages that are missing a start or end offset', () => {
-    const treatment = assign(
-      createProtocol({
-        stages: [
-          { id: 'no-window', order: 1, title: 'Unspecified' },
-          { id: 'start-only', order: 2, startDayOffset: 0 },
-          { id: 'end-only', order: 3, endDayOffset: 10 },
-        ],
-      }),
-    );
+  it('picks the latest startedOn when more than one period is open', () => {
+    const treatment = create({
+      periods: [
+        { id: 'earlier-open', startedOn: calendarDate(2026, 8, 1) },
+        { id: 'later-open', startedOn: calendarDate(2026, 8, 10) },
+      ],
+    });
 
-    expect(getCurrentStage(treatment, calendarDate(2026, 8, 1))).toBeNull();
-  });
-
-  it('picks the matching stage with the lowest order, then original array order', () => {
-    const treatment = assign(
-      createProtocol({
-        stages: [
-          { id: 'second', order: 5, startDayOffset: 0, endDayOffset: 2 },
-          { id: 'first-same-order', order: 1, startDayOffset: 0, endDayOffset: 2 },
-          { id: 'also-order-1', order: 1, startDayOffset: 0, endDayOffset: 2 },
-        ],
-      }),
-    );
-
-    expect(getCurrentStage(treatment, calendarDate(2026, 8, 1))?.id).toBe('first-same-order');
-  });
-
-  it('returns null before start unless a window includes the negative index', () => {
-    const treatment = assign(createProtocol({ stages }));
-    expect(getCurrentStage(treatment, calendarDate(2026, 7, 31))).toBeNull();
-
-    const withNegativeWindow = assign(
-      createProtocol({
-        stages: [{ id: 'before-start', order: 1, startDayOffset: -2, endDayOffset: -1 }],
-      }),
-    );
-    expect(getCurrentStage(withNegativeWindow, calendarDate(2026, 7, 31))?.id).toBe(
-      'before-start',
-    );
+    expect(getCurrentPeriod(treatment)?.id).toBe('later-open');
   });
 });
 
-describe('getTasksForDate', () => {
-  const tasks: ProtocolTask[] = [
-    { id: 'on-start', stageId: 'early', dayOffsets: [0] },
-    { id: 'on-day-3', stageId: 'later', dayOffsets: [3, 4] },
-    { id: 'unscheduled', stageId: 'early', dayOffsets: [] },
-  ];
+describe('getPeriodDayNumber', () => {
+  const period = {
+    id: 'current',
+    startedOn: calendarDate(2026, 8, 1),
+  };
 
-  it('returns tasks whose dayOffsets include the day index, in snapshot order', () => {
-    const treatment = assign(createProtocol({ tasks }));
-
-    expect(getTasksForDate(treatment, calendarDate(2026, 8, 1)).map((task) => task.id)).toEqual([
-      'on-start',
-    ]);
-    expect(getTasksForDate(treatment, calendarDate(2026, 8, 4)).map((task) => task.id)).toEqual([
-      'on-day-3',
-    ]);
+  it('is 1 on the period start date', () => {
+    expect(getPeriodDayNumber(period, calendarDate(2026, 8, 1))).toBe(1);
   });
 
-  it('excludes tasks with empty dayOffsets', () => {
-    const treatment = assign(createProtocol({ tasks }));
-    const ids = getTasksForDate(treatment, calendarDate(2026, 8, 1)).map((task) => task.id);
-    expect(ids).not.toContain('unscheduled');
+  it('is 1-based from the period start', () => {
+    expect(getPeriodDayNumber(period, calendarDate(2026, 8, 4))).toBe(4);
   });
 
-  it('returns no tasks when the snapshot has none', () => {
-    const treatment = assign(createProtocol());
-    expect(getTasksForDate(treatment, calendarDate(2026, 8, 1))).toEqual([]);
+  it('returns null before the period starts', () => {
+    expect(getPeriodDayNumber(period, calendarDate(2026, 7, 31))).toBeNull();
   });
 
-  it('does not infer tasks from the current stage window', () => {
-    const treatment = assign(
-      createProtocol({
-        stages: [{ id: 'early', order: 1, startDayOffset: 0, endDayOffset: 6 }],
-        tasks: [{ id: 'stage-task', stageId: 'early', dayOffsets: [5] }],
-      }),
-    );
+  it('returns null after endedOn', () => {
+    const closed = {
+      id: 'past',
+      startedOn: calendarDate(2026, 8, 1),
+      endedOn: calendarDate(2026, 8, 3),
+    };
 
-    expect(getTasksForDate(treatment, calendarDate(2026, 8, 1))).toEqual([]);
-    expect(getTasksForDate(treatment, calendarDate(2026, 8, 6)).map((task) => task.id)).toEqual([
-      'stage-task',
-    ]);
+    expect(getPeriodDayNumber(closed, calendarDate(2026, 8, 3))).toBe(3);
+    expect(getPeriodDayNumber(closed, calendarDate(2026, 8, 4))).toBeNull();
+  });
+
+  it('resets to 1 when a new current period starts', () => {
+    const treatment = create({
+      periods: [
+        {
+          id: 'first',
+          startedOn: calendarDate(2026, 7, 1),
+          endedOn: calendarDate(2026, 7, 31),
+        },
+        { id: 'second', startedOn: calendarDate(2026, 8, 1) },
+      ],
+    });
+    const current = getCurrentPeriod(treatment);
+
+    expect(current?.id).toBe('second');
+    expect(current).not.toBeNull();
+    if (current === null) {
+      return;
+    }
+    expect(getPeriodDayNumber(current, calendarDate(2026, 8, 1))).toBe(1);
   });
 });
 
-describe('getProgressSummary', () => {
-  it('returns structural counts from the snapshot', () => {
-    const treatment = assign(
-      createProtocol({
-        stages: [
-          { id: 'early', order: 1, startDayOffset: 0, endDayOffset: 2 },
-          { id: 'later', order: 2, startDayOffset: 3, endDayOffset: 6 },
-        ],
-        tasks: [
-          { id: 'task-a', stageId: 'early', dayOffsets: [0] },
-          { id: 'task-b', stageId: 'later', dayOffsets: [3] },
-        ],
-      }),
-    );
+describe('isDateInInclusiveRange', () => {
+  it('includes the start and end dates', () => {
+    const start = calendarDate(2026, 8, 1);
+    const end = calendarDate(2026, 8, 3);
 
-    expect(getProgressSummary(treatment, calendarDate(2026, 8, 1), new Set(['task-a']))).toEqual({
-      stageCount: 2,
-      currentStageId: 'early',
-      currentStageOrder: 1,
-      taskCount: 2,
-      completedTaskCount: 1,
-    });
+    expect(isDateInInclusiveRange(calendarDate(2026, 8, 1), start, end)).toBe(true);
+    expect(isDateInInclusiveRange(calendarDate(2026, 8, 2), start, end)).toBe(true);
+    expect(isDateInInclusiveRange(calendarDate(2026, 8, 3), start, end)).toBe(true);
+    expect(isDateInInclusiveRange(calendarDate(2026, 7, 31), start, end)).toBe(false);
+    expect(isDateInInclusiveRange(calendarDate(2026, 8, 4), start, end)).toBe(false);
+  });
+});
+
+describe('getAssignmentsForDate', () => {
+  const assignments: ActionAssignment[] = [
+    {
+      id: 'on-start',
+      catalogItemId: 'catalog-1',
+      startDate: calendarDate(2026, 8, 1),
+      endDate: calendarDate(2026, 8, 1),
+      status: 'active',
+    },
+    {
+      id: 'range',
+      catalogItemId: 'catalog-2',
+      startDate: calendarDate(2026, 8, 3),
+      endDate: calendarDate(2026, 8, 5),
+      status: 'active',
+    },
+    {
+      id: 'disabled',
+      catalogItemId: 'catalog-3',
+      startDate: calendarDate(2026, 8, 1),
+      endDate: calendarDate(2026, 8, 10),
+      status: 'disabled',
+    },
+  ];
+
+  it('returns active assignments whose inclusive range contains the date', () => {
+    const treatment = create({ assignments });
+
+    expect(getAssignmentsForDate(treatment, calendarDate(2026, 8, 1)).map((item) => item.id)).toEqual(
+      ['on-start'],
+    );
+    expect(getAssignmentsForDate(treatment, calendarDate(2026, 8, 4)).map((item) => item.id)).toEqual(
+      ['range'],
+    );
   });
 
-  it('returns null current stage fields and zero completed tasks for empty snapshots', () => {
-    const treatment = assign(createProtocol());
+  it('excludes disabled assignments even when the date is in range', () => {
+    const treatment = create({ assignments });
+    const ids = getAssignmentsForDate(treatment, calendarDate(2026, 8, 1)).map((item) => item.id);
 
-    expect(getProgressSummary(treatment, calendarDate(2026, 8, 1))).toEqual({
-      stageCount: 0,
-      currentStageId: null,
-      currentStageOrder: null,
-      taskCount: 0,
-      completedTaskCount: 0,
-    });
+    expect(ids).not.toContain('disabled');
   });
 
-  it('ignores completed ids that are not on the snapshot', () => {
-    const treatment = assign(
-      createProtocol({
-        tasks: [{ id: 'task-a', stageId: 'early', dayOffsets: [0] }],
-      }),
-    );
+  it('does not infer assignments from the current period window', () => {
+    const treatment = create({
+      periods: [{ id: 'current', startedOn: calendarDate(2026, 8, 1) }],
+      assignments: [
+        {
+          id: 'later',
+          catalogItemId: 'catalog-1',
+          startDate: calendarDate(2026, 8, 6),
+          endDate: calendarDate(2026, 8, 6),
+          status: 'active',
+        },
+      ],
+    });
 
-    expect(
-      getProgressSummary(treatment, calendarDate(2026, 8, 1), new Set(['task-a', 'unknown']))
-        .completedTaskCount,
-    ).toBe(1);
+    expect(getAssignmentsForDate(treatment, calendarDate(2026, 8, 1))).toEqual([]);
+    expect(getAssignmentsForDate(treatment, calendarDate(2026, 8, 6)).map((item) => item.id)).toEqual(
+      ['later'],
+    );
+  });
+
+  it('does not delete a disabled assignment or its completions', () => {
+    const treatment = create({
+      assignments,
+      completions: [
+        {
+          id: 'completion-disabled',
+          assignmentId: 'disabled',
+          completedOn: calendarDate(2026, 8, 1),
+        },
+      ],
+    });
+
+    expect(treatment.assignments.some((item) => item.id === 'disabled')).toBe(true);
+    expect(treatment.completions.map((item) => item.assignmentId)).toEqual(['disabled']);
+    expect(getAssignmentsForDate(treatment, calendarDate(2026, 8, 1)).map((item) => item.id)).not.toContain(
+      'disabled',
+    );
   });
 });
 
 describe('isActiveTreatment', () => {
   it('is true only for active status', () => {
-    const protocol = createProtocol();
-
-    expect(isActiveTreatment(assign(protocol))).toBe(true);
-    expect(isActiveTreatment(assign(protocol, { status: 'completed' }))).toBe(false);
-    expect(isActiveTreatment(assign(protocol, { status: 'cancelled' }))).toBe(false);
+    expect(isActiveTreatment(create())).toBe(true);
+    expect(isActiveTreatment(create({ status: 'completed' }))).toBe(false);
+    expect(isActiveTreatment(create({ status: 'cancelled' }))).toBe(false);
   });
 });

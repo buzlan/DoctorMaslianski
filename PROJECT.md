@@ -203,8 +203,8 @@ Pilot MVP — documentation aligned to clinic workflow (TASK-040 DONE).
 
 Milestone 0 — Foundation is complete.
 Milestone 1 — Application Foundation is complete (design tokens, UI primitives, Today + Treatment tabs).
-Milestone 2 — Pilot domain types, mock repository, and protocol intake **as originally specified** are complete (TASK-026, 004, 005). That snapshot / two-protocol model is **superseded** by TASK-040.
-Milestone 3 — ProductEvent port and read-only Today are complete (TASK-027, 006). Task completion (TASK-007) is **blocked** until TASK-041.
+Milestone 2 — Pilot domain types, mock repository, and protocol intake **as originally specified** are complete (TASK-026, 004, 005). That snapshot / two-protocol model is **superseded** by TASK-040. TASK-041 replaced snapshot types in code with patient-specific treatments, periods, and assignments.
+Milestone 3 — ProductEvent port and read-only Today are complete (TASK-027, 006). Task completion (TASK-007) is unblocked after TASK-041.
 
 Currently implemented (code):
 
@@ -212,8 +212,8 @@ Currently implemented (code):
 - iOS and Android launch
 - design tokens, UI primitives, Russian copy catalog
 - Today + Treatment tab shell
-- treatment domain + in-memory repository as the **legacy snapshot model**
-- Today read-only screen from that snapshot
-- ProductEvent local sink
+- patient-specific treatment domain + in-memory repository (assignments, periods, milestones, completion overlay types)
+- Today read-only screen from assignments active on the current civil date, with current period Day N
+- ProductEvent local sink (`app_opened` uses patient/treatment ids + cohort; no snapshot protocol pair)
 
-The development backlog lives in `docs/ROADMAP.md` and `docs/tasks/`. The next implementation task is **TASK-041** (patient-specific treatment domain in code). Do not start TASK-007 until TASK-041 is done.
+The development backlog lives in `docs/ROADMAP.md` and `docs/tasks/`. The next implementation task is **TASK-007** (in-memory assignment completion).

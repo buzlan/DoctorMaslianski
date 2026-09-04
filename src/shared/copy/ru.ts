@@ -10,7 +10,7 @@ export const copy: AppCopy = {
     loading: "Загрузка…",
     noActiveTreatment: "Сейчас нет активного лечения.",
     noActionsForToday: "На сегодня в приложении нет доступных действий.",
-    currentStageLabel: "Текущий этап",
+    periodDayLabel: "День",
     tasksLabel: "Задачи на сегодня",
     loadError: "Не удалось загрузить данные.",
     retry: "Повторить",

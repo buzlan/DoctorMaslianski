@@ -112,7 +112,7 @@ No medical/product functionality yet.
 
 ## M2 — Pilot domain
 
-Status: IN PROGRESS (040 DONE; 041 NOT STARTED)
+Status: IN PROGRESS (040 DONE; 041 DONE)
 
 Tasks: [TASK-026](tasks/026-protocol-intake.md), [TASK-004](tasks/004-treatment-domain.md), [TASK-005](tasks/005-mock-repository.md), [TASK-040](tasks/040-clinic-workflow-alignment.md), [TASK-041](tasks/041-patient-treatment-domain.md)
 
@@ -132,7 +132,7 @@ Engineering does not invent clinical content.
 
 ## M3 — Today
 
-Status: IN PROGRESS (027 and 006 DONE; 007 blocked on 041)
+Status: IN PROGRESS (027 and 006 DONE; 007 unblocked after 041)
 
 Tasks: [TASK-027](tasks/027-product-events.md), [TASK-006](tasks/006-today-screen.md), [TASK-007](tasks/007-task-completion.md)
 
