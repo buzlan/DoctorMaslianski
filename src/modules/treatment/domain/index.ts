@@ -1,4 +1,4 @@
-export { calendarDate, dayIndex } from './calendar-date';
+export { calendarDate, dayIndex, isSameCalendarDate } from './calendar-date';
 export type { CalendarDate } from './calendar-date';
 
 export {
@@ -6,11 +6,24 @@ export {
   getCurrentPeriod,
   getPeriodDayNumber,
   isActiveTreatment,
+  isAssignmentActiveOnDate,
+  isAssignmentCompletedOnDate,
   isDateInInclusiveRange,
 } from './helpers';
 
 export { createTreatment } from './create-treatment';
 export type { CreateTreatmentInput } from './create-treatment';
+
+export {
+  clearAssignmentCompletion,
+  completionIdFor,
+  recordAssignmentCompletion,
+} from './complete-assignment';
+export type {
+  AssignmentCompletionIgnoredReason,
+  ClearAssignmentCompletionResult,
+  RecordAssignmentCompletionResult,
+} from './complete-assignment';
 
 export type {
   ActionAssignment,

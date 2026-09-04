@@ -204,7 +204,7 @@ Pilot MVP — documentation aligned to clinic workflow (TASK-040 DONE).
 Milestone 0 — Foundation is complete.
 Milestone 1 — Application Foundation is complete (design tokens, UI primitives, Today + Treatment tabs).
 Milestone 2 — Pilot domain types, mock repository, and protocol intake **as originally specified** are complete (TASK-026, 004, 005). That snapshot / two-protocol model is **superseded** by TASK-040. TASK-041 replaced snapshot types in code with patient-specific treatments, periods, and assignments.
-Milestone 3 — ProductEvent port and read-only Today are complete (TASK-027, 006). Task completion (TASK-007) is unblocked after TASK-041.
+Milestone 3 — ProductEvent port, Today, and in-memory assignment completion are complete (TASK-027, 006, 007).
 
 Currently implemented (code):
 
@@ -212,8 +212,8 @@ Currently implemented (code):
 - iOS and Android launch
 - design tokens, UI primitives, Russian copy catalog
 - Today + Treatment tab shell
-- patient-specific treatment domain + in-memory repository (assignments, periods, milestones, completion overlay types)
-- Today read-only screen from assignments active on the current civil date, with current period Day N
-- ProductEvent local sink (`app_opened` uses patient/treatment ids + cohort; no snapshot protocol pair)
+- patient-specific treatment domain + in-memory repository (assignments, periods, milestones, ActionCompletion overlay)
+- Today screen from assignments active on the current civil date, with current period Day N and in-memory assignment completion
+- ProductEvent local sink (`app_opened` and `task_completed` use patient/treatment ids + cohort; `task_completed` carries assignment id only; no snapshot protocol pair)
 
-The development backlog lives in `docs/ROADMAP.md` and `docs/tasks/`. The next implementation task is **TASK-007** (in-memory assignment completion).
+The development backlog lives in `docs/ROADMAP.md` and `docs/tasks/`. The next implementation task is **TASK-008** (treatment timeline).

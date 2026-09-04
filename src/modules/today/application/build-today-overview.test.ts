@@ -7,6 +7,7 @@ function create(
     status?: TreatmentStatus;
     periods?: Parameters<typeof createTreatment>[0]['periods'];
     assignments?: Parameters<typeof createTreatment>[0]['assignments'];
+    completions?: Parameters<typeof createTreatment>[0]['completions'];
   } = {},
 ) {
   return createTreatment({
@@ -15,6 +16,7 @@ function create(
     status: options.status,
     periods: options.periods,
     assignments: options.assignments,
+    completions: options.completions,
   });
 }
 
@@ -67,7 +69,7 @@ describe('buildTodayOverview', () => {
 
     expect(buildTodayOverview(treatment, calendarDate(2026, 8, 1))).toMatchObject({
       kind: 'ready',
-      assignments: [{ id: 'on-start', title: 'synthetic-start' }],
+      assignments: [{ id: 'on-start', title: 'synthetic-start', completed: false }],
     });
     expect(buildTodayOverview(treatment, calendarDate(2026, 8, 4))).toMatchObject({
       kind: 'ready',
@@ -76,8 +78,38 @@ describe('buildTodayOverview', () => {
           id: 'on-day-3',
           title: 'synthetic-day-3',
           instruction: 'synthetic-instruction',
+          completed: false,
         },
       ],
+    });
+  });
+
+  it('overlays completion state for the requested civil date only', () => {
+    const treatment = create({
+      assignments: [
+        {
+          id: 'on-start',
+          catalogItemId: 'catalog-1',
+          title: 'synthetic-start',
+          startDate: calendarDate(2026, 8, 1),
+          endDate: calendarDate(2026, 8, 3),
+          status: 'active',
+        },
+      ],
+      completions: [
+        {
+          id: 'completion-1',
+          assignmentId: 'on-start',
+          completedOn: calendarDate(2026, 8, 1),
+        },
+      ],
+    });
+
+    expect(buildTodayOverview(treatment, calendarDate(2026, 8, 1))).toMatchObject({
+      assignments: [{ id: 'on-start', completed: true }],
+    });
+    expect(buildTodayOverview(treatment, calendarDate(2026, 8, 2))).toMatchObject({
+      assignments: [{ id: 'on-start', completed: false }],
     });
   });
 

@@ -2,23 +2,78 @@
  * In-memory TreatmentRepository for development.
  *
  * Stores an already-created patient Treatment. getActiveTreatment() does
- * not load a clinic action catalog.
+ * not load a clinic action catalog. Completions are an in-memory overlay
+ * and are lost when the process exits.
  */
 
-import type { Treatment } from '../domain';
+import {
+  clearAssignmentCompletion,
+  recordAssignmentCompletion,
+  type CalendarDate,
+  type Treatment,
+} from '../domain';
 
 import { createDevelopmentTreatment } from './fixtures/pilot-treatment';
-import type { TreatmentRepository } from './treatment-repository';
+import type {
+  CompleteAssignmentResult,
+  TreatmentRepository,
+  UncompleteAssignmentResult,
+} from './treatment-repository';
 
 export type InMemoryTreatmentRepositorySeed =
   | { empty: true }
   | { empty?: false; treatment?: Treatment };
 
 class InMemoryTreatmentRepository implements TreatmentRepository {
-  constructor(private readonly treatment: Treatment | null) {}
+  constructor(private treatment: Treatment | null) {}
 
   getActiveTreatment(): Promise<Treatment | null> {
     return Promise.resolve(this.treatment);
+  }
+
+  completeAssignment(
+    assignmentId: string,
+    onDate: CalendarDate,
+  ): Promise<CompleteAssignmentResult> {
+    if (this.treatment === null) {
+      return Promise.resolve({ status: 'ignored', reason: 'no_active_treatment' });
+    }
+
+    const result = recordAssignmentCompletion(this.treatment, assignmentId, onDate);
+    if (result.status === 'ignored') {
+      return Promise.resolve(result);
+    }
+
+    this.treatment = result.treatment;
+
+    return Promise.resolve({
+      status: 'recorded',
+      completion: result.completion,
+      alreadyPresent: result.alreadyPresent,
+      patientId: this.treatment.patientId,
+      treatmentId: this.treatment.id,
+    });
+  }
+
+  uncompleteAssignment(
+    assignmentId: string,
+    onDate: CalendarDate,
+  ): Promise<UncompleteAssignmentResult> {
+    if (this.treatment === null) {
+      return Promise.resolve({ status: 'ignored', reason: 'no_active_treatment' });
+    }
+
+    const result = clearAssignmentCompletion(this.treatment, assignmentId, onDate);
+    if (result.status === 'ignored') {
+      return Promise.resolve(result);
+    }
+
+    this.treatment = result.treatment;
+
+    return Promise.resolve({
+      status: 'cleared',
+      alreadyAbsent: result.alreadyAbsent,
+    });
   }
 }
 

@@ -1,4 +1,4 @@
-import { calendarDate, dayIndex } from './calendar-date';
+import { calendarDate, dayIndex, isSameCalendarDate } from './calendar-date';
 
 describe('calendarDate', () => {
   it('accepts a valid civil date', () => {
@@ -42,5 +42,16 @@ describe('dayIndex', () => {
 
   it('counts one day from 2028-02-29 to 2028-03-01', () => {
     expect(dayIndex(calendarDate(2028, 2, 29), calendarDate(2028, 3, 1))).toBe(1);
+  });
+});
+
+describe('isSameCalendarDate', () => {
+  it('is true only when year, month, and day match', () => {
+    const date = calendarDate(2026, 8, 19);
+
+    expect(isSameCalendarDate(date, calendarDate(2026, 8, 19))).toBe(true);
+    expect(isSameCalendarDate(date, calendarDate(2026, 8, 18))).toBe(false);
+    expect(isSameCalendarDate(date, calendarDate(2026, 7, 19))).toBe(false);
+    expect(isSameCalendarDate(date, calendarDate(2025, 8, 19))).toBe(false);
   });
 });

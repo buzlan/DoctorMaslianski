@@ -26,6 +26,13 @@ const APP_OPENED_KEYS = new Set([
   'treatmentId',
 ]);
 
+const TASK_COMPLETED_KEYS = new Set([
+  ...BASE_KEYS,
+  'patientId',
+  'treatmentId',
+  'entityId',
+]);
+
 const PROTOCOL_ASSIGNED_KEYS = new Set([
   ...BASE_KEYS,
   'patientId',
@@ -56,7 +63,6 @@ const TREATMENT_NAMES = new Set<ProductEventName>([
 
 const ENTITY_NAMES = new Set<ProductEventName>([
   'task_scheduled',
-  'task_completed',
   'checkin_requested',
   'checkin_submitted',
   'photo_checkpoint_requested',
@@ -112,6 +118,10 @@ export function assertValidProductEvent(input: unknown): ProductEvent {
 
   if (eventName === 'app_opened') {
     assertAppOpenedContext(record);
+  } else if (eventName === 'task_completed') {
+    assertRequiredString(record, 'patientId');
+    assertRequiredString(record, 'treatmentId');
+    assertRequiredString(record, 'entityId');
   } else if (PROTOCOL_ASSIGNED_NAMES.has(eventName)) {
     assertRequiredString(record, 'patientId');
     assertRequiredProtocol(record);
@@ -138,6 +148,9 @@ export function assertValidProductEvent(input: unknown): ProductEvent {
 function allowedKeysFor(name: ProductEventName): Set<string> {
   if (name === 'app_opened') {
     return APP_OPENED_KEYS;
+  }
+  if (name === 'task_completed') {
+    return TASK_COMPLETED_KEYS;
   }
   if (PROTOCOL_ASSIGNED_NAMES.has(name)) {
     return PROTOCOL_ASSIGNED_KEYS;
@@ -239,7 +252,7 @@ function assertTreatmentIdCoherence(
     throw new InvalidProductEventError('unsupported event field: treatmentId');
   }
 
-  if (eventName !== 'app_opened' && !isPresent(record, 'protocolKind')) {
+  if (eventName !== 'app_opened' && eventName !== 'task_completed' && !isPresent(record, 'protocolKind')) {
     throw new InvalidProductEventError('unsupported event field: treatmentId');
   }
 }

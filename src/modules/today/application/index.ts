@@ -1,6 +1,10 @@
 export { buildTodayOverview } from './build-today-overview';
 export type { TodayAssignmentItem, TodayOverview } from './build-today-overview';
 export {
+  completeTodayAssignment,
+  uncompleteTodayAssignment,
+} from './complete-today-assignment';
+export {
   createTodayLoader,
   loadTodayOverview,
   sharedTodayLoader,

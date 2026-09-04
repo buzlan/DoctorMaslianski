@@ -132,7 +132,7 @@ Engineering does not invent clinical content.
 
 ## M3 — Today
 
-Status: IN PROGRESS (027 and 006 DONE; 007 unblocked after 041)
+Status: DONE
 
 Tasks: [TASK-027](tasks/027-product-events.md), [TASK-006](tasks/006-today-screen.md), [TASK-007](tasks/007-task-completion.md)
 

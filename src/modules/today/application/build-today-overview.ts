@@ -3,12 +3,14 @@ import {
   getCurrentPeriod,
   getPeriodDayNumber,
   isActiveTreatment,
+  isAssignmentCompletedOnDate,
   type CalendarDate,
   type Treatment,
 } from '@/modules/treatment/domain';
 
 export type TodayAssignmentItem = {
   id: string;
+  completed: boolean;
   title?: string;
   instruction?: string;
 };
@@ -23,12 +25,15 @@ export type TodayOverview =
       assignments: readonly TodayAssignmentItem[];
     };
 
-function mapAssignment(assignment: {
-  id: string;
-  title?: string;
-  instruction?: string;
-}): TodayAssignmentItem {
-  const item: TodayAssignmentItem = { id: assignment.id };
+function mapAssignment(
+  assignment: {
+    id: string;
+    title?: string;
+    instruction?: string;
+  },
+  completed: boolean,
+): TodayAssignmentItem {
+  const item: TodayAssignmentItem = { id: assignment.id, completed };
 
   if (assignment.title !== undefined) {
     item.title = assignment.title;
@@ -58,6 +63,11 @@ export function buildTodayOverview(
     patientId: treatment.patientId,
     treatmentId: treatment.id,
     periodDayNumber,
-    assignments: getAssignmentsForDate(treatment, onDate).map(mapAssignment),
+    assignments: getAssignmentsForDate(treatment, onDate).map((assignment) =>
+      mapAssignment(
+        assignment,
+        isAssignmentCompletedOnDate(treatment, assignment.id, onDate),
+      ),
+    ),
   };
 }

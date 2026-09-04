@@ -1,6 +1,6 @@
 # TASK-007 — Treatment assignment completion (in-memory)
 
-Status: NOT STARTED
+Status: DONE
 
 Milestone: M3 — Today
 
@@ -67,6 +67,6 @@ npm run lint
 npm test
 ```
 
-Unit tests for repository writes, including that a completion remains if the assignment is later disabled in memory.
+Unit tests for repository writes. Domain tests prove an existing `ActionCompletion` remains when a new treatment value is constructed with that assignment disabled. Repository tests do not mutate `getActiveTreatment()` results to simulate doctor disable.
 
 Manually verify on iOS Simulator and Android Emulator.

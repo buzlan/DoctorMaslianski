@@ -63,7 +63,12 @@ type EntityTreatmentEvent = TreatmentEventContext & {
 };
 
 type TaskScheduledEvent = { name: 'task_scheduled' } & EntityTreatmentEvent;
-type TaskCompletedEvent = { name: 'task_completed' } & EntityTreatmentEvent;
+type TaskCompletedEvent = ProductEventBase & {
+  name: 'task_completed';
+  patientId: string;
+  treatmentId: string;
+  entityId: string;
+};
 type CheckinRequestedEvent = { name: 'checkin_requested' } & EntityTreatmentEvent;
 type CheckinSubmittedEvent = { name: 'checkin_submitted' } & EntityTreatmentEvent;
 type PhotoCheckpointRequestedEvent = {

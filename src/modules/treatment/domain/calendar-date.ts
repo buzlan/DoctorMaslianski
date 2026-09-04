@@ -53,3 +53,7 @@ function toJulianDay({ year, month, day }: CalendarDate): number {
 export function dayIndex(start: CalendarDate, onDate: CalendarDate): number {
   return toJulianDay(onDate) - toJulianDay(start);
 }
+
+export function isSameCalendarDate(left: CalendarDate, right: CalendarDate): boolean {
+  return left.year === right.year && left.month === right.month && left.day === right.day;
+}

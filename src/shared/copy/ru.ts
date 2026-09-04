@@ -14,6 +14,8 @@ export const copy: AppCopy = {
     tasksLabel: "Задачи на сегодня",
     loadError: "Не удалось загрузить данные.",
     retry: "Повторить",
+    markComplete: "Отметить выполненным",
+    markIncomplete: "Снять отметку",
   },
   treatment: {
     title: "Лечение",

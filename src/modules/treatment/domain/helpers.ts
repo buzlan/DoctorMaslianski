@@ -1,4 +1,4 @@
-import { dayIndex } from './calendar-date';
+import { dayIndex, isSameCalendarDate } from './calendar-date';
 import type { CalendarDate } from './calendar-date';
 import type { ActionAssignment, Treatment, TreatmentPeriod } from './types';
 
@@ -41,14 +41,34 @@ export function isDateInInclusiveRange(
   return dayIndex(startDate, onDate) >= 0 && dayIndex(onDate, endDate) >= 0;
 }
 
+export function isAssignmentActiveOnDate(
+  assignment: ActionAssignment,
+  onDate: CalendarDate,
+): boolean {
+  return (
+    assignment.status === 'active' &&
+    isDateInInclusiveRange(onDate, assignment.startDate, assignment.endDate)
+  );
+}
+
 export function getAssignmentsForDate(
   treatment: Treatment,
   onDate: CalendarDate,
 ): readonly ActionAssignment[] {
-  return treatment.assignments.filter(
-    (assignment) =>
-      assignment.status === 'active' &&
-      isDateInInclusiveRange(onDate, assignment.startDate, assignment.endDate),
+  return treatment.assignments.filter((assignment) =>
+    isAssignmentActiveOnDate(assignment, onDate),
+  );
+}
+
+export function isAssignmentCompletedOnDate(
+  treatment: Treatment,
+  assignmentId: string,
+  onDate: CalendarDate,
+): boolean {
+  return treatment.completions.some(
+    (completion) =>
+      completion.assignmentId === assignmentId &&
+      isSameCalendarDate(completion.completedOn, onDate),
   );
 }
 

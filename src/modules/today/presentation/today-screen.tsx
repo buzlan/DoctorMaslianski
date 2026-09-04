@@ -9,12 +9,13 @@ import {
 import {
   sharedTodayLoader,
   toLocalCalendarDate,
+  type TodayAssignmentItem,
   type TodayLoadResult,
   type TodayOverview,
 } from "@/modules/today/application";
 import { copy } from "@/shared/copy";
 import { getColors, theme } from "@/shared/theme";
-import { AppText, Screen, Stack } from "@/shared/ui";
+import { AppText, Button, Screen, Stack } from "@/shared/ui";
 
 type ReadyOverview = Extract<TodayOverview, { kind: "ready" }>;
 
@@ -32,11 +33,23 @@ function toViewState(result: TodayLoadResult): TodayViewState {
   return result;
 }
 
-function requestTodayLoad() {
-  return sharedTodayLoader.load(toLocalCalendarDate(new Date()));
+function todayDate() {
+  return toLocalCalendarDate(new Date());
 }
 
-function ReadyContent({ overview }: { overview: ReadyOverview }) {
+function requestTodayLoad() {
+  return sharedTodayLoader.load(todayDate());
+}
+
+function ReadyContent({
+  overview,
+  pendingAssignmentId,
+  onToggle,
+}: {
+  overview: ReadyOverview;
+  pendingAssignmentId: string | null;
+  onToggle: (assignment: TodayAssignmentItem) => void;
+}) {
   const hasAssignments = overview.assignments.length > 0;
 
   return (
@@ -59,6 +72,15 @@ function ReadyContent({ overview }: { overview: ReadyOverview }) {
               {assignment.instruction ? (
                 <AppText tone="secondary">{assignment.instruction}</AppText>
               ) : null}
+              <Button
+                label={
+                  assignment.completed
+                    ? copy.today.markIncomplete
+                    : copy.today.markComplete
+                }
+                disabled={pendingAssignmentId !== null}
+                onPress={() => onToggle(assignment)}
+              />
             </Stack>
           ))}
         </Stack>
@@ -72,6 +94,9 @@ export function TodayScreen() {
   const [viewState, setViewState] = useState<TodayViewState>({
     status: "loading",
   });
+  const [pendingAssignmentId, setPendingAssignmentId] = useState<string | null>(
+    null,
+  );
   const loadGenerationRef = useRef(0);
 
   useEffect(() => {
@@ -84,6 +109,28 @@ export function TodayScreen() {
       }
     });
   }, []);
+
+  function toggleAssignment(assignment: TodayAssignmentItem) {
+    const generation = loadGenerationRef.current + 1;
+    loadGenerationRef.current = generation;
+    setPendingAssignmentId(assignment.id);
+
+    const request = assignment.completed
+      ? sharedTodayLoader.uncompleteAssignment(assignment.id, todayDate())
+      : sharedTodayLoader.completeAssignment(assignment.id, todayDate());
+
+    void request
+      .then((result) => {
+        if (loadGenerationRef.current === generation) {
+          setViewState(toViewState(result));
+        }
+      })
+      .finally(() => {
+        if (loadGenerationRef.current === generation) {
+          setPendingAssignmentId(null);
+        }
+      });
+  }
 
   return (
     <Screen edges={["top", "left", "right"]} style={styles.content}>
@@ -123,7 +170,11 @@ export function TodayScreen() {
             style={styles.scroll}
             contentContainerStyle={styles.scrollContent}
           >
-            <ReadyContent overview={viewState.overview} />
+            <ReadyContent
+              overview={viewState.overview}
+              pendingAssignmentId={pendingAssignmentId}
+              onToggle={toggleAssignment}
+            />
           </ScrollView>
         ) : null}
       </Stack>

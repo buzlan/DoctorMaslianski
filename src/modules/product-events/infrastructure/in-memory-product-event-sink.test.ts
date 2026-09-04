@@ -30,8 +30,11 @@ function treatmentStartedEvent(): ProductEvent {
 function taskCompletedEvent(): ProductEvent {
   return {
     name: 'task_completed',
-    ...treatmentContext(),
-    entityId: 'task-1',
+    at: AT,
+    patientId: 'patient-1',
+    treatmentId: 'treatment-1',
+    pilotCohort: DEVELOPMENT_PILOT_COHORT,
+    entityId: 'assignment-1',
   };
 }
 
@@ -96,14 +99,13 @@ describe('createInMemoryProductEventSink', () => {
 
   it('carries protocol kind and version on a treatment-related event', async () => {
     const sink = createInMemoryProductEventSink();
-    await sink.append(taskCompletedEvent());
+    await sink.append(treatmentStartedEvent());
 
     const stored = sink.getAll()[0];
     expect(stored).toMatchObject({
-      name: 'task_completed',
+      name: 'treatment_started',
       protocolKind: 'sclerotherapy',
       protocolVersion: 1,
-      entityId: 'task-1',
     });
   });
 });
@@ -187,10 +189,51 @@ describe('app_opened context', () => {
 });
 
 describe('entityId', () => {
-  it('accepts entityId on task_completed', async () => {
+  it('accepts entityId on task_completed as an assignment id without snapshot protocol fields', async () => {
     const sink = createInMemoryProductEventSink();
     await sink.append(taskCompletedEvent());
-    expect(sink.getAll()[0]).toMatchObject({ entityId: 'task-1' });
+    expect(sink.getAll()[0]).toEqual({
+      name: 'task_completed',
+      at: AT,
+      patientId: 'patient-1',
+      treatmentId: 'treatment-1',
+      pilotCohort: DEVELOPMENT_PILOT_COHORT,
+      entityId: 'assignment-1',
+    });
+    expect(sink.getAll()[0]).not.toHaveProperty('protocolKind');
+    expect(sink.getAll()[0]).not.toHaveProperty('protocolVersion');
+    expect(sink.getAll()[0]).not.toHaveProperty('title');
+    expect(sink.getAll()[0]).not.toHaveProperty('instruction');
+  });
+
+  it('rejects protocolKind and protocolVersion on task_completed', async () => {
+    const sink = createInMemoryProductEventSink();
+
+    await expect(
+      sink.append({
+        ...taskCompletedEvent(),
+        protocolKind: 'sclerotherapy',
+        protocolVersion: 1,
+      } as ProductEvent),
+    ).rejects.toThrow(InvalidProductEventError);
+  });
+
+  it('rejects title and instruction on task_completed', async () => {
+    const sink = createInMemoryProductEventSink();
+
+    await expect(
+      sink.append({
+        ...taskCompletedEvent(),
+        title: 'synthetic-title',
+      } as unknown as ProductEvent),
+    ).rejects.toThrow(InvalidProductEventError);
+
+    await expect(
+      sink.append({
+        ...taskCompletedEvent(),
+        instruction: 'synthetic-instruction',
+      } as unknown as ProductEvent),
+    ).rejects.toThrow(InvalidProductEventError);
   });
 
   it('rejects entityId on treatment_started', async () => {

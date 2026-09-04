@@ -5,6 +5,7 @@ import {
   getCurrentPeriod,
   getPeriodDayNumber,
   isActiveTreatment,
+  isAssignmentCompletedOnDate,
   isDateInInclusiveRange,
 } from './helpers';
 import type { ActionAssignment, TreatmentStatus } from './types';
@@ -227,6 +228,33 @@ describe('getAssignmentsForDate', () => {
     expect(getAssignmentsForDate(treatment, calendarDate(2026, 8, 1)).map((item) => item.id)).not.toContain(
       'disabled',
     );
+  });
+});
+
+describe('isAssignmentCompletedOnDate', () => {
+  it('is true only for a matching assignment id and civil date', () => {
+    const treatment = create({
+      assignments: [
+        {
+          id: 'on-start',
+          catalogItemId: 'catalog-1',
+          startDate: calendarDate(2026, 8, 1),
+          endDate: calendarDate(2026, 8, 1),
+          status: 'active',
+        },
+      ],
+      completions: [
+        {
+          id: 'completion-1',
+          assignmentId: 'on-start',
+          completedOn: calendarDate(2026, 8, 1),
+        },
+      ],
+    });
+
+    expect(isAssignmentCompletedOnDate(treatment, 'on-start', calendarDate(2026, 8, 1))).toBe(true);
+    expect(isAssignmentCompletedOnDate(treatment, 'on-start', calendarDate(2026, 8, 2))).toBe(false);
+    expect(isAssignmentCompletedOnDate(treatment, 'other', calendarDate(2026, 8, 1))).toBe(false);
   });
 });
 

@@ -12,6 +12,8 @@ export type AppCopy = {
     tasksLabel: string;
     loadError: string;
     retry: string;
+    markComplete: string;
+    markIncomplete: string;
   };
   treatment: {
     title: string;

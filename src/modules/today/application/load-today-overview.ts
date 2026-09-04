@@ -11,6 +11,10 @@ import {
 } from '@/modules/treatment/infrastructure';
 
 import { buildTodayOverview, type TodayOverview } from './build-today-overview';
+import {
+  completeTodayAssignment,
+  uncompleteTodayAssignment,
+} from './complete-today-assignment';
 
 export type TodayLoadResult =
   | { status: 'ready'; overview: Extract<TodayOverview, { kind: 'ready' }> }
@@ -19,6 +23,8 @@ export type TodayLoadResult =
 
 export type TodayLoader = {
   load(onDate: CalendarDate): Promise<TodayLoadResult>;
+  completeAssignment(assignmentId: string, onDate: CalendarDate): Promise<TodayLoadResult>;
+  uncompleteAssignment(assignmentId: string, onDate: CalendarDate): Promise<TodayLoadResult>;
 };
 
 export async function loadTodayOverview(
@@ -87,6 +93,25 @@ export function createTodayLoader(deps: {
       }
 
       return result;
+    },
+    completeAssignment(assignmentId: string, onDate: CalendarDate) {
+      return completeTodayAssignment(
+        {
+          repository: deps.repository,
+          eventSink: deps.eventSink,
+          now,
+          pilotCohort,
+        },
+        assignmentId,
+        onDate,
+      );
+    },
+    uncompleteAssignment(assignmentId: string, onDate: CalendarDate) {
+      return uncompleteTodayAssignment(
+        { repository: deps.repository },
+        assignmentId,
+        onDate,
+      );
     },
   };
 }

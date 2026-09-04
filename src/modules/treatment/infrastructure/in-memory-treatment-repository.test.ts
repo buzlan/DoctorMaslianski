@@ -1,4 +1,4 @@
-import { calendarDate, createTreatment } from '../domain';
+import { calendarDate, completionIdFor, createTreatment } from '../domain';
 import type { ActionAssignment } from '../domain';
 
 import {
@@ -141,5 +141,178 @@ describe('sharedTreatmentRepository', () => {
     expect(treatment?.treatmentContext).toBe('sclerotherapy');
     expect(treatment?.status).toBe('active');
     expect(treatment?.periods[0]?.id).toBe(DEVELOPMENT_PERIOD_ID);
+  });
+});
+
+const ON_DATE = calendarDate(2026, 8, 1);
+
+function syntheticAssignment(
+  options: Partial<ActionAssignment> & Pick<ActionAssignment, 'id'> = { id: 'assignment-1' },
+): ActionAssignment {
+  return {
+    catalogItemId: 'catalog-1',
+    startDate: ON_DATE,
+    endDate: calendarDate(2026, 8, 7),
+    status: 'active',
+    ...options,
+  };
+}
+
+function repositoryWithAssignment(assignment: ActionAssignment = syntheticAssignment()) {
+  return createInMemoryTreatmentRepository({
+    treatment: createTreatment({
+      id: 'treatment-1',
+      patientId: developmentPatient.id,
+      periods: [{ id: 'period-1', startedOn: ON_DATE }],
+      milestones: [{ id: 'milestone-1' }],
+      assignments: [assignment],
+    }),
+  });
+}
+
+describe('completeAssignment', () => {
+  it('records a completion keyed by assignment id, not a snapshot task id', async () => {
+    const repository = repositoryWithAssignment();
+
+    await expect(repository.completeAssignment('assignment-1', ON_DATE)).resolves.toEqual({
+      status: 'recorded',
+      alreadyPresent: false,
+      patientId: developmentPatient.id,
+      treatmentId: 'treatment-1',
+      completion: {
+        id: completionIdFor('assignment-1', ON_DATE),
+        assignmentId: 'assignment-1',
+        completedOn: ON_DATE,
+      },
+    });
+
+    const treatment = await repository.getActiveTreatment();
+    expect(treatment?.completions).toEqual([
+      {
+        id: completionIdFor('assignment-1', ON_DATE),
+        assignmentId: 'assignment-1',
+        completedOn: ON_DATE,
+      },
+    ]);
+    expect(treatment).not.toHaveProperty('snapshot');
+    expect(treatment?.completions[0]).not.toHaveProperty('taskId');
+  });
+
+  it('is idempotent for a repeated complete of the same assignment and date', async () => {
+    const repository = repositoryWithAssignment();
+
+    const first = await repository.completeAssignment('assignment-1', ON_DATE);
+    const second = await repository.completeAssignment('assignment-1', ON_DATE);
+    const treatment = await repository.getActiveTreatment();
+
+    expect(first).toMatchObject({ status: 'recorded', alreadyPresent: false });
+    expect(second).toMatchObject({ status: 'recorded', alreadyPresent: true });
+    expect(treatment?.completions).toHaveLength(1);
+    expect(treatment?.completions[0]?.id).toBe(completionIdFor('assignment-1', ON_DATE));
+  });
+
+  it('does not change assignments, periods, or milestones', async () => {
+    const repository = repositoryWithAssignment();
+    const before = await repository.getActiveTreatment();
+
+    await repository.completeAssignment('assignment-1', ON_DATE);
+    const after = await repository.getActiveTreatment();
+
+    expect(after?.assignments).toEqual(before?.assignments);
+    expect(after?.periods).toEqual(before?.periods);
+    expect(after?.milestones).toEqual(before?.milestones);
+  });
+
+  it('ignores a write when seeded empty', async () => {
+    const repository = createInMemoryTreatmentRepository({ empty: true });
+
+    await expect(repository.completeAssignment('assignment-1', ON_DATE)).resolves.toEqual({
+      status: 'ignored',
+      reason: 'no_active_treatment',
+    });
+  });
+
+  it('ignores a write against a disabled assignment seeded from the start', async () => {
+    const repository = repositoryWithAssignment(
+      syntheticAssignment({ id: 'assignment-1', status: 'disabled' }),
+    );
+
+    await expect(repository.completeAssignment('assignment-1', ON_DATE)).resolves.toEqual({
+      status: 'ignored',
+      reason: 'assignment_not_completable_on_date',
+    });
+
+    const treatment = await repository.getActiveTreatment();
+    expect(treatment?.completions).toEqual([]);
+    expect(treatment?.assignments[0]?.status).toBe('disabled');
+  });
+
+  it('isolates completions between factory instances', async () => {
+    const first = repositoryWithAssignment();
+    const second = repositoryWithAssignment();
+
+    await first.completeAssignment('assignment-1', ON_DATE);
+
+    expect((await first.getActiveTreatment())?.completions).toHaveLength(1);
+    expect((await second.getActiveTreatment())?.completions).toEqual([]);
+  });
+});
+
+describe('uncompleteAssignment', () => {
+  it('clears a completion and records the same deterministic id on complete again', async () => {
+    const repository = repositoryWithAssignment();
+
+    await repository.completeAssignment('assignment-1', ON_DATE);
+    await expect(repository.uncompleteAssignment('assignment-1', ON_DATE)).resolves.toEqual({
+      status: 'cleared',
+      alreadyAbsent: false,
+    });
+    expect((await repository.getActiveTreatment())?.completions).toEqual([]);
+
+    const recorded = await repository.completeAssignment('assignment-1', ON_DATE);
+    expect(recorded).toMatchObject({
+      status: 'recorded',
+      alreadyPresent: false,
+      completion: { id: completionIdFor('assignment-1', ON_DATE) },
+    });
+    expect((await repository.getActiveTreatment())?.completions).toHaveLength(1);
+  });
+
+  it('is idempotent when no completion exists', async () => {
+    const repository = repositoryWithAssignment();
+
+    await expect(repository.uncompleteAssignment('assignment-1', ON_DATE)).resolves.toEqual({
+      status: 'cleared',
+      alreadyAbsent: true,
+    });
+  });
+
+  it('ignores uncomplete against a disabled assignment seeded from the start', async () => {
+    const repository = createInMemoryTreatmentRepository({
+      treatment: createTreatment({
+        id: 'treatment-1',
+        patientId: developmentPatient.id,
+        assignments: [syntheticAssignment({ id: 'assignment-1', status: 'disabled' })],
+        completions: [
+          {
+            id: 'kept',
+            assignmentId: 'assignment-1',
+            completedOn: ON_DATE,
+          },
+        ],
+      }),
+    });
+
+    await expect(repository.uncompleteAssignment('assignment-1', ON_DATE)).resolves.toEqual({
+      status: 'ignored',
+      reason: 'assignment_not_completable_on_date',
+    });
+    expect((await repository.getActiveTreatment())?.completions).toEqual([
+      {
+        id: 'kept',
+        assignmentId: 'assignment-1',
+        completedOn: ON_DATE,
+      },
+    ]);
   });
 });
