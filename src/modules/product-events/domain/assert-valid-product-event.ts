@@ -71,11 +71,14 @@ const ENTITY_NAMES = new Set<ProductEventName>([
 
 const CHECKIN_NAMES = new Set<ProductEventName>(['checkin_requested', 'checkin_submitted']);
 
+const PATIENT_PHOTO_ADDED_NAMES = new Set<ProductEventName>(['patient_photo_added']);
+
 const PROTOCOL_FREE_TREATMENT_ID_NAMES = new Set<ProductEventName>([
   'app_opened',
   'task_completed',
   'checkin_requested',
   'checkin_submitted',
+  'patient_photo_added',
 ]);
 
 export class InvalidProductEventError extends Error {
@@ -127,7 +130,11 @@ export function assertValidProductEvent(input: unknown): ProductEvent {
 
   if (eventName === 'app_opened') {
     assertAppOpenedContext(record);
-  } else if (eventName === 'task_completed' || CHECKIN_NAMES.has(eventName)) {
+  } else if (
+    eventName === 'task_completed' ||
+    CHECKIN_NAMES.has(eventName) ||
+    PATIENT_PHOTO_ADDED_NAMES.has(eventName)
+  ) {
     assertRequiredString(record, 'patientId');
     assertRequiredString(record, 'treatmentId');
     assertRequiredString(record, 'entityId');
@@ -161,7 +168,7 @@ function allowedKeysFor(name: ProductEventName): Set<string> {
   if (name === 'task_completed') {
     return TASK_COMPLETED_KEYS;
   }
-  if (CHECKIN_NAMES.has(name)) {
+  if (CHECKIN_NAMES.has(name) || PATIENT_PHOTO_ADDED_NAMES.has(name)) {
     return CHECKIN_EVENT_KEYS;
   }
   if (PROTOCOL_ASSIGNED_NAMES.has(name)) {

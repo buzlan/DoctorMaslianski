@@ -1,6 +1,6 @@
 # TASK-014 — Patient photo capture
 
-Status: NOT STARTED
+Status: DONE
 
 Milestone: M7 — Photos
 

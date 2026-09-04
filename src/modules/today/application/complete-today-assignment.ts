@@ -1,4 +1,5 @@
 import type { DiaryRepository } from '@/modules/diary/infrastructure';
+import type { PatientPhotoRepository } from '@/modules/photos/infrastructure';
 import {
   DEVELOPMENT_PILOT_COHORT,
   type ProductEventSink,
@@ -14,6 +15,7 @@ import { loadTodayOverview, type TodayLoadResult } from './load-today-overview';
 export type CompleteTodayAssignmentDeps = {
   repository: TreatmentRepository;
   diaryRepository: DiaryRepository;
+  photoRepository: PatientPhotoRepository;
   eventSink: ProductEventSink;
   now?: () => Date;
   pilotCohort?: PilotCohort;
@@ -29,7 +31,12 @@ export async function completeTodayAssignment(
   try {
     result = await deps.repository.completeAssignment(assignmentId, onDate);
   } catch {
-    return loadTodayOverview(deps.repository, deps.diaryRepository, onDate);
+    return loadTodayOverview(
+      deps.repository,
+      deps.diaryRepository,
+      deps.photoRepository,
+      onDate,
+    );
   }
 
   if (result.status === 'recorded' && !result.alreadyPresent) {
@@ -45,11 +52,15 @@ export async function completeTodayAssignment(
     });
   }
 
-  return loadTodayOverview(deps.repository, deps.diaryRepository, onDate);
+  return loadTodayOverview(deps.repository, deps.diaryRepository, deps.photoRepository, onDate);
 }
 
 export async function uncompleteTodayAssignment(
-  deps: { repository: TreatmentRepository; diaryRepository: DiaryRepository },
+  deps: {
+    repository: TreatmentRepository;
+    diaryRepository: DiaryRepository;
+    photoRepository: PatientPhotoRepository;
+  },
   assignmentId: string,
   onDate: CalendarDate,
 ): Promise<TodayLoadResult> {
@@ -59,5 +70,5 @@ export async function uncompleteTodayAssignment(
     // Persist failed; in-memory completion state is unchanged.
   }
 
-  return loadTodayOverview(deps.repository, deps.diaryRepository, onDate);
+  return loadTodayOverview(deps.repository, deps.diaryRepository, deps.photoRepository, onDate);
 }

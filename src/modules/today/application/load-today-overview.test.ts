@@ -1,5 +1,6 @@
 import { createCheckinEventSession } from '@/modules/diary/application';
 import { createInMemoryDiaryRepository } from '@/modules/diary/infrastructure';
+import { createInMemoryPatientPhotoRepository } from '@/modules/photos/infrastructure';
 import {
   createInMemoryProductEventSink,
   DEVELOPMENT_PILOT_COHORT,
@@ -55,7 +56,14 @@ describe('loadTodayOverview', () => {
       }),
     });
 
-    await expect(loadTodayOverview(repository, createInMemoryDiaryRepository(), ON_DATE)).resolves.toEqual({
+    await expect(
+      loadTodayOverview(
+        repository,
+        createInMemoryDiaryRepository(),
+        createInMemoryPatientPhotoRepository(),
+        ON_DATE,
+      ),
+    ).resolves.toEqual({
       status: 'ready',
       overview: {
         kind: 'ready',
@@ -64,20 +72,34 @@ describe('loadTodayOverview', () => {
         periodDayNumber: 1,
         assignments: [{ id: 'on-start', title: 'synthetic-start', completed: false }],
         diaryOpen: true,
+        photosRecordedToday: 0,
+        photoAddOpen: true,
       },
     });
   });
 
   it('returns no_active_treatment when the repository resolves null', async () => {
-    const repository = createInMemoryTreatmentRepository({ empty: true });
-
-    await expect(loadTodayOverview(repository, createInMemoryDiaryRepository(), ON_DATE)).resolves.toEqual({
+    await expect(
+      loadTodayOverview(
+        createInMemoryTreatmentRepository({ empty: true }),
+        createInMemoryDiaryRepository(),
+        createInMemoryPatientPhotoRepository(),
+        ON_DATE,
+      ),
+    ).resolves.toEqual({
       status: 'no_active_treatment',
     });
   });
 
   it('returns error when the repository rejects', async () => {
-    await expect(loadTodayOverview(rejectingRepository(), createInMemoryDiaryRepository(), ON_DATE)).resolves.toEqual({
+    await expect(
+      loadTodayOverview(
+        rejectingRepository(),
+        createInMemoryDiaryRepository(),
+        createInMemoryPatientPhotoRepository(),
+        ON_DATE,
+      ),
+    ).resolves.toEqual({
       status: 'error',
     });
   });
@@ -92,6 +114,7 @@ function createLoaderDeps(
   return {
     repository,
     diaryRepository,
+    photoRepository: createInMemoryPatientPhotoRepository(),
     eventSink: sink,
     checkinEvents: createCheckinEventSession({ eventSink: sink, now }),
     now,
@@ -125,6 +148,8 @@ describe('createTodayLoader', () => {
       'app_opened',
       'checkin_requested',
     ]);
+    expect(sink.getAll().some((event) => event.name === 'patient_photo_added')).toBe(false);
+    expect(sink.getAll().some((event) => event.name.startsWith('photo_checkpoint'))).toBe(false);
     expect(sink.getAll()[0]).toEqual({
       name: 'app_opened',
       at: AT,

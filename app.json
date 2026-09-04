@@ -35,7 +35,15 @@
           "imageWidth": 76
         }
       ],
-      "expo-secure-store"
+      "expo-secure-store",
+      [
+        "expo-image-picker",
+        {
+          "cameraPermission": "Приложение использует камеру, чтобы вы могли добавить фото к вашему лечению.",
+          "photosPermission": "Приложение использует фотоплёнку, чтобы вы могли добавить фото к вашему лечению.",
+          "microphonePermission": false
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,

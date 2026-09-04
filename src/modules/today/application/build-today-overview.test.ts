@@ -144,6 +144,8 @@ describe('buildTodayOverview', () => {
       periodDayNumber: null,
       assignments: [],
       diaryOpen: true,
+      photosRecordedToday: 0,
+      photoAddOpen: true,
     });
     expect(overview).not.toHaveProperty('protocolKind');
     expect(overview).not.toHaveProperty('protocolVersion');
@@ -171,6 +173,21 @@ describe('buildTodayOverview', () => {
     expect(json).not.toContain('TBD by clinic');
     expect(json).not.toContain('threshold');
     expect(json).not.toContain('диагноз');
+  });
+
+  it('sets photoAddOpen from the recorded count for today', () => {
+    expect(buildTodayOverview(create(), calendarDate(2026, 8, 1), false, 0)).toMatchObject({
+      photosRecordedToday: 0,
+      photoAddOpen: true,
+    });
+    expect(buildTodayOverview(create(), calendarDate(2026, 8, 1), false, 2)).toMatchObject({
+      photosRecordedToday: 2,
+      photoAddOpen: true,
+    });
+    expect(buildTodayOverview(create(), calendarDate(2026, 8, 1), false, 3)).toMatchObject({
+      photosRecordedToday: 3,
+      photoAddOpen: false,
+    });
   });
 
   it('sets diaryOpen false when today’s diary entry already exists', () => {

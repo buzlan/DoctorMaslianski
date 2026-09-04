@@ -47,11 +47,13 @@ function ReadyContent({
   pendingAssignmentId,
   onToggle,
   onFillDiary,
+  onAddPhoto,
 }: {
   overview: ReadyOverview;
   pendingAssignmentId: string | null;
   onToggle: (assignment: TodayAssignmentItem) => void;
   onFillDiary: () => void;
+  onAddPhoto: () => void;
 }) {
   const hasAssignments = overview.assignments.length > 0;
 
@@ -90,6 +92,18 @@ function ReadyContent({
       )}
       {overview.diaryOpen ? (
         <Button label={copy.today.fillDiary} onPress={onFillDiary} />
+      ) : null}
+      {overview.photosRecordedToday === 1 ? (
+        <AppText tone="secondary">{copy.today.photoAdded1}</AppText>
+      ) : null}
+      {overview.photosRecordedToday === 2 ? (
+        <AppText tone="secondary">{copy.today.photoAdded2}</AppText>
+      ) : null}
+      {overview.photosRecordedToday === 3 ? (
+        <AppText tone="secondary">{copy.today.photoAdded3}</AppText>
+      ) : null}
+      {overview.photoAddOpen ? (
+        <Button label={copy.today.addPhoto} onPress={onAddPhoto} />
       ) : null}
     </Stack>
   );
@@ -185,6 +199,9 @@ export function TodayScreen() {
               onToggle={toggleAssignment}
               onFillDiary={() => {
                 router.navigate("/diary");
+              }}
+              onAddPhoto={() => {
+                router.push("/photo-capture");
               }}
             />
           </ScrollView>

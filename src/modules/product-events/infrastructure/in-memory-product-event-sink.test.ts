@@ -296,6 +296,55 @@ describe('checkin events', () => {
   });
 });
 
+describe('patient_photo_added', () => {
+  function patientPhotoAddedEvent(): ProductEvent {
+    return {
+      name: 'patient_photo_added',
+      at: AT,
+      patientId: 'patient-1',
+      treatmentId: 'treatment-1',
+      pilotCohort: DEVELOPMENT_PILOT_COHORT,
+      entityId: 'treatment-1:2026-8-19:1',
+    };
+  }
+
+  it('accepts identifier-only patient_photo_added', async () => {
+    const sink = createInMemoryProductEventSink();
+    await sink.append(patientPhotoAddedEvent());
+    expect(sink.getAll()[0]).toEqual(patientPhotoAddedEvent());
+    expect(sink.getAll()[0]).not.toHaveProperty('protocolKind');
+    expect(sink.getAll()[0]).not.toHaveProperty('localFileRef');
+    expect(sink.getAll()[0]).not.toHaveProperty('uri');
+    expect(sink.getAll()[0]).not.toHaveProperty('mimeType');
+  });
+
+  it('rejects protocol pair and photo payload fields', async () => {
+    const sink = createInMemoryProductEventSink();
+
+    await expect(
+      sink.append({
+        ...patientPhotoAddedEvent(),
+        protocolKind: 'sclerotherapy',
+        protocolVersion: 1,
+      } as unknown as ProductEvent),
+    ).rejects.toThrow(InvalidProductEventError);
+
+    await expect(
+      sink.append({
+        ...patientPhotoAddedEvent(),
+        localFileRef: 'photo.jpg',
+      } as unknown as ProductEvent),
+    ).rejects.toThrow(InvalidProductEventError);
+
+    await expect(
+      sink.append({
+        ...patientPhotoAddedEvent(),
+        uri: 'file:///tmp/photo.jpg',
+      } as unknown as ProductEvent),
+    ).rejects.toThrow(InvalidProductEventError);
+  });
+});
+
 describe('privacy boundary', () => {
   it.each([
     ['answers', { pain: 8 }],

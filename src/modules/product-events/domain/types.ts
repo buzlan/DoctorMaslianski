@@ -17,6 +17,7 @@ export const PRODUCT_EVENT_NAMES = [
   'checkin_submitted',
   'photo_checkpoint_requested',
   'photo_checkpoint_completed',
+  'patient_photo_added',
   'treatment_journey_completed',
   'feedback_submitted',
   'app_opened',
@@ -92,6 +93,17 @@ type PhotoCheckpointRequestedEvent = {
 type PhotoCheckpointCompletedEvent = {
   name: 'photo_checkpoint_completed';
 } & EntityTreatmentEvent;
+/**
+ * Standing patient-photo confirm on Today. entityId is PatientPhoto.id.
+ * Not a doctor-defined photo checkpoint. Do not emit photo_checkpoint_*.
+ * Do not put localFileRef, URI, bytes, or MIME metadata on this event.
+ */
+type PatientPhotoAddedEvent = ProductEventBase & {
+  name: 'patient_photo_added';
+  patientId: string;
+  treatmentId: string;
+  entityId: string;
+};
 
 type FeedbackSubmittedEvent = {
   name: 'feedback_submitted';
@@ -111,4 +123,5 @@ export type ProductEvent =
   | CheckinSubmittedEvent
   | PhotoCheckpointRequestedEvent
   | PhotoCheckpointCompletedEvent
+  | PatientPhotoAddedEvent
   | FeedbackSubmittedEvent;

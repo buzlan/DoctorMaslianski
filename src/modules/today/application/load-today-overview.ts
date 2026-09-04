@@ -6,6 +6,11 @@ import {
   sharedDiaryRepository,
   type DiaryRepository,
 } from '@/modules/diary/infrastructure';
+import { countPatientPhotosOnDate } from '@/modules/photos/domain';
+import {
+  sharedPatientPhotoRepository,
+  type PatientPhotoRepository,
+} from '@/modules/photos/infrastructure';
 import {
   DEVELOPMENT_PILOT_COHORT,
   sharedProductEventSink,
@@ -38,6 +43,7 @@ export type TodayLoader = {
 export async function loadTodayOverview(
   repository: TreatmentRepository,
   diaryRepository: DiaryRepository,
+  photoRepository: PatientPhotoRepository,
   onDate: CalendarDate,
 ): Promise<TodayLoadResult> {
   try {
@@ -47,7 +53,13 @@ export async function loadTodayOverview(
     }
 
     const todayEntry = await diaryRepository.getEntryOnDate(treatment.id, onDate);
-    const overview = buildTodayOverview(treatment, onDate, todayEntry !== null);
+    const photos = await photoRepository.listPhotos(treatment.id);
+    const overview = buildTodayOverview(
+      treatment,
+      onDate,
+      todayEntry !== null,
+      countPatientPhotosOnDate(photos, onDate),
+    );
 
     if (overview.kind === 'no_active_treatment') {
       return { status: 'no_active_treatment' };
@@ -84,6 +96,7 @@ function createAppOpenedEvent(args: {
 export function createTodayLoader(deps: {
   repository: TreatmentRepository;
   diaryRepository: DiaryRepository;
+  photoRepository: PatientPhotoRepository;
   eventSink: ProductEventSink;
   checkinEvents: CheckinEventSession;
   now?: () => Date;
@@ -95,7 +108,12 @@ export function createTodayLoader(deps: {
 
   return {
     async load(onDate: CalendarDate): Promise<TodayLoadResult> {
-      const result = await loadTodayOverview(deps.repository, deps.diaryRepository, onDate);
+      const result = await loadTodayOverview(
+        deps.repository,
+        deps.diaryRepository,
+        deps.photoRepository,
+        onDate,
+      );
 
       if (!hasEmittedAppOpened) {
         hasEmittedAppOpened = true;
@@ -123,6 +141,7 @@ export function createTodayLoader(deps: {
         {
           repository: deps.repository,
           diaryRepository: deps.diaryRepository,
+          photoRepository: deps.photoRepository,
           eventSink: deps.eventSink,
           now,
           pilotCohort,
@@ -136,6 +155,7 @@ export function createTodayLoader(deps: {
         {
           repository: deps.repository,
           diaryRepository: deps.diaryRepository,
+          photoRepository: deps.photoRepository,
         },
         assignmentId,
         onDate,
@@ -147,6 +167,7 @@ export function createTodayLoader(deps: {
 export const sharedTodayLoader = createTodayLoader({
   repository: sharedTreatmentRepository,
   diaryRepository: sharedDiaryRepository,
+  photoRepository: sharedPatientPhotoRepository,
   eventSink: sharedProductEventSink,
   checkinEvents: sharedCheckinEventSession,
 });

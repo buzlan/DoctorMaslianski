@@ -24,6 +24,8 @@ export type TodayOverview =
       periodDayNumber: number | null;
       assignments: readonly TodayAssignmentItem[];
       diaryOpen: boolean;
+      photosRecordedToday: 0 | 1 | 2 | 3;
+      photoAddOpen: boolean;
     };
 
 function mapAssignment(
@@ -47,10 +49,24 @@ function mapAssignment(
   return item;
 }
 
+function clampPhotoCount(count: number): 0 | 1 | 2 | 3 {
+  if (count <= 0) {
+    return 0;
+  }
+  if (count === 1) {
+    return 1;
+  }
+  if (count === 2) {
+    return 2;
+  }
+  return 3;
+}
+
 export function buildTodayOverview(
   treatment: Treatment | null,
   onDate: CalendarDate,
   todayDiaryEntryExists = false,
+  photosRecordedToday = 0,
 ): TodayOverview {
   if (treatment === null || !isActiveTreatment(treatment)) {
     return { kind: 'no_active_treatment' };
@@ -59,6 +75,7 @@ export function buildTodayOverview(
   const currentPeriod = getCurrentPeriod(treatment);
   const periodDayNumber =
     currentPeriod === null ? null : getPeriodDayNumber(currentPeriod, onDate);
+  const recorded = clampPhotoCount(photosRecordedToday);
 
   return {
     kind: 'ready',
@@ -72,5 +89,7 @@ export function buildTodayOverview(
       ),
     ),
     diaryOpen: !todayDiaryEntryExists,
+    photosRecordedToday: recorded,
+    photoAddOpen: recorded < 3,
   };
 }

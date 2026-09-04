@@ -16,6 +16,10 @@ export type AppCopy = {
     markComplete: string;
     markIncomplete: string;
     fillDiary: string;
+    addPhoto: string;
+    photoAdded1: string;
+    photoAdded2: string;
+    photoAdded3: string;
   };
   diary: {
     title: string;
@@ -44,5 +48,19 @@ export type AppCopy = {
     back: string;
     milestoneDetailTitle: string;
     milestoneNotFound: string;
+  };
+  photos: {
+    title: string;
+    takePhoto: string;
+    chooseFromLibrary: string;
+    confirm: string;
+    retry: string;
+    back: string;
+    permissionDenied: string;
+    cameraUnavailable: string;
+    confirmError: string;
+    invalidSource: string;
+    dailyCap: string;
+    noActiveTreatment: string;
   };
 };

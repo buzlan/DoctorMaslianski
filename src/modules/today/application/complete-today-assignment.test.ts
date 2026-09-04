@@ -1,4 +1,5 @@
 import { createInMemoryDiaryRepository } from '@/modules/diary/infrastructure';
+import { createInMemoryPatientPhotoRepository } from '@/modules/photos/infrastructure';
 import {
   createInMemoryProductEventSink,
   DEVELOPMENT_PILOT_COHORT,
@@ -46,7 +47,7 @@ describe('completeTodayAssignment', () => {
     const now = () => new Date(AT);
 
     const result = await completeTodayAssignment(
-      { repository, diaryRepository: createInMemoryDiaryRepository(), eventSink, now },
+      { repository, diaryRepository: createInMemoryDiaryRepository(), photoRepository: createInMemoryPatientPhotoRepository(), eventSink, now },
       'assignment-1',
       ON_DATE,
     );
@@ -81,6 +82,7 @@ describe('completeTodayAssignment', () => {
     const deps = {
       repository,
       diaryRepository: createInMemoryDiaryRepository(),
+      photoRepository: createInMemoryPatientPhotoRepository(),
       eventSink,
       now: () => new Date(AT),
     };
@@ -124,6 +126,7 @@ describe('completeTodayAssignment', () => {
     const deps = {
       repository,
       diaryRepository: createInMemoryDiaryRepository(),
+      photoRepository: createInMemoryPatientPhotoRepository(),
       eventSink,
       now: () => new Date(AT),
     };
@@ -165,13 +168,14 @@ describe('uncompleteTodayAssignment', () => {
     const deps = {
       repository,
       diaryRepository: createInMemoryDiaryRepository(),
+      photoRepository: createInMemoryPatientPhotoRepository(),
       eventSink,
       now: () => new Date(AT),
     };
 
     await completeTodayAssignment(deps, 'assignment-1', ON_DATE);
     const result = await uncompleteTodayAssignment(
-      { repository, diaryRepository: createInMemoryDiaryRepository() },
+      { repository, diaryRepository: createInMemoryDiaryRepository(), photoRepository: createInMemoryPatientPhotoRepository() },
       'assignment-1',
       ON_DATE,
     );
@@ -227,6 +231,7 @@ describe('uncompleteTodayAssignment', () => {
     const deps = {
       repository,
       diaryRepository: createInMemoryDiaryRepository(),
+      photoRepository: createInMemoryPatientPhotoRepository(),
       eventSink,
       now: () => new Date(AT),
     };
@@ -236,7 +241,7 @@ describe('uncompleteTodayAssignment', () => {
 
     await expect(
       uncompleteTodayAssignment(
-        { repository, diaryRepository: createInMemoryDiaryRepository() },
+        { repository, diaryRepository: createInMemoryDiaryRepository(), photoRepository: createInMemoryPatientPhotoRepository() },
         'assignment-1',
         ON_DATE,
       ),
