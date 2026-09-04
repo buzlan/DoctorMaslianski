@@ -65,6 +65,19 @@ export type AppCopy = {
     book: string;
     openError: string;
   };
+  completion: {
+    title: string;
+    body: string;
+    loading: string;
+    loadError: string;
+    retry: string;
+    notCompleted: string;
+    surveyTitle: string;
+    usefulnessLabel: string;
+    clarityLabel: string;
+    submit: string;
+    submitted: string;
+  };
   photos: {
     title: string;
     takePhoto: string;

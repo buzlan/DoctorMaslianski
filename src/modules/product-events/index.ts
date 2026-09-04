@@ -8,6 +8,7 @@ export type {
   ProductEventName,
   ProtocolAssignedContext,
   TreatmentEventContext,
+  TreatmentIdsContext,
 } from './domain';
 export {
   createInMemoryProductEventSink,

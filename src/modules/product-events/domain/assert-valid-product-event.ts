@@ -47,8 +47,10 @@ const TREATMENT_EVENT_KEYS = new Set([...BASE_KEYS, ...TREATMENT_CONTEXT_KEYS]);
 
 const ENTITY_EVENT_KEYS = new Set([...TREATMENT_EVENT_KEYS, 'entityId']);
 
+const TREATMENT_IDS_KEYS = new Set([...BASE_KEYS, 'patientId', 'treatmentId']);
+
 const FEEDBACK_EVENT_KEYS = new Set([
-  ...TREATMENT_EVENT_KEYS,
+  ...TREATMENT_IDS_KEYS,
   'usefulnessScore',
   'clarityScore',
 ]);
@@ -58,10 +60,9 @@ const PROTOCOL_ASSIGNED_NAMES = new Set<ProductEventName>([
   'patient_activated',
 ]);
 
-const TREATMENT_NAMES = new Set<ProductEventName>([
-  'treatment_started',
-  'treatment_journey_completed',
-]);
+const TREATMENT_NAMES = new Set<ProductEventName>(['treatment_started']);
+
+const TREATMENT_IDS_NAMES = new Set<ProductEventName>(['treatment_journey_completed']);
 
 const ENTITY_NAMES = new Set<ProductEventName>([
   'task_scheduled',
@@ -79,6 +80,8 @@ const PROTOCOL_FREE_TREATMENT_ID_NAMES = new Set<ProductEventName>([
   'checkin_requested',
   'checkin_submitted',
   'patient_photo_added',
+  'treatment_journey_completed',
+  'feedback_submitted',
 ]);
 
 export class InvalidProductEventError extends Error {
@@ -144,11 +147,15 @@ export function assertValidProductEvent(input: unknown): ProductEvent {
     assertOptionalString(record, 'treatmentId');
   } else if (TREATMENT_NAMES.has(eventName)) {
     assertTreatmentContext(record);
+  } else if (TREATMENT_IDS_NAMES.has(eventName)) {
+    assertRequiredString(record, 'patientId');
+    assertRequiredString(record, 'treatmentId');
   } else if (ENTITY_NAMES.has(eventName)) {
     assertTreatmentContext(record);
     assertRequiredString(record, 'entityId');
   } else if (eventName === 'feedback_submitted') {
-    assertTreatmentContext(record);
+    assertRequiredString(record, 'patientId');
+    assertRequiredString(record, 'treatmentId');
     assertOptionalFiniteNumber(record, 'usefulnessScore');
     assertOptionalFiniteNumber(record, 'clarityScore');
   }
@@ -176,6 +183,9 @@ function allowedKeysFor(name: ProductEventName): Set<string> {
   }
   if (TREATMENT_NAMES.has(name)) {
     return TREATMENT_EVENT_KEYS;
+  }
+  if (TREATMENT_IDS_NAMES.has(name)) {
+    return TREATMENT_IDS_KEYS;
   }
   if (ENTITY_NAMES.has(name)) {
     return ENTITY_EVENT_KEYS;

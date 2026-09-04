@@ -9,4 +9,5 @@ export type {
   ProtocolAssignedContext,
   ProtocolKind,
   TreatmentEventContext,
+  TreatmentIdsContext,
 } from './types';

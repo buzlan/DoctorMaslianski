@@ -37,6 +37,12 @@ export type TreatmentEventContext = ProductEventBase & {
   protocolVersion: number;
 };
 
+/** Ids + cohort only. Not leftover snapshot protocol context. */
+export type TreatmentIdsContext = ProductEventBase & {
+  patientId: string;
+  treatmentId: string;
+};
+
 export type ProtocolAssignedContext = ProductEventBase & {
   patientId: string;
   protocolKind: ProtocolKind;
@@ -57,7 +63,7 @@ type TreatmentStartedEvent = { name: 'treatment_started' } & TreatmentEventConte
 
 type TreatmentJourneyCompletedEvent = {
   name: 'treatment_journey_completed';
-} & TreatmentEventContext;
+} & TreatmentIdsContext;
 
 type EntityTreatmentEvent = TreatmentEventContext & {
   entityId: string;
@@ -109,7 +115,7 @@ type FeedbackSubmittedEvent = {
   name: 'feedback_submitted';
   usefulnessScore?: number;
   clarityScore?: number;
-} & TreatmentEventContext;
+} & TreatmentIdsContext;
 
 export type ProductEvent =
   | AppOpenedEvent

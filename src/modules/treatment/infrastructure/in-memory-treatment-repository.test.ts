@@ -46,6 +46,13 @@ describe('development treatment fixture', () => {
     expect(treatment).not.toHaveProperty('snapshot');
     assertNoIntakeMarkers(treatment);
   });
+
+  it('can be constructed as completed for TASK-028 shell verification', () => {
+    const treatment = createDevelopmentTreatment({ status: 'completed' });
+
+    expect(treatment.status).toBe('completed');
+    expect(treatment.id).toBe(DEVELOPMENT_TREATMENT_ID);
+  });
 });
 
 describe('createInMemoryTreatmentRepository', () => {

@@ -131,7 +131,7 @@ The product model supports:
 
 `ProductEvent` is product analytics, not a duplicate clinical store. It must not contain raw diary answers, medical free text, photo URLs/content, diagnoses, or doctor notes.
 
-Legacy ProductEvent fields `protocolKind` and `protocolVersion` described a versioned protocol snapshot. That context is **superseded**. Do **not** reinterpret `protocolVersion` as action-catalog version. Schema adaptation waits for TASK-041 or a later explicit event-migration task.
+Legacy ProductEvent fields `protocolKind` and `protocolVersion` described a versioned protocol snapshot. That context is **superseded**. Do **not** reinterpret `protocolVersion` as action-catalog version. Emitted events already omit that pair (TASK-041). Leftover unemitted `treatment_journey_completed` / `feedback_submitted` context is adapted in TASK-028.
 
 Pilot metrics must be segmentable by pilot cohort so internal testers, closed-beta patients and clinic-pilot patients can be analyzed separately. The MVP has a single treatment context (sclerotherapy); do not require a telangiectasia segment.
 
@@ -211,10 +211,12 @@ Currently implemented (code):
 - Expo project, TypeScript, Expo Router
 - iOS and Android launch
 - design tokens, UI primitives, Russian copy catalog
-- Today + Treatment tab shell
-- patient-specific treatment domain + in-memory repository (assignments, periods, milestones, ActionCompletion overlay)
-- Today screen from assignments active on the current civil date, with current period Day N and in-memory assignment completion
-- Treatment timeline: current period Day N, clinic-provided milestones grouped by period, honest empty state when the shared fixture has no visits
-- ProductEvent local sink (`app_opened` and `task_completed` use patient/treatment ids + cohort; `task_completed` carries assignment id only; no snapshot protocol pair)
+- three-tab shell while treatment is active: Today, Treatment, Diary
+- patient-specific treatment domain + local persistence (assignments, periods, milestones, ActionCompletion overlay)
+- Today: assignments active on the current civil date, period Day N, assignment completion, diary CTA, patient photo upload (max 3/day), current appointment, clinic contact
+- Treatment timeline: period Day N, clinic-provided milestones, visit details, doctor milestone photos, current appointment
+- Diary tab: once-per-civil-date form + submitted history
+- ProductEvent local sink (`app_opened`, `task_completed`, diary/photo counts, `treatment_journey_completed`, `feedback_submitted` use patient/treatment ids + cohort; no snapshot protocol pair; `feedback_submitted` may include numeric usefulness/clarity only)
+- completed-treatment shell: when `Treatment.status` is `completed`, main tabs are hidden; completion screen reuses clinic contact and optional local feedback survey
 
-The development backlog lives in `docs/ROADMAP.md` and `docs/tasks/`. The next implementation task is **TASK-009** (visit / milestone details).
+The development backlog lives in `docs/ROADMAP.md` and `docs/tasks/`. The next implementation task is **TASK-029** (Supabase schema in the other repository).

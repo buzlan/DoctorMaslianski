@@ -112,7 +112,7 @@ No medical/product functionality yet.
 
 ## M2 — Pilot domain
 
-Status: IN PROGRESS (040 DONE; 041 DONE)
+Status: DONE
 
 Tasks: [TASK-026](tasks/026-protocol-intake.md), [TASK-004](tasks/004-treatment-domain.md), [TASK-005](tasks/005-mock-repository.md), [TASK-040](tasks/040-clinic-workflow-alignment.md), [TASK-041](tasks/041-patient-treatment-domain.md)
 
@@ -149,7 +149,7 @@ Goals:
 
 ## M4 — Treatment Timeline
 
-Status: IN PROGRESS (008 DONE; 009 NOT STARTED)
+Status: DONE
 
 Tasks: [TASK-008](tasks/008-treatment-timeline.md), [TASK-009](tasks/009-stage-details.md)
 
@@ -165,7 +165,7 @@ Goals:
 
 ## M5 — Local State and Persistence
 
-Status: NOT STARTED
+Status: DONE
 
 Tasks: [TASK-010](tasks/010-persist-task-completion.md)
 
@@ -181,7 +181,7 @@ Do not install a global state library speculatively.
 
 ## M6 — Symptom Diary
 
-Status: NOT STARTED
+Status: DONE
 
 Tasks: [TASK-011](tasks/011-diary-domain.md), [TASK-012](tasks/012-symptom-check-in.md), [TASK-013](tasks/013-symptom-history.md)
 
@@ -198,7 +198,7 @@ Goals:
 
 ## M7 — Photos
 
-Status: NOT STARTED
+Status: DONE
 
 Tasks: [TASK-014](tasks/014-photo-capture.md), [TASK-015](tasks/015-photo-gallery.md)
 
@@ -214,7 +214,7 @@ Goals:
 
 ## M8 — Pilot companion completeness
 
-Status: NOT STARTED
+Status: DONE
 
 Tasks: [TASK-020](tasks/020-clinic-contact.md), [TASK-028](tasks/028-feedback-survey.md)
 

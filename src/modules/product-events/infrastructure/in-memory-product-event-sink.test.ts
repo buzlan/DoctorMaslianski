@@ -379,12 +379,50 @@ describe('privacy boundary', () => {
   });
 });
 
+describe('treatment_journey_completed', () => {
+  it('accepts patient and treatment ids without snapshot protocol context', async () => {
+    const sink = createInMemoryProductEventSink();
+    const event: ProductEvent = {
+      name: 'treatment_journey_completed',
+      at: AT,
+      patientId: 'patient-1',
+      treatmentId: 'treatment-1',
+      pilotCohort: DEVELOPMENT_PILOT_COHORT,
+    };
+
+    await sink.append(event);
+
+    expect(sink.getAll()[0]).toEqual(event);
+    expect(sink.getAll()[0]).not.toHaveProperty('protocolKind');
+    expect(sink.getAll()[0]).not.toHaveProperty('protocolVersion');
+  });
+
+  it('rejects protocolKind and protocolVersion on treatment_journey_completed', async () => {
+    const sink = createInMemoryProductEventSink();
+
+    await expect(
+      sink.append({
+        name: 'treatment_journey_completed',
+        at: AT,
+        patientId: 'patient-1',
+        treatmentId: 'treatment-1',
+        protocolKind: 'sclerotherapy',
+        protocolVersion: 1,
+        pilotCohort: DEVELOPMENT_PILOT_COHORT,
+      } as unknown as ProductEvent),
+    ).rejects.toThrow(InvalidProductEventError);
+  });
+});
+
 describe('feedback_submitted', () => {
   it('accepts numeric usefulness and clarity scores and stores them unchanged', async () => {
     const sink = createInMemoryProductEventSink();
     const event: ProductEvent = {
       name: 'feedback_submitted',
-      ...treatmentContext(),
+      at: AT,
+      patientId: 'patient-1',
+      treatmentId: 'treatment-1',
+      pilotCohort: DEVELOPMENT_PILOT_COHORT,
       usefulnessScore: 1,
       clarityScore: 5,
     };
@@ -394,6 +432,25 @@ describe('feedback_submitted', () => {
     expect(sink.getAll()[0]).toEqual(event);
     expect(sink.getAll()[0]).not.toHaveProperty('passed');
     expect(sink.getAll()[0]).not.toHaveProperty('successful');
+    expect(sink.getAll()[0]).not.toHaveProperty('protocolKind');
+    expect(sink.getAll()[0]).not.toHaveProperty('protocolVersion');
+  });
+
+  it('rejects protocolKind and protocolVersion on feedback_submitted', async () => {
+    const sink = createInMemoryProductEventSink();
+
+    await expect(
+      sink.append({
+        name: 'feedback_submitted',
+        at: AT,
+        patientId: 'patient-1',
+        treatmentId: 'treatment-1',
+        protocolKind: 'sclerotherapy',
+        protocolVersion: 1,
+        pilotCohort: DEVELOPMENT_PILOT_COHORT,
+        usefulnessScore: 4,
+      } as unknown as ProductEvent),
+    ).rejects.toThrow(InvalidProductEventError);
   });
 
   it('rejects free text on feedback_submitted', async () => {
@@ -402,18 +459,24 @@ describe('feedback_submitted', () => {
     await expect(
       sink.append({
         name: 'feedback_submitted',
-        ...treatmentContext(),
+        at: AT,
+        patientId: 'patient-1',
+        treatmentId: 'treatment-1',
+        pilotCohort: DEVELOPMENT_PILOT_COHORT,
         usefulnessScore: 4,
         text: 'I felt better',
-      } as ProductEvent),
+      } as unknown as ProductEvent),
     ).rejects.toThrow(InvalidProductEventError);
 
     await expect(
       sink.append({
         name: 'feedback_submitted',
-        ...treatmentContext(),
+        at: AT,
+        patientId: 'patient-1',
+        treatmentId: 'treatment-1',
+        pilotCohort: DEVELOPMENT_PILOT_COHORT,
         comment: 'unclear instructions',
-      } as ProductEvent),
+      } as unknown as ProductEvent),
     ).rejects.toThrow(InvalidProductEventError);
   });
 });

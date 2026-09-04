@@ -145,7 +145,7 @@ Do not silently destroy history: a change **supersedes** the previous row; the p
 
 ### FeedbackSurvey
 
-Product validation (usefulness / clarity, optional free text), not a medical outcome. Shown in the completed-treatment patient state (TASK-028). Free text must not go on ProductEvent.
+Product validation (usefulness / clarity scores 1–5 only), not a medical outcome. Shown in the completed-treatment patient state (TASK-028). Do not collect free text.
 
 ### ProductEvent
 
@@ -153,7 +153,7 @@ Product analytics, not a clinical store. Must not contain raw diary answers, med
 
 **Legacy context is superseded.** Events shipped around TASK-027 may include `protocolKind` (`sclerotherapy` | `telangiectasia`) and `protocolVersion`. That pair described a versioned protocol snapshot. It must **not** be reinterpreted as action-catalog version.
 
-The smallest necessary ProductEvent schema adaptation is deferred to [TASK-041](tasks/041-patient-treatment-domain.md) or a later explicit event-migration task when code requires it. Do not preserve misleading semantics just for compatibility. Until that adaptation, do not add new events that pretend `protocolVersion` means catalog version.
+TASK-041 adapted emitted events (`app_opened`, `task_completed`, diary/photo counts) away from that pair. Leftover unemitted `treatment_journey_completed` and `feedback_submitted` context is adapted in [TASK-028](tasks/028-feedback-survey.md). Do not preserve misleading semantics just for compatibility. Do not add new events that pretend `protocolVersion` means catalog version.
 
 Keep `pilotCohort` segmentation. Symptom values are not success metrics.
 
