@@ -251,6 +251,9 @@ describe('entityId', () => {
 describe('privacy boundary', () => {
   it.each([
     ['answers', { pain: 8 }],
+    ['pain', 8],
+    ['swelling', 4],
+    ['wellbeing', 'worse'],
     ['metadata', { note: 'clinical' }],
     ['photoUrl', 'https://example.test/photo.jpg'],
     ['diagnosis', 'varices'],

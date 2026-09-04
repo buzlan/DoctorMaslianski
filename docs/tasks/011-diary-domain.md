@@ -1,6 +1,6 @@
 # TASK-011 — Symptom diary domain
 
-Status: NOT STARTED
+Status: DONE
 
 Milestone: M6 — Symptom Diary
 
@@ -33,6 +33,8 @@ Domain before UI. Testable without camera or native APIs. Questions must not be 
 - Structural validation only.
 - The app must not interpret scores as diagnosis or emergency.
 - Clinical answer values belong on `DiaryEntry`, never on `ProductEvent` metadata.
+
+Persistence in this task is in-memory only. Diary answers are not stored in AsyncStorage or the assignment completion overlay. Local-at-rest handling is a separate TASK-012 decision.
 
 ## Out of scope
 
