@@ -1,3 +1,5 @@
+import { createCheckinEventSession } from '@/modules/diary/application';
+import { createInMemoryDiaryRepository } from '@/modules/diary/infrastructure';
 import {
   createInMemoryProductEventSink,
   DEVELOPMENT_PILOT_COHORT,
@@ -53,7 +55,7 @@ describe('loadTodayOverview', () => {
       }),
     });
 
-    await expect(loadTodayOverview(repository, ON_DATE)).resolves.toEqual({
+    await expect(loadTodayOverview(repository, createInMemoryDiaryRepository(), ON_DATE)).resolves.toEqual({
       status: 'ready',
       overview: {
         kind: 'ready',
@@ -61,6 +63,7 @@ describe('loadTodayOverview', () => {
         treatmentId: 'treatment-1',
         periodDayNumber: 1,
         assignments: [{ id: 'on-start', title: 'synthetic-start', completed: false }],
+        diaryOpen: true,
       },
     });
   });
@@ -68,54 +71,74 @@ describe('loadTodayOverview', () => {
   it('returns no_active_treatment when the repository resolves null', async () => {
     const repository = createInMemoryTreatmentRepository({ empty: true });
 
-    await expect(loadTodayOverview(repository, ON_DATE)).resolves.toEqual({
+    await expect(loadTodayOverview(repository, createInMemoryDiaryRepository(), ON_DATE)).resolves.toEqual({
       status: 'no_active_treatment',
     });
   });
 
   it('returns error when the repository rejects', async () => {
-    await expect(loadTodayOverview(rejectingRepository(), ON_DATE)).resolves.toEqual({
+    await expect(loadTodayOverview(rejectingRepository(), createInMemoryDiaryRepository(), ON_DATE)).resolves.toEqual({
       status: 'error',
     });
   });
 });
+
+function createLoaderDeps(
+  sink: ReturnType<typeof createInMemoryProductEventSink>,
+  repository: TreatmentRepository,
+  now: () => Date,
+  diaryRepository = createInMemoryDiaryRepository(),
+) {
+  return {
+    repository,
+    diaryRepository,
+    eventSink: sink,
+    checkinEvents: createCheckinEventSession({ eventSink: sink, now }),
+    now,
+  };
+}
 
 describe('createTodayLoader', () => {
   const now = () => new Date(AT);
 
   it('emits one contextual app_opened for an active treatment', async () => {
     const sink = createInMemoryProductEventSink();
-    const loader = createTodayLoader({
-      repository: createInMemoryTreatmentRepository({
-        treatment: createTreatment({
-          id: 'treatment-1',
-          patientId: 'dev-patient-1',
-          periods: [{ id: 'current', startedOn: ON_DATE }],
+    const loader = createTodayLoader(
+      createLoaderDeps(
+        sink,
+        createInMemoryTreatmentRepository({
+          treatment: createTreatment({
+            id: 'treatment-1',
+            patientId: 'dev-patient-1',
+            periods: [{ id: 'current', startedOn: ON_DATE }],
+          }),
         }),
-      }),
-      eventSink: sink,
-      now,
-    });
+        now,
+      ),
+    );
 
-    await expect(loader.load(ON_DATE)).resolves.toMatchObject({ status: 'ready' });
-    expect(sink.getAll()).toEqual([
-      {
-        name: 'app_opened',
-        at: AT,
-        pilotCohort: DEVELOPMENT_PILOT_COHORT,
-        patientId: 'dev-patient-1',
-        treatmentId: 'treatment-1',
-      },
+    await expect(loader.load(ON_DATE)).resolves.toMatchObject({
+      status: 'ready',
+      overview: { diaryOpen: true },
+    });
+    expect(sink.getAll().map((event) => event.name)).toEqual([
+      'app_opened',
+      'checkin_requested',
     ]);
+    expect(sink.getAll()[0]).toEqual({
+      name: 'app_opened',
+      at: AT,
+      pilotCohort: DEVELOPMENT_PILOT_COHORT,
+      patientId: 'dev-patient-1',
+      treatmentId: 'treatment-1',
+    });
   });
 
   it('emits one base app_opened when there is no active treatment', async () => {
     const sink = createInMemoryProductEventSink();
-    const loader = createTodayLoader({
-      repository: createInMemoryTreatmentRepository({ empty: true }),
-      eventSink: sink,
-      now,
-    });
+    const loader = createTodayLoader(
+      createLoaderDeps(sink, createInMemoryTreatmentRepository({ empty: true }), now),
+    );
 
     await expect(loader.load(ON_DATE)).resolves.toEqual({ status: 'no_active_treatment' });
     expect(sink.getAll()).toEqual([
@@ -129,11 +152,7 @@ describe('createTodayLoader', () => {
 
   it('emits one base app_opened when the first load rejects', async () => {
     const sink = createInMemoryProductEventSink();
-    const loader = createTodayLoader({
-      repository: rejectingRepository(),
-      eventSink: sink,
-      now,
-    });
+    const loader = createTodayLoader(createLoaderDeps(sink, rejectingRepository(), now));
 
     await expect(loader.load(ON_DATE)).resolves.toEqual({ status: 'error' });
     expect(sink.getAll()).toEqual([
@@ -158,11 +177,7 @@ describe('createTodayLoader', () => {
       },
       ...ignoredWrites(),
     };
-    const loader = createTodayLoader({
-      repository,
-      eventSink: sink,
-      now,
-    });
+    const loader = createTodayLoader(createLoaderDeps(sink, repository, now));
 
     await expect(loader.load(ON_DATE)).resolves.toEqual({ status: 'error' });
     shouldReject = false;
@@ -178,28 +193,30 @@ describe('createTodayLoader', () => {
 
   it('does not include protocol snapshot fields or clinical text on app_opened', async () => {
     const sink = createInMemoryProductEventSink();
-    const loader = createTodayLoader({
-      repository: createInMemoryTreatmentRepository({
-        treatment: createTreatment({
-          id: 'treatment-1',
-          patientId: 'dev-patient-1',
-          periods: [{ id: 'current', startedOn: ON_DATE }],
-          assignments: [
-            {
-              id: 'on-start',
-              catalogItemId: 'catalog-1',
-              title: 'synthetic-task-title',
-              instruction: 'synthetic-task-instruction',
-              startDate: ON_DATE,
-              endDate: ON_DATE,
-              status: 'active',
-            },
-          ],
+    const loader = createTodayLoader(
+      createLoaderDeps(
+        sink,
+        createInMemoryTreatmentRepository({
+          treatment: createTreatment({
+            id: 'treatment-1',
+            patientId: 'dev-patient-1',
+            periods: [{ id: 'current', startedOn: ON_DATE }],
+            assignments: [
+              {
+                id: 'on-start',
+                catalogItemId: 'catalog-1',
+                title: 'synthetic-task-title',
+                instruction: 'synthetic-task-instruction',
+                startDate: ON_DATE,
+                endDate: ON_DATE,
+                status: 'active',
+              },
+            ],
+          }),
         }),
-      }),
-      eventSink: sink,
-      now,
-    });
+        now,
+      ),
+    );
 
     await loader.load(ON_DATE);
 
@@ -222,34 +239,75 @@ describe('createTodayLoader', () => {
 
   it('does not emit a second app_opened when completing an assignment after load', async () => {
     const sink = createInMemoryProductEventSink();
-    const loader = createTodayLoader({
-      repository: createInMemoryTreatmentRepository({
-        treatment: createTreatment({
-          id: 'treatment-1',
-          patientId: 'dev-patient-1',
-          periods: [{ id: 'current', startedOn: ON_DATE }],
-          assignments: [
-            {
-              id: 'assignment-1',
-              catalogItemId: 'catalog-1',
-              startDate: ON_DATE,
-              endDate: ON_DATE,
-              status: 'active',
-            },
-          ],
+    const loader = createTodayLoader(
+      createLoaderDeps(
+        sink,
+        createInMemoryTreatmentRepository({
+          treatment: createTreatment({
+            id: 'treatment-1',
+            patientId: 'dev-patient-1',
+            periods: [{ id: 'current', startedOn: ON_DATE }],
+            assignments: [
+              {
+                id: 'assignment-1',
+                catalogItemId: 'catalog-1',
+                startDate: ON_DATE,
+                endDate: ON_DATE,
+                status: 'active',
+              },
+            ],
+          }),
         }),
-      }),
-      eventSink: sink,
-      now,
-    });
+        now,
+      ),
+    );
 
     await loader.load(ON_DATE);
     const result = await loader.completeAssignment('assignment-1', ON_DATE);
 
     expect(result).toMatchObject({
       status: 'ready',
-      overview: { assignments: [{ id: 'assignment-1', completed: true }] },
+      overview: {
+        assignments: [{ id: 'assignment-1', completed: true }],
+        diaryOpen: true,
+      },
     });
-    expect(sink.getAll().map((event) => event.name)).toEqual(['app_opened', 'task_completed']);
+    expect(sink.getAll().map((event) => event.name)).toEqual([
+      'app_opened',
+      'checkin_requested',
+      'task_completed',
+    ]);
+  });
+
+  it('sets diaryOpen false when today’s diary is already submitted', async () => {
+    const sink = createInMemoryProductEventSink();
+    const diaryRepository = createInMemoryDiaryRepository();
+    const treatment = createTreatment({
+      id: 'treatment-1',
+      patientId: 'dev-patient-1',
+      periods: [{ id: 'current', startedOn: ON_DATE }],
+    });
+    await diaryRepository.submitEntry(treatment, ON_DATE, {
+      pain: 1,
+      swelling: 2,
+      wellbeing: 'better',
+    });
+    const loader = createTodayLoader(
+      createLoaderDeps(
+        sink,
+        createInMemoryTreatmentRepository({ treatment }),
+        now,
+        diaryRepository,
+      ),
+    );
+
+    const result = await loader.load(ON_DATE);
+    expect(result).toMatchObject({
+      status: 'ready',
+      overview: { diaryOpen: false },
+    });
+    expect(JSON.stringify(result)).not.toContain('pain');
+    expect(JSON.stringify(result)).not.toContain('better');
+    expect(sink.getAll().map((event) => event.name)).toEqual(['app_opened']);
   });
 });

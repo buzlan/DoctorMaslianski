@@ -2,6 +2,7 @@ export type AppCopy = {
   tabs: {
     today: string;
     treatment: string;
+    diary: string;
   };
   today: {
     title: string;
@@ -14,6 +15,22 @@ export type AppCopy = {
     retry: string;
     markComplete: string;
     markIncomplete: string;
+    fillDiary: string;
+  };
+  diary: {
+    title: string;
+    loading: string;
+    noActiveTreatment: string;
+    loadError: string;
+    retry: string;
+    painLabel: string;
+    swellingLabel: string;
+    wellbeingLabel: string;
+    wellbeingBetter: string;
+    wellbeingUnchanged: string;
+    wellbeingWorse: string;
+    submit: string;
+    completedToday: string;
   };
   treatment: {
     title: string;

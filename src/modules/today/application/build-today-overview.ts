@@ -23,6 +23,7 @@ export type TodayOverview =
       treatmentId: string;
       periodDayNumber: number | null;
       assignments: readonly TodayAssignmentItem[];
+      diaryOpen: boolean;
     };
 
 function mapAssignment(
@@ -49,6 +50,7 @@ function mapAssignment(
 export function buildTodayOverview(
   treatment: Treatment | null,
   onDate: CalendarDate,
+  todayDiaryEntryExists = false,
 ): TodayOverview {
   if (treatment === null || !isActiveTreatment(treatment)) {
     return { kind: 'no_active_treatment' };
@@ -69,5 +71,6 @@ export function buildTodayOverview(
         isAssignmentCompletedOnDate(treatment, assignment.id, onDate),
       ),
     ),
+    diaryOpen: !todayDiaryEntryExists,
   };
 }

@@ -1,4 +1,12 @@
 import {
+  sharedCheckinEventSession,
+  type CheckinEventSession,
+} from '@/modules/diary/application';
+import {
+  sharedDiaryRepository,
+  type DiaryRepository,
+} from '@/modules/diary/infrastructure';
+import {
   DEVELOPMENT_PILOT_COHORT,
   sharedProductEventSink,
   type AppOpenedEvent,
@@ -29,11 +37,17 @@ export type TodayLoader = {
 
 export async function loadTodayOverview(
   repository: TreatmentRepository,
+  diaryRepository: DiaryRepository,
   onDate: CalendarDate,
 ): Promise<TodayLoadResult> {
   try {
     const treatment = await repository.getActiveTreatment();
-    const overview = buildTodayOverview(treatment, onDate);
+    if (treatment === null) {
+      return { status: 'no_active_treatment' };
+    }
+
+    const todayEntry = await diaryRepository.getEntryOnDate(treatment.id, onDate);
+    const overview = buildTodayOverview(treatment, onDate, todayEntry !== null);
 
     if (overview.kind === 'no_active_treatment') {
       return { status: 'no_active_treatment' };
@@ -69,7 +83,9 @@ function createAppOpenedEvent(args: {
 
 export function createTodayLoader(deps: {
   repository: TreatmentRepository;
+  diaryRepository: DiaryRepository;
   eventSink: ProductEventSink;
+  checkinEvents: CheckinEventSession;
   now?: () => Date;
   pilotCohort?: PilotCohort;
 }): TodayLoader {
@@ -79,7 +95,7 @@ export function createTodayLoader(deps: {
 
   return {
     async load(onDate: CalendarDate): Promise<TodayLoadResult> {
-      const result = await loadTodayOverview(deps.repository, onDate);
+      const result = await loadTodayOverview(deps.repository, deps.diaryRepository, onDate);
 
       if (!hasEmittedAppOpened) {
         hasEmittedAppOpened = true;
@@ -92,12 +108,21 @@ export function createTodayLoader(deps: {
         );
       }
 
+      if (result.status === 'ready' && result.overview.diaryOpen) {
+        await deps.checkinEvents.emitRequestedIfNeeded({
+          patientId: result.overview.patientId,
+          treatmentId: result.overview.treatmentId,
+          onDate,
+        });
+      }
+
       return result;
     },
     completeAssignment(assignmentId: string, onDate: CalendarDate) {
       return completeTodayAssignment(
         {
           repository: deps.repository,
+          diaryRepository: deps.diaryRepository,
           eventSink: deps.eventSink,
           now,
           pilotCohort,
@@ -108,7 +133,10 @@ export function createTodayLoader(deps: {
     },
     uncompleteAssignment(assignmentId: string, onDate: CalendarDate) {
       return uncompleteTodayAssignment(
-        { repository: deps.repository },
+        {
+          repository: deps.repository,
+          diaryRepository: deps.diaryRepository,
+        },
         assignmentId,
         onDate,
       );
@@ -118,5 +146,7 @@ export function createTodayLoader(deps: {
 
 export const sharedTodayLoader = createTodayLoader({
   repository: sharedTreatmentRepository,
+  diaryRepository: sharedDiaryRepository,
   eventSink: sharedProductEventSink,
+  checkinEvents: sharedCheckinEventSession,
 });

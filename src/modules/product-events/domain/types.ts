@@ -69,8 +69,23 @@ type TaskCompletedEvent = ProductEventBase & {
   treatmentId: string;
   entityId: string;
 };
-type CheckinRequestedEvent = { name: 'checkin_requested' } & EntityTreatmentEvent;
-type CheckinSubmittedEvent = { name: 'checkin_submitted' } & EntityTreatmentEvent;
+/**
+ * Structural check-in analytics only. entityId is diaryEntryIdFor(treatmentId, civilDate).
+ * Product metrics must deduplicate checkin_requested by entityId (and treatmentId),
+ * not by raw event row count: a process restart may append another requested event.
+ */
+type CheckinRequestedEvent = ProductEventBase & {
+  name: 'checkin_requested';
+  patientId: string;
+  treatmentId: string;
+  entityId: string;
+};
+type CheckinSubmittedEvent = ProductEventBase & {
+  name: 'checkin_submitted';
+  patientId: string;
+  treatmentId: string;
+  entityId: string;
+};
 type PhotoCheckpointRequestedEvent = {
   name: 'photo_checkpoint_requested';
 } & EntityTreatmentEvent;

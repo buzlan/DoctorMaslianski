@@ -7,12 +7,10 @@
     "icon": "./assets/images/icon.png",
     "scheme": "doctormaslianski",
     "userInterfaceStyle": "automatic",
-
     "ios": {
       "bundleIdentifier": "by.maslianski.app",
       "icon": "./assets/expo.icon"
     },
-
     "android": {
       "package": "by.maslianski.app",
       "adaptiveIcon": {
@@ -23,12 +21,10 @@
       },
       "predictiveBackGestureEnabled": false
     },
-
     "web": {
       "output": "static",
       "favicon": "./assets/images/favicon.png"
     },
-
     "plugins": [
       "expo-router",
       [
@@ -38,9 +34,9 @@
           "image": "./assets/images/splash-icon.png",
           "imageWidth": 76
         }
-      ]
+      ],
+      "expo-secure-store"
     ],
-
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true

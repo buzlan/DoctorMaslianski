@@ -1,3 +1,4 @@
+import { createInMemoryDiaryRepository } from '@/modules/diary/infrastructure';
 import {
   createInMemoryProductEventSink,
   DEVELOPMENT_PILOT_COHORT,
@@ -45,7 +46,7 @@ describe('completeTodayAssignment', () => {
     const now = () => new Date(AT);
 
     const result = await completeTodayAssignment(
-      { repository, eventSink, now },
+      { repository, diaryRepository: createInMemoryDiaryRepository(), eventSink, now },
       'assignment-1',
       ON_DATE,
     );
@@ -77,7 +78,12 @@ describe('completeTodayAssignment', () => {
   it('does not emit a second task_completed for an idempotent repeat', async () => {
     const repository = repositoryWithSyntheticAssignment();
     const eventSink = createInMemoryProductEventSink();
-    const deps = { repository, eventSink, now: () => new Date(AT) };
+    const deps = {
+      repository,
+      diaryRepository: createInMemoryDiaryRepository(),
+      eventSink,
+      now: () => new Date(AT),
+    };
 
     await completeTodayAssignment(deps, 'assignment-1', ON_DATE);
     await completeTodayAssignment(deps, 'assignment-1', ON_DATE);
@@ -115,7 +121,12 @@ describe('completeTodayAssignment', () => {
       store,
     });
     const eventSink = createInMemoryProductEventSink();
-    const deps = { repository, eventSink, now: () => new Date(AT) };
+    const deps = {
+      repository,
+      diaryRepository: createInMemoryDiaryRepository(),
+      eventSink,
+      now: () => new Date(AT),
+    };
 
     await expect(completeTodayAssignment(deps, 'assignment-1', ON_DATE)).resolves.toMatchObject({
       status: 'ready',
@@ -151,10 +162,19 @@ describe('uncompleteTodayAssignment', () => {
   it('clears current completion state without deleting historical task_completed events', async () => {
     const repository = repositoryWithSyntheticAssignment();
     const eventSink = createInMemoryProductEventSink();
-    const deps = { repository, eventSink, now: () => new Date(AT) };
+    const deps = {
+      repository,
+      diaryRepository: createInMemoryDiaryRepository(),
+      eventSink,
+      now: () => new Date(AT),
+    };
 
     await completeTodayAssignment(deps, 'assignment-1', ON_DATE);
-    const result = await uncompleteTodayAssignment({ repository }, 'assignment-1', ON_DATE);
+    const result = await uncompleteTodayAssignment(
+      { repository, diaryRepository: createInMemoryDiaryRepository() },
+      'assignment-1',
+      ON_DATE,
+    );
 
     expect(result).toMatchObject({
       status: 'ready',
@@ -204,13 +224,22 @@ describe('uncompleteTodayAssignment', () => {
       store,
     });
     const eventSink = createInMemoryProductEventSink();
-    const deps = { repository, eventSink, now: () => new Date(AT) };
+    const deps = {
+      repository,
+      diaryRepository: createInMemoryDiaryRepository(),
+      eventSink,
+      now: () => new Date(AT),
+    };
 
     await completeTodayAssignment(deps, 'assignment-1', ON_DATE);
     failSave = true;
 
     await expect(
-      uncompleteTodayAssignment({ repository }, 'assignment-1', ON_DATE),
+      uncompleteTodayAssignment(
+        { repository, diaryRepository: createInMemoryDiaryRepository() },
+        'assignment-1',
+        ON_DATE,
+      ),
     ).resolves.toMatchObject({
       status: 'ready',
       overview: {

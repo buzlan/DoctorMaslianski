@@ -143,6 +143,7 @@ describe('buildTodayOverview', () => {
       treatmentId: 'treatment-1',
       periodDayNumber: null,
       assignments: [],
+      diaryOpen: true,
     });
     expect(overview).not.toHaveProperty('protocolKind');
     expect(overview).not.toHaveProperty('protocolVersion');
@@ -170,5 +171,15 @@ describe('buildTodayOverview', () => {
     expect(json).not.toContain('TBD by clinic');
     expect(json).not.toContain('threshold');
     expect(json).not.toContain('диагноз');
+  });
+
+  it('sets diaryOpen false when today’s diary entry already exists', () => {
+    expect(buildTodayOverview(create(), calendarDate(2026, 8, 1), true)).toMatchObject({
+      kind: 'ready',
+      diaryOpen: false,
+    });
+    expect(buildTodayOverview(create(), calendarDate(2026, 8, 1), false)).toMatchObject({
+      diaryOpen: true,
+    });
   });
 });

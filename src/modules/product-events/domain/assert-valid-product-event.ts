@@ -33,6 +33,8 @@ const TASK_COMPLETED_KEYS = new Set([
   'entityId',
 ]);
 
+const CHECKIN_EVENT_KEYS = TASK_COMPLETED_KEYS;
+
 const PROTOCOL_ASSIGNED_KEYS = new Set([
   ...BASE_KEYS,
   'patientId',
@@ -63,10 +65,17 @@ const TREATMENT_NAMES = new Set<ProductEventName>([
 
 const ENTITY_NAMES = new Set<ProductEventName>([
   'task_scheduled',
-  'checkin_requested',
-  'checkin_submitted',
   'photo_checkpoint_requested',
   'photo_checkpoint_completed',
+]);
+
+const CHECKIN_NAMES = new Set<ProductEventName>(['checkin_requested', 'checkin_submitted']);
+
+const PROTOCOL_FREE_TREATMENT_ID_NAMES = new Set<ProductEventName>([
+  'app_opened',
+  'task_completed',
+  'checkin_requested',
+  'checkin_submitted',
 ]);
 
 export class InvalidProductEventError extends Error {
@@ -118,7 +127,7 @@ export function assertValidProductEvent(input: unknown): ProductEvent {
 
   if (eventName === 'app_opened') {
     assertAppOpenedContext(record);
-  } else if (eventName === 'task_completed') {
+  } else if (eventName === 'task_completed' || CHECKIN_NAMES.has(eventName)) {
     assertRequiredString(record, 'patientId');
     assertRequiredString(record, 'treatmentId');
     assertRequiredString(record, 'entityId');
@@ -151,6 +160,9 @@ function allowedKeysFor(name: ProductEventName): Set<string> {
   }
   if (name === 'task_completed') {
     return TASK_COMPLETED_KEYS;
+  }
+  if (CHECKIN_NAMES.has(name)) {
+    return CHECKIN_EVENT_KEYS;
   }
   if (PROTOCOL_ASSIGNED_NAMES.has(name)) {
     return PROTOCOL_ASSIGNED_KEYS;
@@ -252,7 +264,10 @@ function assertTreatmentIdCoherence(
     throw new InvalidProductEventError('unsupported event field: treatmentId');
   }
 
-  if (eventName !== 'app_opened' && eventName !== 'task_completed' && !isPresent(record, 'protocolKind')) {
+  if (
+    !PROTOCOL_FREE_TREATMENT_ID_NAMES.has(eventName) &&
+    !isPresent(record, 'protocolKind')
+  ) {
     throw new InvalidProductEventError('unsupported event field: treatmentId');
   }
 }

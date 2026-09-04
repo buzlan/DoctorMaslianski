@@ -38,6 +38,17 @@ function taskCompletedEvent(): ProductEvent {
   };
 }
 
+function checkinSubmittedEvent(): ProductEvent {
+  return {
+    name: 'checkin_submitted',
+    at: AT,
+    patientId: 'patient-1',
+    treatmentId: 'treatment-1',
+    pilotCohort: DEVELOPMENT_PILOT_COHORT,
+    entityId: 'treatment-1:2026-8-19',
+  };
+}
+
 function appOpenedBase(): ProductEvent {
   return {
     name: 'app_opened',
@@ -248,6 +259,43 @@ describe('entityId', () => {
   });
 });
 
+describe('checkin events', () => {
+  it('accepts checkin_submitted with structural identifiers only', async () => {
+    const sink = createInMemoryProductEventSink();
+    await sink.append(checkinSubmittedEvent());
+    expect(sink.getAll()[0]).toEqual(checkinSubmittedEvent());
+    expect(sink.getAll()[0]).not.toHaveProperty('protocolKind');
+    expect(sink.getAll()[0]).not.toHaveProperty('protocolVersion');
+    expect(sink.getAll()[0]).not.toHaveProperty('pain');
+    expect(sink.getAll()[0]).not.toHaveProperty('answers');
+  });
+
+  it('rejects protocolKind and protocolVersion on checkin_requested and checkin_submitted', async () => {
+    const sink = createInMemoryProductEventSink();
+
+    await expect(
+      sink.append({
+        ...checkinSubmittedEvent(),
+        protocolKind: 'sclerotherapy',
+        protocolVersion: 1,
+      } as unknown as ProductEvent),
+    ).rejects.toThrow(InvalidProductEventError);
+
+    await expect(
+      sink.append({
+        name: 'checkin_requested',
+        at: AT,
+        patientId: 'patient-1',
+        treatmentId: 'treatment-1',
+        pilotCohort: DEVELOPMENT_PILOT_COHORT,
+        entityId: 'treatment-1:2026-8-19',
+        protocolKind: 'sclerotherapy',
+        protocolVersion: 1,
+      } as unknown as ProductEvent),
+    ).rejects.toThrow(InvalidProductEventError);
+  });
+});
+
 describe('privacy boundary', () => {
   it.each([
     ['answers', { pain: 8 }],
@@ -264,11 +312,9 @@ describe('privacy boundary', () => {
 
     await expect(
       sink.append({
-        name: 'checkin_submitted',
-        ...treatmentContext(),
-        entityId: 'checkin-1',
+        ...checkinSubmittedEvent(),
         [field]: value,
-      } as ProductEvent),
+      } as unknown as ProductEvent),
     ).rejects.toThrow(InvalidProductEventError);
   });
 
@@ -277,11 +323,9 @@ describe('privacy boundary', () => {
 
     await expect(
       sink.append({
-        name: 'checkin_submitted',
-        ...treatmentContext(),
-        entityId: 'checkin-1',
+        ...checkinSubmittedEvent(),
         answers: { pain: 8 },
-      } as ProductEvent),
+      } as unknown as ProductEvent),
     ).rejects.toThrow('unsupported event field: answers');
   });
 });

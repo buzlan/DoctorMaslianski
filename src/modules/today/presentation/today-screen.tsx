@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from "react";
+import { useFocusEffect, useRouter } from "expo-router";
+import { useCallback, useRef, useState } from "react";
 import {
   Pressable,
   ScrollView,
@@ -45,10 +46,12 @@ function ReadyContent({
   overview,
   pendingAssignmentId,
   onToggle,
+  onFillDiary,
 }: {
   overview: ReadyOverview;
   pendingAssignmentId: string | null;
   onToggle: (assignment: TodayAssignmentItem) => void;
+  onFillDiary: () => void;
 }) {
   const hasAssignments = overview.assignments.length > 0;
 
@@ -85,12 +88,16 @@ function ReadyContent({
           ))}
         </Stack>
       )}
+      {overview.diaryOpen ? (
+        <Button label={copy.today.fillDiary} onPress={onFillDiary} />
+      ) : null}
     </Stack>
   );
 }
 
 export function TodayScreen() {
   const colors = getColors(useColorScheme());
+  const router = useRouter();
   const [viewState, setViewState] = useState<TodayViewState>({
     status: "loading",
   });
@@ -99,16 +106,18 @@ export function TodayScreen() {
   );
   const loadGenerationRef = useRef(0);
 
-  useEffect(() => {
-    const generation = loadGenerationRef.current + 1;
-    loadGenerationRef.current = generation;
+  useFocusEffect(
+    useCallback(() => {
+      const generation = loadGenerationRef.current + 1;
+      loadGenerationRef.current = generation;
 
-    void requestTodayLoad().then((result) => {
-      if (loadGenerationRef.current === generation) {
-        setViewState(toViewState(result));
-      }
-    });
-  }, []);
+      void requestTodayLoad().then((result) => {
+        if (loadGenerationRef.current === generation) {
+          setViewState(toViewState(result));
+        }
+      });
+    }, []),
+  );
 
   function toggleAssignment(assignment: TodayAssignmentItem) {
     const generation = loadGenerationRef.current + 1;
@@ -174,6 +183,9 @@ export function TodayScreen() {
               overview={viewState.overview}
               pendingAssignmentId={pendingAssignmentId}
               onToggle={toggleAssignment}
+              onFillDiary={() => {
+                router.navigate("/diary");
+              }}
             />
           </ScrollView>
         ) : null}

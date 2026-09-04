@@ -29,6 +29,12 @@ export default function TabsLayout() {
           title: copy.tabs.treatment,
         }}
       />
+      <Tabs.Screen
+        name="diary"
+        options={{
+          title: copy.tabs.diary,
+        }}
+      />
     </Tabs>
   );
 }

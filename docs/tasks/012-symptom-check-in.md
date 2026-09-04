@@ -1,6 +1,6 @@
 # TASK-012 — Symptom check-in UI and Diary tab
 
-Status: NOT STARTED
+Status: DONE
 
 Milestone: M6 — Symptom Diary
 
@@ -45,7 +45,7 @@ Vertical slice: collect symptoms, do not just model them.
 
 ## New dependencies
 
-No (default).
+`expo-secure-store` (SDK 57, `npx expo install`) — temporary development / internal dry-run local-at-rest adapter for diary answers. Not the final real-patient clinical store.
 
 ## Plan Mode
 

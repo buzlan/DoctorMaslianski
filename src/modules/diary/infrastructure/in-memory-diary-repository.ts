@@ -1,9 +1,9 @@
 /**
  * In-memory DiaryRepository.
  *
- * Entries are lost when the process exits. Local-at-rest persistence for diary
- * answers is a separate decision (TASK-012) and must not reuse the assignment
- * completion overlay.
+ * Entries are lost when the process exits. Durable local-at-rest persistence
+ * is owned by PersistentDiaryRepository + DiaryEntryStore (TASK-012) and must
+ * not reuse the assignment completion overlay.
  *
  * listEntries returns oldest-first civil-date order so tests are stable. That
  * is not the Diary-history UI contract; TASK-013 may present newest-first or

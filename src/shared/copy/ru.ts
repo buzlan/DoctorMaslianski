@@ -4,6 +4,7 @@ export const copy: AppCopy = {
   tabs: {
     today: "Сегодня",
     treatment: "Лечение",
+    diary: "Дневник",
   },
   today: {
     title: "Сегодня",
@@ -16,6 +17,22 @@ export const copy: AppCopy = {
     retry: "Повторить",
     markComplete: "Отметить выполненным",
     markIncomplete: "Снять отметку",
+    fillDiary: "Заполнить дневник",
+  },
+  diary: {
+    title: "Дневник",
+    loading: "Загрузка…",
+    noActiveTreatment: "Сейчас нет активного лечения.",
+    loadError: "Не удалось загрузить данные.",
+    retry: "Повторить",
+    painLabel: "Боль",
+    swellingLabel: "Отёк",
+    wellbeingLabel: "Самочувствие",
+    wellbeingBetter: "Лучше",
+    wellbeingUnchanged: "Без изменений",
+    wellbeingWorse: "Хуже",
+    submit: "Отправить",
+    completedToday: "Дневник за сегодня заполнен.",
   },
   treatment: {
     title: "Лечение",

@@ -16,3 +16,4 @@ export type {
 } from './domain';
 export { createInMemoryDiaryRepository } from './infrastructure';
 export type { DiaryRepository, SubmitDiaryEntryResult } from './infrastructure';
+export { DiaryScreen } from './presentation';

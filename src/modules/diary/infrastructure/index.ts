@@ -1,2 +1,10 @@
 export type { DiaryRepository, SubmitDiaryEntryResult } from './diary-repository';
 export { createInMemoryDiaryRepository } from './in-memory-diary-repository';
+export type { DiaryEntryStore } from './diary-entry-store';
+export { createInMemoryDiaryEntryStore } from './in-memory-diary-entry-store';
+export type { InMemoryDiaryEntryStore } from './in-memory-diary-entry-store';
+export { createPersistentDiaryRepository } from './persistent-diary-repository';
+export type { PersistentDiaryRepositoryOptions } from './persistent-diary-repository';
+export { createSecureStoreDiaryEntryStore } from './secure-store-diary-entry-store';
+export type { SecureStoreLike } from './secure-store-diary-entry-store';
+export { sharedDiaryRepository } from './shared-diary-repository';
