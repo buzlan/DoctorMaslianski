@@ -88,6 +88,23 @@ export type AppCopy = {
       title: string;
       body: string;
     };
+    tokenLabel: string;
+    tokenPlaceholder: string;
+    continueWithInvite: string;
+    consentTitle: string;
+    consentBody: string;
+    privacyAccept: string;
+    pilotConsentAccept: string;
+    activate: string;
+    activating: string;
+    errors: {
+      invalid: string;
+      expired: string;
+      revoked: string;
+      consumed: string;
+      unusable: string;
+      network: string;
+    };
   };
   photos: {
     title: string;

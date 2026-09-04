@@ -397,6 +397,33 @@ describe('treatment_journey_completed', () => {
     expect(sink.getAll()[0]).not.toHaveProperty('protocolVersion');
   });
 
+  it('rejects protocolKind and protocolVersion on patient_activated', async () => {
+    const sink = createInMemoryProductEventSink();
+
+    await expect(
+      sink.append({
+        name: 'patient_activated',
+        at: AT,
+        patientId: 'patient-1',
+        treatmentId: 'treatment-1',
+        protocolKind: 'sclerotherapy',
+        protocolVersion: 1,
+        pilotCohort: DEVELOPMENT_PILOT_COHORT,
+      } as unknown as ProductEvent),
+    ).rejects.toBeInstanceOf(InvalidProductEventError);
+
+    await sink.append({
+      name: 'patient_activated',
+      at: AT,
+      patientId: 'patient-1',
+      treatmentId: 'treatment-1',
+      pilotCohort: DEVELOPMENT_PILOT_COHORT,
+    });
+
+    expect(sink.getAll()[0]).not.toHaveProperty('protocolKind');
+    expect(sink.getAll()[0]).not.toHaveProperty('protocolVersion');
+  });
+
   it('rejects protocolKind and protocolVersion on treatment_journey_completed', async () => {
     const sink = createInMemoryProductEventSink();
 

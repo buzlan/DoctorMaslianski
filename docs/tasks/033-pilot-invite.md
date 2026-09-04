@@ -1,6 +1,6 @@
 # TASK-033 — Pilot invite and activation
 
-Status: NOT STARTED
+Status: DONE
 
 Milestone: M10 — Pilot access
 
@@ -70,3 +70,9 @@ Yes.
 ## Verification
 
 Defined in Plan Mode. At minimum `tsc`, lint, both platforms, plus a failed-invite path.
+
+## Implementation notes
+
+- Consume uses `verify_jwt = false` and `@supabase/server` `auth: 'publishable'`. The publishable key is the public project API credential, not app attestation. The invite token is the capability.
+- Session mint: Admin `generateLink({ type: 'magiclink' })` + server `verifyOtp`. No stored patient password.
+- After consume, remint only for 15 minutes. Then the refresh session is the credential.

@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
-import { Stack } from "expo-router";
+import { Redirect, Stack, useSegments } from "expo-router";
 
-import { resolveAuthGate, useAuthSession } from "@/core/auth";
+import { resolveAuthGate, signOut, useAuthSession } from "@/core/auth";
+import { getSharedRemotePatientContextResolver } from "@/core/auth/shared-remote-patient-context";
 import {
   loadSharedTreatmentShell,
   type TreatmentShell,
@@ -56,6 +57,58 @@ function ClinicalStack() {
   );
 }
 
+function AccessGate() {
+  const segments = useSegments();
+  const onInvite = segments[0] === "invite";
+  const onAccess = segments[0] === "access";
+
+  return (
+    <>
+      {onInvite || onAccess ? null : <Redirect href="/access" />}
+      <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="access" />
+        <Stack.Screen name="invite/[token]" />
+      </Stack>
+    </>
+  );
+}
+
+function LinkedClinicalShell() {
+  const auth = useAuthSession();
+  const resolver = getSharedRemotePatientContextResolver();
+  const [link, setLink] = useState<"loading" | "ready">(
+    resolver === null ? "ready" : "loading",
+  );
+
+  useEffect(() => {
+    if (auth.status !== "authenticated" || resolver === null) {
+      return;
+    }
+
+    let cancelled = false;
+    void resolver.resolve().then((result) => {
+      if (cancelled) {
+        return;
+      }
+      if (result.status === "unlinked") {
+        void signOut();
+        return;
+      }
+      setLink("ready");
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [auth, resolver]);
+
+  if (link === "loading") {
+    return <LoadingScreen message={copy.access.loading} />;
+  }
+
+  return <ClinicalStack />;
+}
+
 export default function RootLayout() {
   const auth = useAuthSession();
   const gate = resolveAuthGate(auth, __DEV__);
@@ -65,14 +118,8 @@ export default function RootLayout() {
   }
 
   if (gate.screen === "access") {
-    return (
-      <Stack screenOptions={{ headerShown: false }}>
-        <Stack.Protected guard>
-          <Stack.Screen name="access" />
-        </Stack.Protected>
-      </Stack>
-    );
+    return <AccessGate />;
   }
 
-  return <ClinicalStack />;
+  return <LinkedClinicalShell />;
 }

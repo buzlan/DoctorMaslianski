@@ -55,9 +55,9 @@ export type AppOpenedEvent =
   | ({ name: 'app_opened' } & ProductEventBase & { patientId: string })
   | ({ name: 'app_opened' } & ProductEventBase & { patientId: string; treatmentId: string });
 
-type PatientInvitedEvent = { name: 'patient_invited' } & ProtocolAssignedContext;
+type PatientInvitedEvent = { name: 'patient_invited' } & TreatmentIdsContext;
 
-type PatientActivatedEvent = { name: 'patient_activated' } & ProtocolAssignedContext;
+type PatientActivatedEvent = { name: 'patient_activated' } & TreatmentIdsContext;
 
 type TreatmentStartedEvent = { name: 'treatment_started' } & TreatmentEventContext;
 

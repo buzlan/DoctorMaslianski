@@ -35,14 +35,6 @@ const TASK_COMPLETED_KEYS = new Set([
 
 const CHECKIN_EVENT_KEYS = TASK_COMPLETED_KEYS;
 
-const PROTOCOL_ASSIGNED_KEYS = new Set([
-  ...BASE_KEYS,
-  'patientId',
-  'protocolKind',
-  'protocolVersion',
-  'treatmentId',
-]);
-
 const TREATMENT_EVENT_KEYS = new Set([...BASE_KEYS, ...TREATMENT_CONTEXT_KEYS]);
 
 const ENTITY_EVENT_KEYS = new Set([...TREATMENT_EVENT_KEYS, 'entityId']);
@@ -55,14 +47,13 @@ const FEEDBACK_EVENT_KEYS = new Set([
   'clarityScore',
 ]);
 
-const PROTOCOL_ASSIGNED_NAMES = new Set<ProductEventName>([
+const TREATMENT_NAMES = new Set<ProductEventName>(['treatment_started']);
+
+const TREATMENT_IDS_NAMES = new Set<ProductEventName>([
+  'treatment_journey_completed',
   'patient_invited',
   'patient_activated',
 ]);
-
-const TREATMENT_NAMES = new Set<ProductEventName>(['treatment_started']);
-
-const TREATMENT_IDS_NAMES = new Set<ProductEventName>(['treatment_journey_completed']);
 
 const ENTITY_NAMES = new Set<ProductEventName>([
   'task_scheduled',
@@ -82,6 +73,8 @@ const PROTOCOL_FREE_TREATMENT_ID_NAMES = new Set<ProductEventName>([
   'patient_photo_added',
   'treatment_journey_completed',
   'feedback_submitted',
+  'patient_invited',
+  'patient_activated',
 ]);
 
 export class InvalidProductEventError extends Error {
@@ -141,10 +134,6 @@ export function assertValidProductEvent(input: unknown): ProductEvent {
     assertRequiredString(record, 'patientId');
     assertRequiredString(record, 'treatmentId');
     assertRequiredString(record, 'entityId');
-  } else if (PROTOCOL_ASSIGNED_NAMES.has(eventName)) {
-    assertRequiredString(record, 'patientId');
-    assertRequiredProtocol(record);
-    assertOptionalString(record, 'treatmentId');
   } else if (TREATMENT_NAMES.has(eventName)) {
     assertTreatmentContext(record);
   } else if (TREATMENT_IDS_NAMES.has(eventName)) {
@@ -177,9 +166,6 @@ function allowedKeysFor(name: ProductEventName): Set<string> {
   }
   if (CHECKIN_NAMES.has(name) || PATIENT_PHOTO_ADDED_NAMES.has(name)) {
     return CHECKIN_EVENT_KEYS;
-  }
-  if (PROTOCOL_ASSIGNED_NAMES.has(name)) {
-    return PROTOCOL_ASSIGNED_KEYS;
   }
   if (TREATMENT_NAMES.has(name)) {
     return TREATMENT_EVENT_KEYS;
