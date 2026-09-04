@@ -1,40 +1,50 @@
-# TASK-015 — Photo gallery
+# TASK-015 — Doctor milestone photos on Treatment
 
 Status: NOT STARTED
 
-Milestone: M7 — Progress Photos
+Milestone: M7 — Photos
 
 ## Goal
 
-Browse saved progress photos for the active treatment from existing surfaces (for example Diary, stage details, or a nested screen pushed from those).
+The patient can view **doctor-uploaded** photos attached to a treatment milestone / visit from the Treatment screen (timeline and/or visit details).
 
-Uploads are TASK-032. This task is local gallery only. Still no Photos tab.
+This is **not** a gallery of the patient’s own Today uploads. Patient photos have no patient-facing gallery (TASK-014).
+
+Uploads of doctor photos are performed by the clinic tool (TASK-034) and stored remotely in TASK-032. This patient-app task displays photos already associated with a milestone (mock/local first, remote later).
+
+Still no Photos tab.
 
 ## Why this task is needed
 
-Capture without review is incomplete.
+Doctor stage photos and patient daily photos are distinct data flows. Patients need to see visit photos the doctor attached (for example Procedure or Control visit).
 
 ## Dependencies
 
-- TASK-014
+- TASK-008 / TASK-009 (Treatment surfaces exist)
+- TASK-014 need not be a hard code dependency, but keep the two photo kinds distinct in the domain. Sequence after TASK-014 so patient upload is already specified.
 
 ## Requirements
 
-- Local gallery, associated stage/date.
+- Display `DoctorMilestonePhoto` rows on Treatment / visit details.
+- Associate photos with `milestoneId` + `treatmentId`.
 - No medical comparison copy (“looks better/worse”).
-- Placement decided in Plan Mode if TASK-014 did not already define it — nested in Diary and/or Treatment, not a fourth or sixth tab.
+- No patient gallery of PatientPhoto rows.
+- Placement: existing Treatment surfaces or a nested screen pushed from them — not a fourth tab.
 
 ## Out of scope
 
 - Dedicated Photos tab
+- Patient gallery of own photos
+- Patient capture (TASK-014)
 - Guided capture
 - AI
 - Sharing
+- Clinic upload UI (other repo, TASK-034)
 
 ## Expected files or areas affected
 
-- Photos presentation
-- Existing routes only (plus nested stack screens if needed)
+- Photos and/or treatment presentation
+- Existing Treatment routes (plus nested stack screens if needed)
 
 ## New dependencies
 
@@ -42,11 +52,12 @@ No (use an existing image component if already added).
 
 ## Plan Mode
 
-No if TASK-014 already defined gallery entry. Yes if gallery placement is still open.
+Yes (doctor-photo display vs patient-photo capture must stay distinct).
 
 ## Acceptance criteria
 
-- Photos are visible after relaunch from an existing product surface.
+- Doctor photos attached to a visit are visible from Treatment after relaunch (from mock/local data until TASK-032/034).
+- Patient-uploaded Today photos are not shown as a patient gallery.
 - Primary navigation is unchanged.
 - No Photos tab.
 - The application remains runnable.
@@ -60,4 +71,4 @@ npm run lint
 
 Manually verify on iOS Simulator and Android Emulator.
 
-Confirm there is no Photos tab.
+Confirm there is no Photos tab and no patient gallery of own photos.

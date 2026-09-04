@@ -6,7 +6,7 @@ Milestone: M6 — Symptom Diary
 
 ## Goal
 
-Chronological history of submitted check-ins.
+Chronological history of submitted diary entries.
 
 ## Why this task is needed
 
@@ -18,7 +18,7 @@ Diary is incomplete without looking back.
 
 ## Requirements
 
-- Read-only list in Diary of protocol-defined check-ins.
+- Read-only list in Diary of submitted `DiaryEntry` rows.
 - No charts unless trivial.
 - No trend-based medical conclusions.
 - Do not copy raw answers into ProductEvent metadata.

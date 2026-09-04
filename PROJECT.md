@@ -8,12 +8,11 @@ The current application name is temporary and may change in the future.
 
 The first real version is a **closed clinical product pilot**, not a general phlebology platform.
 
-It supports **only** patients undergoing:
+It supports **only** patients undergoing **sclerotherapy**.
 
-- sclerotherapy
-- treatment of telangiectasias / spider veins
+Telangiectasia / spider veins is **not** a separate protocol or product path in this MVP.
 
-It does **not** support all phlebology procedures in this MVP.
+It does **not** support all phlebology procedures.
 
 The purpose is to validate whether structured mobile follow-up is useful for real patients and the clinic.
 
@@ -37,52 +36,64 @@ The application should answer the patient's main daily question:
 
 Patient.
 
-A minimal clinic review surface will live in a **separate repository**. It is not a doctor SaaS dashboard.
+A clinic review / assignment surface will live in a **separate repository**. It is not a protocol SaaS or a full doctor management platform. The doctor selects patient-specific actions from a predefined catalog, sets date ranges, appointments, periods, and completion.
 
 ## Core patient journey (Pilot MVP)
 
-Clinic invites eligible patient and assigns a versioned protocol
+Clinic creates or opens the patient
+→ Doctor assigns current treatment period, selected catalog actions with date ranges, and next appointment
+→ Clinic issues invite / QR containing only a secure token (no medical payload)
 → Patient accepts privacy notice and pilot consent
-→ Patient receives that protocol snapshot as one active treatment plan
-→ Patient sees today's actions
-→ Patient completes doctor-defined tasks
-→ Patient submits protocol-defined check-ins
-→ Patient submits structured progress photos
-→ Patient sees upcoming control appointment and clinic contact
-→ Patient submits end-of-treatment feedback
+→ Patient activates the invite and receives that patient-specific treatment
+→ Patient sees today’s assigned actions
+→ Patient completes assigned actions
+→ Patient submits the daily diary once per civil date
+→ Patient may upload up to three photos per civil date from Today
+→ Patient sees current appointment, treatment period “День N”, visit history, and doctor-uploaded visit photos
+→ Doctor may later add, disable, or change assignments and the appointment; history is kept
+→ Doctor decides treatment is complete
+→ Patient sees a completion screen (no main tabs) with clinic contact / booking
 → Clinic reviews structured follow-up in the separate review tool
 
 ## Core product concept
 
-Treatment Timeline.
+Treatment Timeline: clinical milestones / visits plus the current treatment period (“День N”).
 
-Stages, tasks, recommendations, timing, check-in questions, photo checkpoints and restrictions must originate from the doctor / clinic.
+Daily actions come from **patient-specific assignments** the doctor selects from a clinic-defined action catalog. They do not come from a frozen multi-stage protocol snapshot, and the app does not generate medical recommendations.
+
+Exact clinical texts come from clinic-approved content only. Clinic-supplied drafts stay draft until explicitly approved for patient-facing use.
 
 If medical thresholds are ever introduced, they must also be explicitly defined by the clinic. The Pilot MVP does not derive medical thresholds from patient data.
 
-The software provides structure for displaying and collecting that information. It does not invent clinical protocols.
+The software provides structure for displaying and collecting that information. It does not invent clinical protocols and does not include a protocol editor.
 
-A `PilotProtocol` is **versioned**. A `Treatment` stores the assigned **protocol version and an immutable snapshot**, so later clinic edits cannot silently change an existing patient's journey.
+Historical completions, diary entries, photos, periods, visits, and superseded appointments must not be deleted when the doctor changes the current schedule.
+
+See [docs/domain-model.md](docs/domain-model.md).
 
 ## Pilot patient surfaces
 
-Primary navigation is three sections:
+While treatment is **active**, primary navigation is exactly three tabs:
 
-### Today
+### Today (Сегодня)
 
-The primary screen. Shows only what is relevant today: current stage, today's tasks, check-in or photo request when the protocol asks, next appointment, clinic contact.
+The primary screen. Shows assignments active on the current civil date, completion of those assignments, a diary entry point if not yet submitted today, patient photo upload (max 3 per day), the current appointment, and clinic contact.
 
-### Treatment
+### Treatment (Лечение)
 
-Treatment Timeline and stage details from the assigned protocol snapshot.
+Milestones / visits, current period “День N” (Day 1 at period start; resets to Day 1 if the doctor starts a new period after a control visit), period/visit history, doctor-uploaded visit photos, and the current appointment.
 
-### Diary
+Do not use a fixed mock such as “Preparation → Procedure → Day 1 → Day 7 → Control”.
 
-Protocol-defined check-ins and check-in history.
+### Diary (Дневник)
 
-Progress photos are a **capability** reached from Today, Treatment stage details, and/or Diary. There is **no Photos tab**.
+Once per civil date during the entire active treatment: pain VAS 0–10, swelling VAS 0–10, wellbeing Лучше / Без изменений / Хуже. History of submitted entries. After submit, not offered again until the next calendar day.
 
-There is **no Activity tab** and **no Doctor tab** in the Pilot MVP. HealthKit and Health Connect are post-MVP. Basic doctor/clinic contact and the next appointment appear on Today and/or Treatment.
+There is **no Photos tab**. Patient photos are uploaded from Today only; the patient has **no gallery** of their own photos. Doctor visit photos are viewed from Treatment.
+
+There is **no fourth “Связь с доктором” tab**, **no Activity tab**, and **no Doctor tab**. HealthKit and Health Connect are post-MVP. Clinic contact and the next appointment live on Today and/or Treatment, and on the post-completion screen.
+
+When the doctor marks treatment **complete**, main tabs are hidden. The patient sees a simple completion screen with a CTA to contact / book the clinic.
 
 ## Medical safety
 
@@ -93,10 +104,10 @@ The mobile application must not independently:
 - change treatment
 - determine medical thresholds
 - give emergency medical conclusions
-- invent protocol content
+- invent protocol or catalog content
 - claim the pilot proves clinical efficacy
 
-Medical recommendations originate from a doctor or a doctor-defined treatment protocol.
+Medical recommendations originate from a doctor or clinic-approved content. The doctor controls patient-specific assignments; the app only displays and collects.
 
 The application may collect, display and structure patient information.
 
@@ -105,19 +116,24 @@ The application may collect, display and structure patient information.
 The product model supports:
 
 - Patient (including pilot cohort and consent/privacy acceptance)
-- PilotProtocol (versioned)
-- Treatment (protocol version + immutable snapshot)
-- TreatmentStage
-- TreatmentTask
-- CheckIn
-- PhotoEntry
-- Appointment
+- ActionCatalog (clinic content; draft until approved)
+- Treatment (patient-specific; no protocol snapshot as the plan)
+- TreatmentPeriod
+- TreatmentMilestone
+- ActionAssignment
+- ActionCompletion
+- DiaryEntry
+- PatientPhoto
+- DoctorMilestonePhoto
+- Appointment (current + superseded history)
 - FeedbackSurvey
 - ProductEvent
 
-`ProductEvent` is product analytics, not a duplicate clinical store. It must not contain raw check-in answers, medical free text, photo URLs/content, diagnoses, or doctor notes.
+`ProductEvent` is product analytics, not a duplicate clinical store. It must not contain raw diary answers, medical free text, photo URLs/content, diagnoses, or doctor notes.
 
-Pilot metrics must be segmentable by protocol type and pilot cohort so internal testers, closed-beta patients and clinic-pilot patients can be analyzed separately.
+Legacy ProductEvent fields `protocolKind` and `protocolVersion` described a versioned protocol snapshot. That context is **superseded**. Do **not** reinterpret `protocolVersion` as action-catalog version. Schema adaptation waits for TASK-041 or a later explicit event-migration task.
+
+Pilot metrics must be segmentable by pilot cohort so internal testers, closed-beta patients and clinic-pilot patients can be analyzed separately. The MVP has a single treatment context (sclerotherapy); do not require a telangiectasia segment.
 
 Real-patient data cannot exist only on one phone. The Pilot MVP uses **Supabase** for shared storage. This repository remains the Expo / React Native patient app.
 
@@ -137,15 +153,20 @@ Exact legal UX is finalized in the privacy task. The data model and onboarding m
 - chat
 - billing
 - all phlebology procedures
+- telangiectasia as a separate protocol/product path
+- multiple selectable protocols
+- protocol SaaS / editor
 - multi-clinic SaaS
 - HealthKit / Health Connect
 - dedicated Photos tab
-- dedicated Doctor tab
+- dedicated Doctor / contact tab
+- patient gallery of own submitted photos
 - guided capture overlay
-- push notifications
 - complex analytics product
 - runtime multi-language
 - full doctor management platform
+
+Push notifications **are in Pilot MVP scope** because the doctor can change assignments, appointments, and treatment completion. End-to-end push is after clinic-review writes exist (TASK-025 after TASK-034). Notification text must stay non-diagnostic.
 
 ## Technical foundation
 
@@ -174,21 +195,25 @@ Do not add libraries simply because they may be useful in the future.
 - Build features using small vertical slices.
 - Keep the application working after every completed task.
 
+Prefer explicit patient assignments, periods, and milestones over mutating a protocol snapshot. Do not mutate immutable historical treatment data. No speculative global state library.
+
 ## Current development stage
 
-Pilot MVP — Milestone 1 — Application Foundation.
+Pilot MVP — documentation aligned to clinic workflow (TASK-040 DONE).
 
 Milestone 0 — Foundation is complete.
+Milestone 1 — Application Foundation is complete (design tokens, UI primitives, Today + Treatment tabs).
+Milestone 2 — Pilot domain types, mock repository, and protocol intake **as originally specified** are complete (TASK-026, 004, 005). That snapshot / two-protocol model is **superseded** by TASK-040.
+Milestone 3 — ProductEvent port and read-only Today are complete (TASK-027, 006). Task completion (TASK-007) is **blocked** until TASK-041.
 
-Currently implemented:
+Currently implemented (code):
 
-- Expo project
-- TypeScript
-- Expo Router
-- iOS launch
-- Android launch
-- empty initial application screen
+- Expo project, TypeScript, Expo Router
+- iOS and Android launch
+- design tokens, UI primitives, Russian copy catalog
+- Today + Treatment tab shell
+- treatment domain + in-memory repository as the **legacy snapshot model**
+- Today read-only screen from that snapshot
+- ProductEvent local sink
 
-No product functionality is implemented yet.
-
-The development backlog lives in `docs/ROADMAP.md` and `docs/tasks/`. The next implementation task is TASK-001.
+The development backlog lives in `docs/ROADMAP.md` and `docs/tasks/`. The next implementation task is **TASK-041** (patient-specific treatment domain in code). Do not start TASK-007 until TASK-041 is done.

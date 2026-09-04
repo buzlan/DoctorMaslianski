@@ -6,25 +6,33 @@ Milestone: M6 — Symptom Diary
 
 ## Goal
 
-Check-in model driven by **protocol-defined questions** on the treatment snapshot. Validation is structural (required fields, allowed scales) — not medical risk cutoffs.
+Diary model for the clinic-confirmed Pilot MVP fields. Validation is structural (required fields, allowed scales) — not medical risk cutoffs.
 
-The symptom list previously drafted (pain, swelling, heaviness, itching, burning, feeling vs previous day) is a **proposal for clinic confirmation** in TASK-026, not app-invented medicine. If the doctor specifies different questions, the schema follows the protocol.
+Fields:
+
+- pain: VAS 0–10
+- swelling: VAS 0–10
+- general wellbeing: `better` | `unchanged` | `worse` (Лучше / Без изменений / Хуже)
+
+One entry per civil date during the **entire active treatment**. After submit, that date is complete.
+
+This is **not** a generic protocol-defined question engine and is **not** gated by a treatment snapshot.
 
 ## Why this task is needed
 
-Domain before UI. Testable without camera or native APIs. Questions must not be hardcoded as clinical truth in the app.
+Domain before UI. Testable without camera or native APIs. Questions must not be hardcoded as clinical truth beyond the clinic-confirmed field set. The app must not interpret scores.
 
 ## Dependencies
 
 - TASK-010 (reuse persistence if it still fits; otherwise in-memory until TASK-012)
-- Protocol question definitions from the snapshot (TASK-004 / TASK-026)
+- Standing diary rules from [docs/domain-model.md](../domain-model.md) and [docs/protocols/sclerotherapy-v1.md](../protocols/sclerotherapy-v1.md)
 
 ## Requirements
 
 - `src/modules/diary/domain`
 - Structural validation only.
 - The app must not interpret scores as diagnosis or emergency.
-- Clinical answer values belong on `CheckIn`, never on `ProductEvent` metadata.
+- Clinical answer values belong on `DiaryEntry`, never on `ProductEvent` metadata.
 
 ## Out of scope
 
@@ -33,7 +41,8 @@ Domain before UI. Testable without camera or native APIs. Questions must not be 
 - Notifications
 - Medical risk thresholds
 - Emergency conclusions
-- Inventing check-in questions if the clinic has specified others
+- Extra dimensions (heaviness, itching, burning, vs previous day) unless the clinic later approves them
+- Inventing diary meaning
 
 ## Expected files or areas affected
 
@@ -49,7 +58,8 @@ Yes (new module).
 
 ## Acceptance criteria
 
-- A validated check-in object exists against protocol-defined questions.
+- A validated diary entry object exists against the confirmed field set.
+- A second submit for the same civil date is rejected or treated as already complete.
 - Unit tests pass.
 - No UI is required.
 - The application remains runnable.

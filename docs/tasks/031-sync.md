@@ -8,11 +8,13 @@ Milestone: M9 — Supabase + sync
 
 ## Goal
 
-HTTP/Supabase implementations behind existing ports: treatment, tasks, check-ins, photos metadata, appointments, feedback, ProductEvent flush. Offline queue where practical.
+HTTP/Supabase implementations behind existing ports: treatment (assignments, periods, milestones, completions), diary, photos metadata (both kinds), appointments, feedback, ProductEvent flush. Offline queue where practical.
+
+Doctor-side schedule changes must apply on the device **without deleting** historical completions, diary entries, photos, periods, visits, or superseded appointments.
 
 ## Why this task is needed
 
-Clinic review and real patients need shared data. Completions and events must not live only on one phone.
+Clinic review and real patients need shared data. Completions and events must not live only on one phone. The doctor can change assignments and the appointment after invite.
 
 ## Dependencies
 
@@ -24,15 +26,17 @@ Clinic review and real patients need shared data. Completions and events must no
 
 - Swap mocks behind existing repository ports.
 - Queue writes while offline; retry on reconnect.
-- Flush ProductEvents **without** clinical payloads.
-- Treatment sync must send/receive **protocol version + snapshot**, not “latest protocol”.
-- The client still does not prescribe or change treatment.
+- Flush ProductEvents **without** clinical payloads and without revived snapshot `protocolVersion` semantics.
+- Treatment sync sends/receives patient-specific records (assignments, periods, milestones, current appointment), not “latest protocol snapshot”.
+- The client still does not prescribe or change treatment; it applies clinic-authored schedule updates.
+- Prompt visibility of doctor changes when the app is opened (push is TASK-025 after TASK-034).
 
 ## Out of scope
 
 - Photo file upload (TASK-032)
 - Invite UX (TASK-033)
 - Building backend in this RN repo
+- End-to-end push (TASK-025)
 - State library unless Plan Mode proves need
 
 ## Expected files or areas affected
@@ -51,7 +55,7 @@ Yes.
 ## Acceptance criteria
 
 - Today/Timeline/Diary/photos metadata/feedback work against Supabase in a configured env.
-- Snapshot isolation preserved.
+- Doctor-side assignment/appointment updates appear without wiping history.
 - Offline retry path exists for core writes.
 - The application remains runnable.
 

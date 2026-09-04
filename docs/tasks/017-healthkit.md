@@ -4,7 +4,7 @@ Status: POST-MVP — not part of the Pilot MVP
 
 Milestone: Post-MVP (HealthKit / Activity)
 
-Do **not** implement during the Pilot MVP. There is no Activity tab and no HealthKit requirement for the sclerotherapy / telangiectasia pilot.
+Do **not** implement during the Pilot MVP. There is no Activity tab and no HealthKit requirement for the sclerotherapy pilot.
 
 ## Goal
 

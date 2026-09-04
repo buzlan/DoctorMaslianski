@@ -29,7 +29,8 @@ The MVP roadmap includes real distribution. Phase 2–3 patients need official t
 ## Out of scope
 
 - Production store release (TASK-039)
-- HealthKit / push notifications
+- HealthKit (post-MVP)
+- Implementing push (TASK-025, after TASK-034)
 
 ## Expected files or areas affected
 

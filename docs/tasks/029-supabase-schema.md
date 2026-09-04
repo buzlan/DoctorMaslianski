@@ -12,29 +12,32 @@ Postgres schema, RLS, and Storage buckets for the Pilot MVP.
 
 ## Why this task is needed
 
-Real-patient data cannot exist only on one phone. Schema must preserve protocol versioning, treatment snapshots, consent, and event segmentation.
+Real-patient data cannot exist only on one phone. Schema must preserve patient-specific assignments, periods, milestones, historical completions, consent, and event segmentation — not a frozen protocol snapshot as the plan of care.
 
 ## Dependencies
 
-- Domain shapes from TASK-004 and later modules
-- TASK-026 protocol kinds
+- Domain shapes from TASK-041 and later modules
+- TASK-040 / sclerotherapy content intake (not two protocol kinds)
 
 ## Requirements
 
 Persist at least:
 
 - Patient, including `pilotCohort`, `privacyAcceptedAt`, `pilotConsentAt`, `consentDocumentVersion`
-- PilotProtocol (`kind`, **`version`**, content)
-- Treatment (`protocolId`, **`protocolVersion`**, **immutable snapshot**, status)
-- TreatmentStage / TreatmentTask as snapshot data (or equivalent JSON snapshot + completion overlay)
-- CheckIn, PhotoEntry, Appointment, FeedbackSurvey
-- ProductEvent with `protocolKind`, `protocolVersion`, `pilotCohort` and **without** clinical payloads
+- Action catalog content (sclerotherapy; draft vs approved is a clinic concern)
+- Treatment (status, current period pointer; **no** immutable protocol snapshot as the plan)
+- TreatmentPeriod, TreatmentMilestone, ActionAssignment, ActionCompletion
+- DiaryEntry, PatientPhoto, DoctorMilestonePhoto, Appointment (with supersede history), FeedbackSurvey
+- ProductEvent with `pilotCohort` and **without** clinical payloads and **without** treating legacy `protocolVersion` as catalog version
 
 Rules:
 
-- Editing protocol content publishes a **new version**. Existing treatments keep their snapshot.
-- RLS: patients see only their rows; clinic staff role sees review data.
-- Storage bucket for progress photos; URLs are not copied into ProductEvent.
+- Catalog content edits must not rewrite historical assignments/completions.
+- Disabling an assignment does not delete completions.
+- Appointment changes supersede; they do not silently destroy history.
+- Patient photos and doctor milestone photos are distinct objects / paths.
+- RLS: patients see only their rows; clinic staff role sees review data and can perform assignment writes.
+- Storage buckets for both photo kinds; URLs are not copied into ProductEvent.
 - Do not invent clinical columns that are actually medical thresholds computed by the app.
 
 ## Out of scope
@@ -42,6 +45,7 @@ Rules:
 - Clinic review UI (TASK-034)
 - Mobile client (TASK-030)
 - Implementing schema inside this React Native repository
+- End-to-end push (TASK-025); schema may store push tokens if Plan Mode for 029/025 agrees
 
 ## Expected files or areas affected
 
@@ -59,7 +63,7 @@ Yes (schema + RLS + region choice).
 ## Acceptance criteria
 
 - Migrations exist in the other repo.
-- Versioning, snapshot, consent, and cohort fields exist.
+- Assignments, periods, milestones, completion overlay, two photo kinds, appointment history, consent, and cohort fields exist.
 - RLS documented.
 - This mobile app is unchanged except optional docs.
 

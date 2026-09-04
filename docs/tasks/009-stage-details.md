@@ -1,4 +1,4 @@
-# TASK-009 — Stage details
+# TASK-009 — Visit / milestone details
 
 Status: NOT STARTED
 
@@ -6,11 +6,13 @@ Milestone: M4 — Treatment Timeline
 
 ## Goal
 
-Open a stage from the **treatment snapshot** to see its tasks, doctor-defined recommendations, and related requests (check-in / photo / appointment) as display-only.
+Open a treatment **milestone / visit** to see clinic-defined display content and related requests as display-only (aside from existing assignment completion if it appears here).
+
+Doctor-uploaded photos for that visit are displayed in TASK-015; this task may show a placeholder slot.
 
 ## Why this task is needed
 
-Timeline without details is a label list. Patients need the stage contents from the assigned protocol version, not from a later clinic edit.
+Timeline without details is a label list. Patients need visit contents from **this patient’s treatment records**, not from a protocol snapshot or a later catalog edit.
 
 ## Dependencies
 
@@ -18,21 +20,23 @@ Timeline without details is a label list. Patients need the stage contents from 
 
 ## Requirements
 
-- Stack route above tabs, for example `src/app/treatment/[stageId].tsx`.
-- Read from the treatment snapshot.
-- Read-only except existing task completion if that task appears in the stage.
+- Stack route above tabs, for example `src/app/treatment/[milestoneId].tsx`.
+- Read from treatment milestones / assignments, not from `TreatmentSnapshot` stages.
+- Read-only except existing assignment completion if that assignment appears in the visit context.
 - No new medical logic.
-- Check-in and photo requests are display/CTA placeholders until TASK-012 and TASK-014.
+- Diary and patient-photo requests are display/CTA placeholders until TASK-012 and TASK-014 if they belong on this screen at all (patient photos upload from Today; do not add a patient gallery here).
 
 ## Out of scope
 
-- Editing stages or the protocol
-- Diary or photo capture (later tasks may enter capture from this screen; this task stays display-only except task completion)
+- Editing milestones or the catalog
+- Patient photo capture (TASK-014)
+- Doctor photo viewing UI if still empty (TASK-015)
+- Protocol editor
 
 ## Expected files or areas affected
 
 - New route
-- Stage detail presentation
+- Visit detail presentation
 
 ## New dependencies
 
@@ -44,7 +48,7 @@ Yes (navigation + data flow).
 
 ## Acceptance criteria
 
-- Tap a stage opens details from the snapshot.
+- Tap a visit opens details from the patient’s treatment records.
 - Back returns to the timeline.
 - Invalid id has a safe empty or error state.
 - The application remains runnable.

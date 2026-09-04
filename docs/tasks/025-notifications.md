@@ -1,62 +1,78 @@
-# TASK-025 — Notifications
+# TASK-025 — Push notifications for doctor-side changes
 
-Status: POST-MVP — not part of the Pilot MVP
+Status: NOT STARTED
 
-Milestone: Post-MVP (Notifications)
+Milestone: M11b — after Clinic Review (TASK-034)
 
-Do **not** implement during the Pilot MVP. Push notifications are not required for the first pilot.
+Push notifications **are part of the Pilot MVP**. They exist so the patient is notified when the doctor changes relevant treatment information.
 
-This file remains a coarse placeholder for later work.
+**End-to-end implementation depends on TASK-034.** Clinic-side writes (assignments, appointment, possibly treatment completion) must exist so the workflow is verifiable. Backend/mobile prerequisites (auth session, push token registration, payload shape) may be prepared in M9/M10, but do not treat this task as done until a real clinic-side change can produce a patient notification.
 
-Notification contracts and backend schedules do not exist yet. **Do not implement this task from this file alone.**
+Do **not** implement this task from this file alone without a Plan Mode pass against the actual Expo / backend contract.
 
 Before implementation:
 
-1. Re-enter Plan Mode against the real notification contract.
-2. Split into smaller tasks if this placeholder is still too large (for example token registration vs reminder types vs deep links from notifications).
+1. Re-enter Plan Mode against the real notification contract (Expo push + how the other repo triggers sends).
+2. Split into smaller tasks if this file is still too large (token registration vs send vs tap routing).
 3. Do not treat the bullets below as frozen file lists or dependency choices.
 
-## Goal (coarse)
+## Goal
 
-Push token registration; reminders for tasks, check-ins, and appointments; taps open the right screen — once the backend can schedule them.
+When the doctor changes relevant **assignments**, the **appointment**, and possibly **treatment completion**, the patient receives a push notification.
+
+Notification text must remain **non-diagnostic** and must avoid unnecessary medical details (no catalog instructions, no diary values, no photo content).
+
+Taps open a relevant existing screen (Today, Treatment, or the completion screen). Denied notification permission must leave the app usable; sync still updates the plan when the patient opens the app.
 
 ## Why this task is needed
 
-This is the last major native companion loop. It depends on real identity and backend schedules.
+The doctor can change the patient’s schedule after invite. The patient needs a prompt, non-clinical notice that something changed.
 
 ## Dependencies
 
-- Re-planned onboarding/identity work
+- **TASK-034** (clinic-side writes)
+- TASK-031 (sync so the app can show updated data after the tap)
+- TASK-022 / TASK-030 (session / client)
+- Optional: token persistence may start in M9, but e2e is after 034
 
-## Out of scope until re-planned
+## Requirements
 
-- App-generated urgent medical alerts (“seek emergency care”)
+- Permission flow.
+- Token registration behind an application-owned boundary.
+- Handle doctor-change notifications only for this MVP (not a generic reminder platform).
+- Copy is product/chrome text, not medical recommendations.
+- ProductEvent must not store notification body medical text. Ids only if an event is warranted.
+- No app-generated urgent medical alerts (“seek emergency care”).
+
+## Out of scope
+
+- Daily task / diary reminder campaigns unless a later clinic decision adds them
 - Emergency medical conclusions
+- Using notification copy as a channel for clinical instructions
+- Implementing clinic send logic inside this React Native repository (other repo / backend)
 
 ## Expected files or areas affected
 
-Unknown until re-plan.
+- Application-owned notifications port
+- App config / credentials as required by Expo SDK 57 push docs
+- Copy catalog for non-diagnostic titles/bodies
+- Other repo: send triggers on assignment / appointment / completion writes
 
 ## New dependencies
 
-Unknown until re-plan.
+Unknown until Plan Mode (`expo-notifications` is the likely Expo path). Justify then.
 
 ## Plan Mode
 
-Yes — **required re-plan**.
+Yes — **required** before implementation.
 
-## Acceptance criteria (indicative)
+## Acceptance criteria
 
-Final criteria come from the re-plan.
-
-Indicative:
-
-- Permission flow exists.
-- A reminder opens a relevant screen.
-- Denied state remains usable.
+- A clinic-side change to assignment, appointment, or completion (from TASK-034) can result in a patient notification in a configured environment.
+- Notification text contains no diagnosis, no medical instruction payload, and no diary/photo content.
+- Denied permission: app remains usable; data still updates on open via sync.
 - The application remains runnable.
-- Notifications do not invent emergency medical conclusions.
 
 ## Verification
 
-Defined in the re-plan.
+Defined in Plan Mode. At minimum `tsc`, lint, both platforms, plus a doctor-change path against clinic-review writes.

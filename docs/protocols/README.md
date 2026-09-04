@@ -1,23 +1,22 @@
-# Pilot protocol intake
+# Pilot clinic content intake
 
-This directory is the clinic-authored, versioned source of truth for the two Pilot MVP protocols:
+This directory is the clinic-authored, versioned source of truth for **Pilot MVP sclerotherapy content**.
 
-- sclerotherapy
-- telangiectasias / spider veins (`kind`: `telangiectasia`)
+The Pilot MVP has **one** treatment context: sclerotherapy. Telangiectasia / spider veins is **not** a separate protocol or product path.
 
-These files are documentation intake records. They are not executable fixtures. TASK-005 owns mock/executable fixtures under `src/`.
+These files are documentation intake records. They are not executable fixtures. TASK-041 owns mock/executable fixtures under `src/`.
 
-Missing fields are **not** medical advice. They must not be shown as patient instructions. TASK-005 must not copy intake markers into patient-facing fixture fields.
+Missing fields are **not** medical advice. They must not be shown as patient instructions. Fixtures must not copy intake markers into patient-facing fields.
 
 Engineering does **not** invent:
 
-- treatment stages
+- action catalog items or their instructions
+- treatment milestone / visit labels
 - timing
-- tasks
 - recommendations
 - restrictions
-- check-in questions
-- photo checkpoints
+- diary meaning or thresholds
+- photo capture medical notes
 - control visit schedule
 - medical thresholds
 - warning rules
@@ -26,41 +25,43 @@ Engineering does **not** invent:
 - medication instructions
 - any other treatment instructions
 
-If a value is clinical and has not been supplied by the clinic, leave it marked as missing. Do not guess.
+If a value is clinical and has not been supplied **and approved** by the clinic, leave it marked as missing. Do not guess.
+
+A doctor-supplied document may be used as **source material**. It remains draft until the clinic explicitly approves it for patient-facing use. Do not copy unapproved text into the app.
+
+There is no protocol SaaS / editor in this MVP. The doctor assigns catalog items to a patient with date ranges; that assignment lives on the treatment, not as a second protocol variant.
 
 ## Records in this directory
 
-| File | kind | version | status |
+| File | role | version | status |
 | --- | --- | --- | --- |
-| [sclerotherapy-v1.md](sclerotherapy-v1.md) | `sclerotherapy` | 1 | `draft` |
-| [telangiectasia-v1.md](telangiectasia-v1.md) | `telangiectasia` | 1 | `draft` |
-
-Display name for `telangiectasia`: telangiectasias / spider veins.
+| [sclerotherapy-v1.md](sclerotherapy-v1.md) | sclerotherapy content set / action catalog | 1 | `draft` |
+| [telangiectasia-v1.md](telangiectasia-v1.md) | **not a Pilot MVP path** (kept for TASK-026 history) | 1 | `draft` — superseded as a product path |
 
 ## Identity fields
 
-Each protocol version record repeats these fields in its header.
+The sclerotherapy content record repeats these fields in its header.
 
 | Field | Meaning |
 | --- | --- |
-| `kind` | Closed set: `sclerotherapy` \| `telangiectasia`. Code identifiers stay English. Display labels may be longer. |
-| `version` | Required monotonic integer. Version 1 is the first record for that kind. |
-| `status` | Protocol-version status, not app runtime status. See below. |
-| `source` | Clinic / doctor. Owner: Doctor Maslianski clinic. Engineering owns structure and versioning mechanics only. |
-| `patientFacingLanguage` | Russian. Patient-facing values remain empty until the clinic supplies them. |
+| `kind` | `sclerotherapy` only for assignable Pilot MVP content. Code identifiers stay English. |
+| `version` | Monotonic integer for **clinic content** records. Version 1 is the first sclerotherapy content record. This is **not** a frozen patient journey and is **not** ProductEvent `protocolVersion`. |
+| `status` | Content-record status, not app runtime status. See below. |
+| `source` | Clinic / doctor. Owner: Doctor Maslianski clinic. Engineering owns structure only. |
+| `patientFacingLanguage` | Russian. Patient-facing values remain empty until the clinic supplies **and approves** them. |
 | `contentBoundary` | Engineering did not invent clinical values. |
 
 ### Status
 
 | Status | Meaning |
 | --- | --- |
-| `draft` | Engineering structure only. Not assignable to patients as clinical truth. |
+| `draft` | Engineering structure and/or unapproved source material. Not assignable to patients as clinical truth. |
 | `pending clinic confirmation` | Handed to the clinic. Still not approved. |
 | `approved` | Clinic confirmed this version. Only then is it source content for real-patient assignment. |
 
-Both current v1 records ship as **`draft`**. Clinic approval is a later action, not an engineering decision.
+The current sclerotherapy v1 record ships as **`draft`**. Clinic approval is a later action, not an engineering decision.
 
-Protocol-level `status` is the assignability flag. Each clinical section also has a **Content status** line (`TBD by clinic` / `pending clinic confirmation` / `confirmed by clinic`) so a later clinic review can confirm one section without implying the whole protocol is approved.
+Content-record `status` is the assignability flag. Each clinical section also has a **Content status** line (`TBD by clinic` / `pending clinic confirmation` / `confirmed by clinic`) so a later clinic review can confirm one section without implying the whole record is approved.
 
 ## Missing clinical content
 
@@ -76,31 +77,33 @@ Do **not**:
 
 - treat them as patient instructions
 - copy them into patient-facing UI
-- copy them into patient-facing executable fixture fields in TASK-005 (titles, instructions, questions, restriction text, appointment labels)
+- copy them into patient-facing executable fixture fields (titles, instructions, questions, restriction text, appointment labels)
 
 If a field is ambiguous (clinical vs structural), leave it TBD rather than guessing.
 
 ## Versioning
 
-Clinic protocol version governance is owned by protocol **status** and **real-patient assignment**. Test/mock snapshots do not govern versions.
+Clinic content version governance is owned by content **status** and **real-patient assignment**. Test/mock data does not govern versions.
+
+Patient isolation is **not** “freeze a protocol snapshot on Treatment”. Patient isolation is: assignments, completions, periods, milestones, diary entries, photos, and appointment history are explicit records. Catalog edits do not rewrite existing assignment wording unless the doctor updates that assignment. Historical records are not deleted when the schedule changes.
 
 Rules:
 
-1. While a protocol version is `draft` and has never been approved or assigned to a real patient, the clinic may edit that draft **in place** (same file, same version number).
+1. While a content version is `draft` and has never been approved or assigned to a real patient, the clinic may edit that draft **in place** (same file, same version number).
 2. Once a version is `approved`, later clinical content changes create a **new monotonic version** (new file), not a mutation of the approved version.
-3. Once a version has been assigned to a real patient, that Treatment keeps its **immutable assigned snapshot**. Later protocol versions do not rewrite that journey.
-4. Test/mock snapshots created by TASK-005 do **not** freeze the clinic protocol version and do not force a new version.
+3. Once actions from a version have been assigned to a real patient, those **ActionAssignment** rows (and their completions) keep their history. Later catalog versions do not rewrite that history.
+4. Test/mock data created by TASK-005 / TASK-041 does **not** freeze clinic content version and does not force a new version.
 
-File naming: `{kind}-v{version}.md`. After approval, later clinical edits become `sclerotherapy-v2.md`, `telangiectasia-v2.md`, and so on.
+File naming for assignable content: `sclerotherapy-v{version}.md`. After approval, later clinical edits become `sclerotherapy-v2.md`, and so on.
 
-TASK-004 will later store `protocolVersion` plus an immutable snapshot on `Treatment` for assignment isolation. That contract is documented here; it is not implemented in this task.
+Do not add new telangiectasia content records for this MVP.
 
-## Canonical record template
+## Canonical record template (sclerotherapy)
 
-Both protocol files follow this structure so they stay aligned.
+The sclerotherapy file follows this structure.
 
 ```markdown
-# Protocol: {kind} v{version}
+# Sclerotherapy content: v{version}
 
 Content in this file is clinic-authored or explicitly marked as missing.
 Missing fields are not medical advice. Do not treat placeholder structure as
@@ -108,7 +111,7 @@ treatment instructions. Do not copy intake markers into patient-facing fixtures.
 
 ## Identity
 
-- kind:
+- kind: sclerotherapy
 - version:
 - status:
 - source:
@@ -118,70 +121,63 @@ treatment instructions. Do not copy intake markers into patient-facing fixtures.
 
 ## Versioning
 
-Restate the four versioning rules for this record.
+Restate the versioning rules for this record.
 
-## Stages
-
-Content status: TBD by clinic. Placeholder structure only. Do not treat as medical advice.
-
-| id | title | summary | timingRule | order |
-| --- | --- | --- | --- | --- |
-| TBD | TBD by clinic | TBD by clinic | TBD by clinic | TBD |
-
-Do not invent stage names or day ranges.
-
-## Tasks
+## Action catalog
 
 Content status: TBD by clinic. Placeholder structure only. Do not treat as medical advice.
 
-| id | stageId | title | instruction | scheduleRule |
-| --- | --- | --- | --- | --- |
-| TBD | TBD | TBD by clinic | TBD by clinic | TBD by clinic |
-
-Do not invent daily actions.
-
-## Check-in definitions (active protocol data)
-
-Content status: TBD by clinic.
-
-No active check-in questions in this version. Candidate questions in
-docs/protocols/README.md are not protocol data.
-
-## Photo checkpoints
-
-Content status: TBD by clinic. Placeholder structure only. Do not treat as medical advice.
-
-| id | stageId | title | when | captureNotes |
-| --- | --- | --- | --- | --- |
-| TBD | TBD | TBD by clinic | TBD by clinic | TBD by clinic |
-
-Do not invent a photo schedule.
-
-## Restrictions
-
-Content status: TBD by clinic. Placeholder structure only. Do not treat as medical advice.
-
-| id | title | instruction | appliesWhen |
-| --- | --- | --- | --- |
-| TBD | TBD by clinic | TBD by clinic | TBD by clinic |
-
-Do not invent limits.
-
-## Control appointment pattern
-
-Content status: TBD by clinic. Placeholder structure only. Do not treat as medical advice.
-
-| id | label | when |
+| id | title | instruction |
 | --- | --- | --- |
 | TBD | TBD by clinic | TBD by clinic |
 
-Do not invent visit cadence.
+Do not invent daily actions. The doctor assigns catalog items to a patient with start/end civil dates.
+
+## Treatment milestones / visits
+
+Content status: TBD by clinic. Placeholder structure only. Do not treat as medical advice.
+
+| id | kind | title |
+| --- | --- | --- |
+| TBD | TBD by clinic | TBD by clinic |
+
+Do not invent a fixed mock such as Preparation → Procedure → Day 1 → Day 7 → Control.
+
+## Standing diary (active treatment)
+
+Clinic-confirmed structure for the Pilot MVP (still not approved patient copy beyond the field names agreed with the clinic):
+
+- once per civil date during the entire active treatment
+- pain: VAS 0–10
+- swelling: VAS 0–10
+- general wellbeing: Лучше / Без изменений / Хуже
+
+Do not infer clinical meaning or thresholds.
+
+## Patient photos
+
+- uploaded from Today
+- maximum 3 per calendar day
+- no patient gallery of own photos
+- clinic reviews them
+
+Do not invent capture medical notes.
+
+## Doctor milestone photos
+
+- doctor uploads and attaches to a visit / milestone
+- patient views them from Treatment
+
+## Appointment
+
+Doctor sets the next appointment date/time and may change it later.
+History is superseded, not silently destroyed.
 
 ## Other clinic-authored instructions
 
 Content status: TBD by clinic.
 
-Empty until the clinic supplies rows. Do not invent instructions.
+Empty until the clinic supplies and approves rows. Do not invent instructions.
 
 ## Unresolved / missing fields
 
@@ -190,60 +186,29 @@ Checklist of every clinical section still TBD.
 
 Do not fill `title` or other clinical fields with guessed labels such as “Day 1” or “Compression period”.
 
-## Candidate questions for clinic review (not protocol data)
+## Candidate questions (historical, not catalog data)
 
-The following dimensions appeared in earlier task drafts ([TASK-011](../tasks/011-diary-domain.md), [TASK-026](../tasks/026-protocol-intake.md)). They are **unapproved product proposals**, not clinic-authored questions, and **not** active protocol data.
+Earlier drafts proposed additional diary dimensions (heaviness, itching, burning, vs previous day). The clinic confirmed pain VAS, swelling VAS, and categorical wellbeing for the Pilot MVP. Extra dimensions stay out of catalog/diary data unless the clinic later approves them.
 
-Do not copy them into:
+## What TASK-041 may safely derive
 
-- the **Check-in definitions (active protocol data)** section of a protocol record
-- TASK-004 domain defaults
-- TASK-005 fixture question definitions
-- patient-facing UI
+TASK-041 may take **shapes and rules** from these records and from [docs/domain-model.md](../domain-model.md), not unapproved clinical values:
 
-Until the clinic confirms questions, v1 active check-in data is none.
+- one treatment context: sclerotherapy
+- ActionCatalog containers with optional/empty items
+- Treatment, TreatmentPeriod, TreatmentMilestone, ActionAssignment, ActionCompletion
+- standing diary field shapes
+- distinct PatientPhoto vs DoctorMilestonePhoto
+- Appointment with supersede history
+- helpers compute today’s assignments from civil-date ranges
 
-Candidate dimensions for clinic review only:
+TASK-041 must not:
 
-- pain
-- swelling
-- heaviness
-- itching
-- burning
-- comparison with the previous day
-
-If the clinic specifies different questions, follow the clinic. If the clinic rejects these, they stay out of protocol data.
-
-## What TASK-004 may safely derive
-
-TASK-004 may take **shapes and rules** from these records, not clinical values:
-
-- `PilotProtocol.kind` union (`sclerotherapy` | `telangiectasia`) and required `version: number`
-- nested container types with optional/empty collections: stages, tasks, check-in defs, photo checkpoints, restrictions, appointment pattern
-- snapshot copy semantics: Treatment stores `protocolId`, `protocolVersion`, and an immutable snapshot
-- helpers compute from the snapshot only
-
-TASK-004 must not:
-
-- hardcode a stage list
+- restore telangiectasia as a second protocol path
 - copy TBD strings into domain defaults
-- treat candidate questions as schema defaults
 - invent medical thresholds
+- reinterpret ProductEvent `protocolVersion` as catalog version
 
-## What TASK-005 will later consume
+## What TASK-005 already did (historical)
 
-TASK-005 is the first task allowed to place executable fixtures under `src/`.
-
-It should:
-
-- create two `PilotProtocol` fixtures whose `kind` and `version` match these v1 files
-- copy only **clinic-supplied** values from the intake records
-- **not** copy intake markers (`TBD by clinic`, `placeholder structure only`, `pending clinic confirmation`) into patient-facing fixture fields
-- until clinic content exists, prefer **empty structural collections** (empty stages, tasks, check-in defs, photo checkpoints, restrictions, appointments) and/or **development-only fixture state** that is not presented as patient instructions
-- not invent fake clinical wording to make fixtures look complete
-- not promote candidate check-in questions into fixture question defs
-- demonstrate snapshot isolation in tests: an already constructed Treatment snapshot is unchanged if a later protocol version object is created in the mock
-
-That isolation test proves assignment immutability. It does **not** freeze clinic protocol version governance for a `draft` intake record.
-
-TASK-005 snapshots are test/mock data. They do not approve a protocol, do not count as real-patient assignment, and do not require a new clinic version.
+TASK-005 created two empty `PilotProtocol` fixtures (sclerotherapy and telangiectasia) and snapshot assignment. That model is **superseded**. Do not extend it in TASK-007. TASK-041 replaces fixtures with the patient-specific model. Until clinic-approved catalog text exists, executable fixtures keep empty or non-clinical structural collections.

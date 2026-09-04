@@ -21,13 +21,15 @@ The MVP exists to learn whether the product is useful. Internal testers must not
 - TASK-033 cohort assignment
 - TASK-028 survey
 - TASK-034 for clinic tally (optional)
+- ProductEvent schema as adapted after TASK-041 / any explicit event migration (do not treat legacy `protocolVersion` as catalog version)
 
 ## Requirements
 
 Every reported metric must be **segmentable** by:
 
-- protocol kind — sclerotherapy vs telangiectasia
 - pilot cohort — `internal_dry_run` | `closed_beta` | `clinic_pilot`
+
+The Pilot MVP has a **single** treatment context (sclerotherapy). Do **not** require sclerotherapy vs telangiectasia splits.
 
 Phase 3 / Phase 4 evaluation queries **exclude** `internal_dry_run` by default (or use `clinic_pilot` only, as the metrics doc specifies).
 
@@ -35,9 +37,10 @@ Measurable:
 
 - invited / activated (activation rate)
 - treatment started
-- scheduled vs completed tasks
-- requested vs submitted check-ins
-- requested vs completed photo checkpoints
+- assigned vs completed actions
+- requested vs submitted diary entries
+- patient photos submitted (counts; respect daily cap as product context, not a medical metric)
+- doctor milestone photos viewed or present (if an event exists; otherwise clinic-side counts)
 - journey completion / return engagement
 - feedback completion
 - usefulness score
@@ -45,15 +48,16 @@ Measurable:
 - optional clinic clarification-contact count
 - qualitative clinic notes
 
-Symptom **values** are not success metrics. Do not derive medical conclusions.
+Diary **values** are not success metrics. Do not derive medical conclusions.
 
-Confirm ProductEvent coverage: required names exist; **no** clinical payloads.
+Confirm ProductEvent coverage: required names exist; **no** clinical payloads; no revived snapshot-protocol event semantics.
 
 ## Out of scope
 
 - Complex analytics product
 - Encoding “activation rate must be ≥ X” in the app
 - Clinical efficacy claims
+- Segmenting the MVP as two protocol kinds
 
 ## Expected files or areas affected
 
@@ -71,7 +75,7 @@ Yes.
 
 ## Acceptance criteria
 
-- Metrics catalog exists with segmentation rules.
+- Metrics catalog exists with cohort segmentation rules.
 - Evaluation queries can exclude internal testers.
 - Event privacy boundary is checked.
 - No thresholds in app logic.
@@ -79,4 +83,4 @@ Yes.
 
 ## Verification
 
-Review the catalog and a sample query per protocol kind and cohort.
+Review the catalog and a sample query per cohort.

@@ -12,15 +12,21 @@ This mobile repo only documents the contract.
 
 ## Goal
 
-Minimal **read-mostly** review tool:
+Minimal clinic tool — **not** a protocol SaaS / editor, **not** a full doctor management platform.
 
-Patients → Patient → treatment timeline → task completion → check-ins → photos → feedback
+Staff can:
 
-Plus one justified write: **Invite patient + assign a specific protocol version + cohort** (copies an immutable snapshot).
+- list patients and open a patient
+- review timeline, assignment completions, diary, patient photos, doctor photos, feedback
+- **write** patient-specific treatment: select catalog actions with date ranges, add/disable/change assignments, set/edit next appointment, attach photos to a milestone/visit, start a new period after a control visit, mark treatment complete
+- generate invite / QR containing **only** a secure token
+- assign **pilot cohort**
+
+Historical completions, diary, photos, periods, visits, and superseded appointments must not be deleted when staff disable or change an assignment.
 
 ## Why this task is needed
 
-Clinic staff must review structured follow-up. This is not a doctor SaaS.
+The doctor controls the patient’s plan. The patient app only displays and collects. Clinic staff must both assign and review structured follow-up.
 
 ## Dependencies
 
@@ -29,17 +35,21 @@ Clinic staff must review structured follow-up. This is not a doctor SaaS.
 
 ## Requirements
 
-- Show which protocol **version** the patient is on.
-- Publishing a new protocol version must **not** silently rewrite existing treatments.
+- Show current period, Day N basis, assignments with date ranges, current appointment, milestones.
+- Publishing new catalog content must **not** silently rewrite existing assignments.
 - Staff auth: clinic-only allowlist. Not patient-facing.
 - Optional staff tally for routine clarification contacts (for TASK-035). Do not infer this from the phone.
 - No protocol editor SaaS, chat, billing, or multi-clinic admin.
+- Patient photos (from Today) vs doctor milestone photos stay distinct.
+- These writes are the prerequisite for end-to-end TASK-025 push.
 
 ## Out of scope
 
 - Forcing web code into `DoctorMaslianski`
 - Full doctor management platform
 - Diagnosing patients in the review UI
+- Designing a protocol editor
+- Multiple selectable treatment protocols (sclerotherapy only)
 
 ## Expected files or areas affected
 
@@ -56,9 +66,9 @@ Yes (in the other repository).
 
 ## Acceptance criteria
 
-- Clinic can list patients and open timeline, tasks, check-ins, photos, feedback.
-- Invite assigns version + snapshot + cohort.
-- Existing treatments keep their snapshot after a new protocol version is published.
+- Clinic can list patients and open timeline, assignments, diary, both photo kinds, feedback.
+- Clinic can assign/disable actions, set appointment, attach visit photos, start a new period, mark complete, and issue a token invite.
+- Existing historical rows remain after those writes.
 - This RN app is unchanged except docs.
 
 ## Verification

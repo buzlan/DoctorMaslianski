@@ -1,4 +1,4 @@
-# TASK-010 — Persist task completion
+# TASK-010 — Persist assignment completion
 
 Status: NOT STARTED
 
@@ -6,7 +6,7 @@ Milestone: M5 — Local State and Persistence
 
 ## Goal
 
-Task completion survives restart. Choose the smallest Expo-compatible store at plan time (likely an overlay of completion IDs on the **treatment snapshot** — not a second source of truth for the protocol, and not a rewrite of protocol fixtures).
+Assignment completion survives restart. Choose the smallest Expo-compatible store at plan time (likely an overlay of `ActionCompletion` records — not a second source of truth for the catalog, and not a rewrite of clinic content fixtures).
 
 ## Why this task is needed
 
@@ -20,9 +20,10 @@ This is the first real offline requirement. There is still no backend.
 
 - Persistence behind the treatment repository.
 - Load on startup.
-- Do not persist the whole mock protocol unless that is simpler than an overlay.
+- Persist completion overlay (assignment id + civil date), not an entire mock protocol snapshot.
 - Still no global state library unless Plan Mode for this task shows Context/repository is failing.
 - Do not install storage “for diary/photos too” unless the same API is used immediately.
+- Disabling an assignment must not delete persisted completions.
 
 ## Out of scope
 
@@ -48,7 +49,7 @@ Yes (persistence).
 ## Acceptance criteria
 
 - Kill and relaunch: completions remain.
-- Mock protocol still comes from code/fixtures.
+- Catalog / assignment definitions still come from code/fixtures or later sync, not from rewriting history.
 - The application remains runnable.
 
 ## Verification

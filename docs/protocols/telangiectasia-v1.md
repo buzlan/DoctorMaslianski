@@ -1,5 +1,7 @@
 # Protocol: telangiectasia v1
 
+**Not a Pilot MVP product path.** Telangiectasia / spider veins is not a separate protocol or selectable treatment in the current Pilot MVP. This file is retained for TASK-026 history only. Do not assign it, do not extend it, and do not treat it as a second catalog. Assignable intake is [sclerotherapy-v1.md](sclerotherapy-v1.md).
+
 Display name: telangiectasias / spider veins.
 
 Content in this file is clinic-authored or explicitly marked as missing.
