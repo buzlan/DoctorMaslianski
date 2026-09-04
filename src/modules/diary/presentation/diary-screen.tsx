@@ -14,7 +14,7 @@ import {
 } from "@/modules/diary/application";
 import type { VasScore, Wellbeing } from "@/modules/diary/domain";
 import { copy } from "@/shared/copy";
-import { toLocalCalendarDate } from "@/shared/date/to-local-calendar-date";
+import { loadCivilTodayDate } from "@/shared/date/load-civil-today-date";
 import { getColors, theme } from "@/shared/theme";
 import { AppText, Screen, Stack } from "@/shared/ui";
 
@@ -35,10 +35,6 @@ function toViewState(result: DiaryTodayResult): DiaryViewState {
   return result;
 }
 
-function todayDate() {
-  return toLocalCalendarDate(new Date());
-}
-
 export function DiaryScreen() {
   const colors = getColors(useColorScheme());
   const [viewState, setViewState] = useState<DiaryViewState>({
@@ -52,11 +48,13 @@ export function DiaryScreen() {
       const generation = loadGenerationRef.current + 1;
       loadGenerationRef.current = generation;
 
-      void sharedDiaryLoader.load(todayDate()).then((result) => {
-        if (loadGenerationRef.current === generation) {
-          setViewState(toViewState(result));
-        }
-      });
+      void loadCivilTodayDate().then((onDate) =>
+        sharedDiaryLoader.load(onDate).then((result) => {
+          if (loadGenerationRef.current === generation) {
+            setViewState(toViewState(result));
+          }
+        }),
+      );
     }, []),
   );
 
@@ -69,8 +67,8 @@ export function DiaryScreen() {
     loadGenerationRef.current = generation;
     setSubmitting(true);
 
-    void sharedDiaryLoader
-      .submit(todayDate(), answers)
+    void loadCivilTodayDate()
+      .then((onDate) => sharedDiaryLoader.submit(onDate, answers))
       .then((result) => {
         if (loadGenerationRef.current === generation) {
           setViewState(toViewState(result));
@@ -106,11 +104,13 @@ export function DiaryScreen() {
                 const generation = loadGenerationRef.current + 1;
                 loadGenerationRef.current = generation;
                 setViewState({ status: "loading" });
-                void sharedDiaryLoader.load(todayDate()).then((result) => {
-                  if (loadGenerationRef.current === generation) {
-                    setViewState(toViewState(result));
-                  }
-                });
+                void loadCivilTodayDate().then((onDate) =>
+                  sharedDiaryLoader.load(onDate).then((result) => {
+                    if (loadGenerationRef.current === generation) {
+                      setViewState(toViewState(result));
+                    }
+                  }),
+                );
               }}
             >
               <AppText style={{ color: colors.accent }}>

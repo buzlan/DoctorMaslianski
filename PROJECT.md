@@ -179,7 +179,7 @@ Pilot shared data uses Supabase (Postgres, Auth, Storage, RLS).
 
 Supabase infrastructure definitions such as database migrations, RLS policies, storage configuration, seed/invite tooling, and the clinic review application live in a separate pilot repository.
 
-The React Native application contains environment configuration and a shared Supabase JS client (TASK-030). Patient auth session restore and the root auth gate are TASK-022. Product repositories remain local/mock until TASK-031.
+The React Native application contains environment configuration and a shared Supabase JS client (TASK-030). Patient auth session restore and the root auth gate are TASK-022. Authenticated product repositories sync through TASK-031. Patient photo upload is TASK-032.
 
 State management, networking and persistence libraries will be selected when their corresponding requirements are implemented.
 
@@ -219,6 +219,7 @@ Currently implemented (code):
 - ProductEvent local sink (`app_opened`, `task_completed`, diary/photo counts, `treatment_journey_completed`, `feedback_submitted` use patient/treatment ids + cohort; no snapshot protocol pair; `feedback_submitted` may include numeric usefulness/clarity only)
 - completed-treatment shell: when `Treatment.status` is `completed`, main tabs are hidden; completion screen reuses clinic contact and optional local feedback survey
 - Supabase public env + shared JS client in `src/core/` (no repository swap)
-- Auth session foundation (TASK-022): persisted session restore, confirmed-only applySession/signOut, generation-based SecureStore, root auth gate. Unauthenticated → access screen; production unavailable → service-unavailable copy; `__DEV__` + missing env still uses local treatment shells. Product repositories remain local until TASK-031.
+- Auth session foundation (TASK-022): persisted session restore, confirmed-only applySession/signOut, generation-based SecureStore, root auth gate. Unauthenticated → access screen; production unavailable → service-unavailable copy; `__DEV__` + missing env still uses local treatment shells.
+- Remote repositories (TASK-031): authenticated sessions use Supabase behind existing ports (treatment, diary, clinic contact, doctor-photo metadata, feedback, ProductEvent insert) with a user-scoped FIFO outbox and process-local last-read snapshots. Patient photo bytes remain local until TASK-032. `__DEV__` without auth/env keeps local fixtures.
 
-The development backlog lives in `docs/ROADMAP.md` and `docs/tasks/`. The next implementation task is **TASK-031** (remote repositories / sync). TASK-029 is complete in `doctor-maslianski-pilot`. TASK-022 is complete.
+The development backlog lives in `docs/ROADMAP.md` and `docs/tasks/`. The next implementation task is **TASK-032** (photo upload to Supabase Storage).

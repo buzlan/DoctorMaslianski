@@ -14,13 +14,13 @@ import {
 } from "@/modules/clinic-contact";
 import {
   sharedTodayLoader,
-  toLocalCalendarDate,
   type TodayAssignmentItem,
   type TodayLoadResult,
   type TodayOverview,
 } from "@/modules/today/application";
 import { CurrentAppointmentBlock } from "@/modules/treatment/presentation/current-appointment-block";
 import { copy } from "@/shared/copy";
+import { loadCivilTodayDate } from "@/shared/date/load-civil-today-date";
 import { getColors, theme } from "@/shared/theme";
 import { AppText, Button, Screen, Stack } from "@/shared/ui";
 
@@ -40,12 +40,9 @@ function toViewState(result: TodayLoadResult): TodayViewState {
   return result;
 }
 
-function todayDate() {
-  return toLocalCalendarDate(new Date());
-}
-
-function requestTodayLoad() {
-  return sharedTodayLoader.load(todayDate());
+async function requestTodayLoad() {
+  const onDate = await loadCivilTodayDate();
+  return sharedTodayLoader.load(onDate);
 }
 
 function requestTodayAndContact() {
@@ -156,21 +153,23 @@ export function TodayScreen() {
     loadGenerationRef.current = generation;
     setPendingAssignmentId(assignment.id);
 
-    const request = assignment.completed
-      ? sharedTodayLoader.uncompleteAssignment(assignment.id, todayDate())
-      : sharedTodayLoader.completeAssignment(assignment.id, todayDate());
+    void loadCivilTodayDate().then((onDate) => {
+      const request = assignment.completed
+        ? sharedTodayLoader.uncompleteAssignment(assignment.id, onDate)
+        : sharedTodayLoader.completeAssignment(assignment.id, onDate);
 
-    void request
-      .then((result) => {
-        if (loadGenerationRef.current === generation) {
-          setViewState(toViewState(result));
-        }
-      })
-      .finally(() => {
-        if (loadGenerationRef.current === generation) {
-          setPendingAssignmentId(null);
-        }
-      });
+      void request
+        .then((result) => {
+          if (loadGenerationRef.current === generation) {
+            setViewState(toViewState(result));
+          }
+        })
+        .finally(() => {
+          if (loadGenerationRef.current === generation) {
+            setPendingAssignmentId(null);
+          }
+        });
+    });
   }
 
   return (

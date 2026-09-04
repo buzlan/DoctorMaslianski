@@ -6,6 +6,8 @@ export { createInMemoryTreatmentRepository } from './in-memory-treatment-reposit
 export type { InMemoryTreatmentRepositorySeed } from './in-memory-treatment-repository';
 export { createPersistentTreatmentRepository } from './persistent-treatment-repository';
 export type { PersistentTreatmentRepositoryOptions } from './persistent-treatment-repository';
+export { createRemoteTreatmentRepository } from './remote-treatment-repository';
+export type { RemoteTreatmentRepositoryOptions } from './remote-treatment-repository';
 export { sharedTreatmentRepository } from './shared-treatment-repository';
 export type {
   CompleteAssignmentResult,

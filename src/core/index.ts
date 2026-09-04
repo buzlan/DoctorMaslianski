@@ -35,6 +35,10 @@ export {
   getSharedSupabaseClient,
 } from './supabase/client';
 export type {
+  AppSupabaseClient,
   CreateSupabaseClientOptions,
   SupabaseAuthStorage,
 } from './supabase/client';
+export type { Database } from './supabase/database.types';
+
+export { shouldUseRemoteRepositories } from './runtime/should-use-remote-repositories';

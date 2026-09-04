@@ -1,3 +1,5 @@
+import { getRemoteAdapters } from '@/core/runtime/remote-adapters';
+import { shouldUseRemoteRepositories } from '@/core/runtime/should-use-remote-repositories';
 import { assertValidProductEvent } from '../domain';
 import type { ProductEvent } from '../domain';
 
@@ -23,4 +25,21 @@ export function createInMemoryProductEventSink(): InMemoryProductEventSink {
   return new InMemoryProductEventLog();
 }
 
-export const sharedProductEventSink = createInMemoryProductEventSink();
+const localProductEventSink = createInMemoryProductEventSink();
+
+export const sharedProductEventSink: InMemoryProductEventSink = {
+  async append(event) {
+    if (shouldUseRemoteRepositories()) {
+      const remote = getRemoteAdapters();
+      if (remote !== null) {
+        await remote.productEvents.append(event);
+        return;
+      }
+    }
+
+    await localProductEventSink.append(event);
+  },
+  getAll() {
+    return localProductEventSink.getAll();
+  },
+};

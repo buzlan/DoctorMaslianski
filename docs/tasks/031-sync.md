@@ -1,6 +1,6 @@
 # TASK-031 — Remote repositories and offline sync
 
-Status: NOT STARTED
+Status: DONE
 
 Milestone: M9 — Supabase + sync
 

@@ -15,7 +15,7 @@ import {
   type TreatmentTimelineLoadResult,
 } from "@/modules/treatment/application";
 import { copy } from "@/shared/copy";
-import { toLocalCalendarDate } from "@/shared/date/to-local-calendar-date";
+import { loadCivilTodayDate } from "@/shared/date/load-civil-today-date";
 import { getColors, theme } from "@/shared/theme";
 import { AppText, Screen, Stack } from "@/shared/ui";
 
@@ -38,12 +38,9 @@ function toViewState(result: TreatmentTimelineLoadResult): TreatmentViewState {
   return result;
 }
 
-function todayDate() {
-  return toLocalCalendarDate(new Date());
-}
-
-function requestTimelineLoad() {
-  return loadSharedTreatmentTimeline(todayDate());
+async function requestTimelineLoad() {
+  const onDate = await loadCivilTodayDate();
+  return loadSharedTreatmentTimeline(onDate);
 }
 
 function formatPeriodRange(period: TimelinePeriod): string {

@@ -6,13 +6,9 @@ import { Pressable, ScrollView, StyleSheet, useColorScheme } from "react-native"
 import { sharedPatientPhotoLoader } from "@/modules/photos/application";
 import type { CapturedImage } from "@/modules/photos/domain";
 import { copy } from "@/shared/copy";
-import { toLocalCalendarDate } from "@/shared/date/to-local-calendar-date";
+import { loadCivilTodayDate } from "@/shared/date/load-civil-today-date";
 import { getColors, theme } from "@/shared/theme";
 import { AppText, Button, Screen, Stack } from "@/shared/ui";
-
-function todayDate() {
-  return toLocalCalendarDate(new Date());
-}
 
 export function PatientPhotoCaptureScreen() {
   const colors = getColors(useColorScheme());
@@ -66,7 +62,10 @@ export function PatientPhotoCaptureScreen() {
     setMessage(null);
 
     try {
-      const result = await sharedPatientPhotoLoader.confirm(todayDate(), captured);
+      const result = await sharedPatientPhotoLoader.confirm(
+        await loadCivilTodayDate(),
+        captured,
+      );
       if (result.status === "recorded") {
         goBack();
         return;

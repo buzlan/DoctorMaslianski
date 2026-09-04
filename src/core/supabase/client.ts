@@ -9,6 +9,10 @@ import {
   type SupabasePublicEnvResult,
 } from '../env/supabase-env';
 
+import type { Database } from './database.types';
+
+export type AppSupabaseClient = SupabaseClient<Database>;
+
 /**
  * Auth sessions persist through the TASK-022 generation-based SecureStore
  * adapter. Do not default to AsyncStorage. Tests may inject memory storage.
@@ -23,7 +27,7 @@ export type CreateSupabaseClientOptions = {
   authStorage?: SupabaseAuthStorage;
 };
 
-let sharedClient: SupabaseClient | null | undefined;
+let sharedClient: AppSupabaseClient | null | undefined;
 let hasWarned = false;
 
 function warnWhenUnavailable(envResult: SupabasePublicEnvResult): void {
@@ -34,21 +38,21 @@ function warnWhenUnavailable(envResult: SupabasePublicEnvResult): void {
   hasWarned = true;
   if (envResult.status === 'missing') {
     console.warn(
-      'Supabase env is missing. The app will keep using local repositories until TASK-031.',
+      'Supabase env is missing. Authenticated remote repositories are unavailable; local fixtures remain in __DEV__.',
     );
     return;
   }
 
   console.warn(
-    `Supabase env is invalid (${envResult.reason}). The app will keep using local repositories until TASK-031.`,
+    `Supabase env is invalid (${envResult.reason}). Authenticated remote repositories are unavailable; local fixtures remain in __DEV__.`,
   );
 }
 
 export function createSupabaseClient(
   config: SupabasePublicConfig,
   options: CreateSupabaseClientOptions = {},
-): SupabaseClient {
-  return createClient(config.url, config.publishableKey, {
+): AppSupabaseClient {
+  return createClient<Database>(config.url, config.publishableKey, {
     auth: {
       storage: options.authStorage ?? createChunkedSecureStoreAuthStorage(),
       persistSession: true,
@@ -61,7 +65,7 @@ export function createSupabaseClient(
 export function createSupabaseClientFromEnv(
   envResult: SupabasePublicEnvResult = readSupabasePublicEnv(),
   options: CreateSupabaseClientOptions = {},
-): SupabaseClient | null {
+): AppSupabaseClient | null {
   if (envResult.status !== 'ready') {
     warnWhenUnavailable(envResult);
     return null;
@@ -70,7 +74,7 @@ export function createSupabaseClientFromEnv(
   return createSupabaseClient(envResult.config, options);
 }
 
-export function getSharedSupabaseClient(): SupabaseClient | null {
+export function getSharedSupabaseClient(): AppSupabaseClient | null {
   if (sharedClient !== undefined) {
     return sharedClient;
   }
