@@ -17,6 +17,11 @@ export type AppCopy = {
   };
   treatment: {
     title: string;
-    body: string;
+    loading: string;
+    noActiveTreatment: string;
+    loadError: string;
+    retry: string;
+    periodDayLabel: string;
+    emptyMilestones: string;
   };
 };

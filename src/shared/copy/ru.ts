@@ -19,6 +19,11 @@ export const copy: AppCopy = {
   },
   treatment: {
     title: "Лечение",
-    body: "Здесь появится ход лечения.",
+    loading: "Загрузка…",
+    noActiveTreatment: "Сейчас нет активного лечения.",
+    loadError: "Не удалось загрузить данные.",
+    retry: "Повторить",
+    periodDayLabel: "День",
+    emptyMilestones: "Пока нет визитов в ходе лечения.",
   },
 };

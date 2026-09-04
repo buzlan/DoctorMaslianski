@@ -214,6 +214,7 @@ Currently implemented (code):
 - Today + Treatment tab shell
 - patient-specific treatment domain + in-memory repository (assignments, periods, milestones, ActionCompletion overlay)
 - Today screen from assignments active on the current civil date, with current period Day N and in-memory assignment completion
+- Treatment timeline: current period Day N, clinic-provided milestones grouped by period, honest empty state when the shared fixture has no visits
 - ProductEvent local sink (`app_opened` and `task_completed` use patient/treatment ids + cohort; `task_completed` carries assignment id only; no snapshot protocol pair)
 
-The development backlog lives in `docs/ROADMAP.md` and `docs/tasks/`. The next implementation task is **TASK-008** (treatment timeline).
+The development backlog lives in `docs/ROADMAP.md` and `docs/tasks/`. The next implementation task is **TASK-009** (visit / milestone details).

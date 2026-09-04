@@ -1,6 +1,6 @@
 # TASK-008 — Treatment Timeline
 
-Status: NOT STARTED
+Status: DONE
 
 Milestone: M4 — Treatment Timeline
 
@@ -25,6 +25,7 @@ Treatment Timeline is the core product concept after Today. It is not a frozen p
 - Do not use a fixed mock such as Preparation → Procedure → Day 1 → Day 7 → Control.
 - No app-generated medical commentary.
 - Doctor-uploaded visit photos are TASK-015; this task may leave photo slots empty.
+- Milestone-to-period grouping uses civil-date windows as a temporary read-model fallback. `TreatmentMilestone` has no `periodId` in this task. Future Supabase / clinic-side records should store an explicit milestone-to-period relationship.
 
 ## Out of scope
 

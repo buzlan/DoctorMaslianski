@@ -149,7 +149,7 @@ Goals:
 
 ## M4 — Treatment Timeline
 
-Status: NOT STARTED
+Status: IN PROGRESS (008 DONE; 009 NOT STARTED)
 
 Tasks: [TASK-008](tasks/008-treatment-timeline.md), [TASK-009](tasks/009-stage-details.md)
 

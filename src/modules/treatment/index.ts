@@ -1,0 +1,1 @@
+export { TreatmentScreen } from "./presentation";
