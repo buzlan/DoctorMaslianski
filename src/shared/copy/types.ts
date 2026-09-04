@@ -78,6 +78,17 @@ export type AppCopy = {
     submit: string;
     submitted: string;
   };
+  access: {
+    loading: string;
+    authenticationRequired: {
+      title: string;
+      body: string;
+    };
+    serviceUnavailable: {
+      title: string;
+      body: string;
+    };
+  };
   photos: {
     title: string;
     takePhoto: string;

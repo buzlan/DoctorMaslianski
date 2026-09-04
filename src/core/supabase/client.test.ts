@@ -74,6 +74,16 @@ describe('createSupabaseClient', () => {
     expect(client.auth).toBeDefined();
     expect(typeof client.auth.getSession).toBe('function');
   });
+
+  it('uses the hardened SecureStore adapter when storage is not injected', () => {
+    const client = createSupabaseClient({
+      url: LOCAL_URL,
+      publishableKey: 'sb_publishable_test',
+    });
+
+    expect(client.auth).toBeDefined();
+    expect(typeof client.auth.getSession).toBe('function');
+  });
 });
 
 describe('getSharedSupabaseClient', () => {

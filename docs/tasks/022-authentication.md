@@ -1,6 +1,6 @@
 # TASK-022 — Authentication infrastructure
 
-Status: NOT STARTED
+Status: DONE
 
 Milestone: M9 — Supabase + sync
 
@@ -39,7 +39,7 @@ Remote patient data cannot be fetched anonymously.
 
 ## New dependencies
 
-Maybe `expo-secure-store`. Justify in Plan Mode.
+None. Reused existing `expo-secure-store` (TASK-012) for a generation-based session adapter. Did not add `aes-js` or a state library.
 
 ## Plan Mode
 
@@ -56,6 +56,7 @@ Yes.
 ```bash
 npx tsc --noEmit
 npm run lint
+npm test
 ```
 
 Both platforms.

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Stack } from "expo-router";
 
+import { resolveAuthGate, useAuthSession } from "@/core/auth";
 import {
   loadSharedTreatmentShell,
   type TreatmentShell,
@@ -8,21 +9,35 @@ import {
 import { copy } from "@/shared/copy";
 import { AppText, Screen } from "@/shared/ui";
 
-export default function RootLayout() {
+function LoadingScreen({ message }: { message: string }) {
+  return (
+    <Screen>
+      <AppText>{message}</AppText>
+    </Screen>
+  );
+}
+
+function ClinicalStack() {
   const [shell, setShell] = useState<TreatmentShell | { status: "loading" }>({
     status: "loading",
   });
 
   useEffect(() => {
-    void loadSharedTreatmentShell().then(setShell);
+    let cancelled = false;
+
+    void loadSharedTreatmentShell().then((next) => {
+      if (!cancelled) {
+        setShell(next);
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   if (shell.status === "loading") {
-    return (
-      <Screen>
-        <AppText>{copy.completion.loading}</AppText>
-      </Screen>
-    );
+    return <LoadingScreen message={copy.completion.loading} />;
   }
 
   const treatmentCompleted = shell.status === "completed";
@@ -39,4 +54,25 @@ export default function RootLayout() {
       </Stack.Protected>
     </Stack>
   );
+}
+
+export default function RootLayout() {
+  const auth = useAuthSession();
+  const gate = resolveAuthGate(auth, __DEV__);
+
+  if (gate.screen === "loading") {
+    return <LoadingScreen message={copy.access.loading} />;
+  }
+
+  if (gate.screen === "access") {
+    return (
+      <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Protected guard>
+          <Stack.Screen name="access" />
+        </Stack.Protected>
+      </Stack>
+    );
+  }
+
+  return <ClinicalStack />;
 }

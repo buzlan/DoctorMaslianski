@@ -1,8 +1,8 @@
 import 'react-native-url-polyfill/auto';
 
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 
+import { createChunkedSecureStoreAuthStorage } from '../auth/session-storage';
 import {
   readSupabasePublicEnv,
   type SupabasePublicConfig,
@@ -10,10 +10,8 @@ import {
 } from '../env/supabase-env';
 
 /**
- * TASK-030 persists Auth sessions with AsyncStorage as client plumbing only.
- * No login, logout, auth gate, onAuthStateChange UI, or invite activation lives
- * here. TASK-022 must review and harden session-at-rest storage before
- * real-patient authentication is enabled.
+ * Auth sessions persist through the TASK-022 generation-based SecureStore
+ * adapter. Do not default to AsyncStorage. Tests may inject memory storage.
  */
 export type SupabaseAuthStorage = {
   getItem: (key: string) => Promise<string | null> | string | null;
@@ -52,7 +50,7 @@ export function createSupabaseClient(
 ): SupabaseClient {
   return createClient(config.url, config.publishableKey, {
     auth: {
-      storage: options.authStorage ?? AsyncStorage,
+      storage: options.authStorage ?? createChunkedSecureStoreAuthStorage(),
       persistSession: true,
       autoRefreshToken: true,
       detectSessionInUrl: false,
