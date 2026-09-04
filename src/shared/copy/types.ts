@@ -53,6 +53,18 @@ export type AppCopy = {
     doctorPhotosUnavailable: string;
     doctorPhotoAccessibilityLabel: string;
   };
+  appointment: {
+    label: string;
+    empty: string;
+  };
+  clinicContact: {
+    label: string;
+    unavailable: string;
+    call: string;
+    email: string;
+    book: string;
+    openError: string;
+  };
   photos: {
     title: string;
     takePhoto: string;

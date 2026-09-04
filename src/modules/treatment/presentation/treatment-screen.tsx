@@ -19,6 +19,7 @@ import { toLocalCalendarDate } from "@/shared/date/to-local-calendar-date";
 import { getColors, theme } from "@/shared/theme";
 import { AppText, Screen, Stack } from "@/shared/ui";
 
+import { CurrentAppointmentBlock } from "./current-appointment-block";
 import { formatCalendarDate } from "./format-calendar-date";
 
 type ReadyTimeline = Extract<TreatmentTimeline, { kind: "ready" }>;
@@ -129,6 +130,7 @@ function ReadyContent({ timeline }: { timeline: ReadyTimeline }) {
       {timeline.ungroupedMilestones.map((milestone) => (
         <MilestoneRow key={milestone.id} milestone={milestone} />
       ))}
+      <CurrentAppointmentBlock appointment={timeline.currentAppointment} />
     </Stack>
   );
 }

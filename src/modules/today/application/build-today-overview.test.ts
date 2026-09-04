@@ -8,6 +8,7 @@ function create(
     periods?: Parameters<typeof createTreatment>[0]['periods'];
     assignments?: Parameters<typeof createTreatment>[0]['assignments'];
     completions?: Parameters<typeof createTreatment>[0]['completions'];
+    appointments?: Parameters<typeof createTreatment>[0]['appointments'];
   } = {},
 ) {
   return createTreatment({
@@ -17,6 +18,7 @@ function create(
     periods: options.periods,
     assignments: options.assignments,
     completions: options.completions,
+    appointments: options.appointments,
   });
 }
 
@@ -146,6 +148,7 @@ describe('buildTodayOverview', () => {
       diaryOpen: true,
       photosRecordedToday: 0,
       photoAddOpen: true,
+      currentAppointment: null,
     });
     expect(overview).not.toHaveProperty('protocolKind');
     expect(overview).not.toHaveProperty('protocolVersion');
@@ -198,5 +201,35 @@ describe('buildTodayOverview', () => {
     expect(buildTodayOverview(create(), calendarDate(2026, 8, 1), false)).toMatchObject({
       diaryOpen: true,
     });
+  });
+
+  it('projects the current appointment and ignores superseded history', () => {
+    const overview = buildTodayOverview(
+      create({
+        appointments: [
+          {
+            id: 'previous',
+            status: 'superseded',
+            at: '2026-08-10T09:00:00.000Z',
+          },
+          {
+            id: 'current',
+            status: 'current',
+            at: '2026-08-20T09:00:00.000Z',
+          },
+        ],
+      }),
+      calendarDate(2026, 8, 1),
+    );
+
+    expect(overview).toMatchObject({
+      kind: 'ready',
+      currentAppointment: { id: 'current', at: '2026-08-20T09:00:00.000Z' },
+    });
+    if (overview.kind !== 'ready') {
+      return;
+    }
+    expect(overview.currentAppointment).not.toHaveProperty('status');
+    expect(JSON.stringify(overview)).not.toContain('previous');
   });
 });

@@ -62,6 +62,7 @@ describe('loadTreatmentTimeline', () => {
           },
         ],
         ungroupedMilestones: [],
+        currentAppointment: null,
       },
     });
   });

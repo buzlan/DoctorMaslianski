@@ -74,6 +74,7 @@ describe('loadTodayOverview', () => {
         diaryOpen: true,
         photosRecordedToday: 0,
         photoAddOpen: true,
+        currentAppointment: null,
       },
     });
   });

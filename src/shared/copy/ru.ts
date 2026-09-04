@@ -55,6 +55,18 @@ export const copy: AppCopy = {
     doctorPhotosUnavailable: "Не удалось загрузить фотографии.",
     doctorPhotoAccessibilityLabel: "Фотография визита",
   },
+  appointment: {
+    label: "Ближайшая запись",
+    empty: "Ближайшая запись пока не указана.",
+  },
+  clinicContact: {
+    label: "Связь с клиникой",
+    unavailable: "Контакт клиники пока недоступен.",
+    call: "Позвонить в клинику",
+    email: "Написать на почту",
+    book: "Записаться",
+    openError: "Не удалось открыть контакт.",
+  },
   photos: {
     title: "Фото",
     takePhoto: "Камера",

@@ -1,46 +1,71 @@
 # TASK-020 — Clinic contact and next appointment
 
-Status: NOT STARTED
+Status: DONE
 
 Milestone: M8 — Pilot companion completeness
 
 ## Goal
 
-Show basic doctor / clinic contact information and the **current** next appointment on **existing surfaces** (Today and/or Treatment).
+Show the **current** doctor-set next appointment and basic clinic contact / booking on **existing surfaces**. This is **not** a fourth “Связь с доктором” tab and **not** a Doctor tab.
 
-The same contact / booking CTA is reused on the post-completion screen (TASK-028). This is **not** a fourth “Связь с доктором” tab and **not** a Doctor tab.
+Primary navigation while treatment is active remains exactly:
+
+- Сегодня
+- Лечение
+- Дневник
+
+## Surfaces
+
+- **Today (required):** current next appointment **and** clinic contact / booking CTA.
+- **Treatment (structural):** current next appointment only. No contact CTA on Treatment.
+- **Completion screen:** TASK-028 reuses the same contact / booking CTA. This task does **not** hide tabs or build the completed-treatment shell.
 
 ## Why this task is needed
 
-Patients need to know how to reach the clinic and when the next visit is, without expanding primary navigation.
+Patients need to know when the next visit is and how to reach the clinic, without expanding primary navigation.
 
 ## Dependencies
 
-- TASK-015 (companion loop exists; appointment data may already appear from earlier Today/Treatment work)
+- TASK-015 (companion loop exists; appointment rows already live on `Treatment.appointments`)
 
 ## Requirements
 
-- Display-only contact (tel/mailto or equivalent).
-- Next appointment is the current doctor-set row (latest non-superseded), not `appointmentPattern` on a protocol snapshot and not app scheduling logic.
-- Doctor may later change date/time; the patient must see the updated current appointment without silently destroying history (history is data; this task displays current).
-- No custom messenger.
-- No Doctor tab. No Photos tab. No Activity tab.
-- Do not generate medical advice.
+- Next appointment is the current doctor-set row: `status === 'current'` (latest non-superseded). Not `appointmentPattern` on a protocol snapshot and not app scheduling logic.
+- Doctor may later change date/time; the patient must see the updated current appointment. History is **superseded**, not silently destroyed. This task is display-only; it does not add a mobile write API.
+- `Appointment.at` is a clinic-authored ISO datetime string. Display preserves the doctor-set **wall-clock** date/time from that string. Do not convert through the device timezone in a way that changes the wall-clock time. Do not add `clinicTimeZone` or a larger appointment schema in this task.
+- Invalid or unparseable `at` uses the honest unavailable copy. Do not invent a date.
+- Clinic contact is display-only and data-driven: `tel:`, `mailto:`, and `https:` (plus `http:` for booking URLs only). Do not open arbitrary schemes from clinic data. Use `Linking.canOpenURL` / `openURL` safely. Failed open uses short non-medical copy.
+- If no clinic-approved phone / email / booking URL exists, show an honest unavailable state. Do **not** seed fake contact data.
+- No custom messenger. No Doctor tab. No Photos tab. No Activity tab.
+- Do not generate medical advice, emergency instructions, or triage copy.
 
 ## Out of scope
 
-- Doctor dashboard
+- Doctor dashboard / clinic-side appointment writes
 - Messaging product
 - Changing appointments on a server (clinic tool + later sync)
 - Dedicated Doctor section as a top-level tab
 - Completion-shell navigation (TASK-028 owns hiding tabs)
 - HealthKit / Activity
+- Push, QR/invite, Supabase
+- Invented phone numbers, addresses, URLs, or `maslianski.by` as a stand-in booking channel
+
+## Future backend note (not this task)
+
+TASK-029 (and later sync) must explicitly define:
+
+- clinic timezone
+- datetime storage normalization
+- patient display semantics for `Appointment.at`
+
+Do not leave timestamptz vs clinic wall-clock implicit. TASK-020 only displays the authored ISO wall-clock.
 
 ## Expected files or areas affected
 
-- Today and/or Treatment presentation
+- Treatment domain helper for current appointment
+- Today and Treatment read models / presentation
+- Small `src/modules/clinic-contact/**` (no tab route)
 - Copy catalog
-- Optional small `src/modules/doctor/**` or clinic contact types owned by treatment — only if needed. Do not create a tab route.
 
 ## New dependencies
 
@@ -52,9 +77,11 @@ Yes (placement on existing surfaces).
 
 ## Acceptance criteria
 
-- Clinic contact and current next appointment are reachable from Today and/or Treatment.
+- Current next appointment is visible on Today and Treatment (empty state when none / unparseable).
+- Clinic contact / booking is reachable from Today when channels exist; otherwise an honest unavailable state.
 - Content comes from treatment/clinic data, not from a protocol snapshot pattern table.
 - Primary navigation remains Today, Treatment, Diary while treatment is active.
+- No fake phone / email / URL in fixtures or copy.
 - The application remains runnable.
 
 ## Verification
@@ -62,6 +89,14 @@ Yes (placement on existing surfaces).
 ```bash
 npx tsc --noEmit
 npm run lint
+npm test
 ```
 
-Manually verify on iOS Simulator and Android Emulator.
+Manually verify on iOS Simulator and Android Emulator:
+
+- Today shows honest empty next-appointment state
+- Treatment shows honest empty next-appointment state
+- Today shows honest unavailable clinic-contact state
+- exactly three tabs remain
+- no fake phone/email/url
+- no Doctor tab

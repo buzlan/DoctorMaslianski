@@ -49,8 +49,17 @@ export type ActionCompletion = {
 
 export type Appointment = {
   id: string;
+  /**
+   * Clinic-authored ISO datetime. Patient display uses the wall-clock
+   * date/time from this string. Do not convert through the device timezone.
+   */
   at?: string;
   status: AppointmentRecordStatus;
+};
+
+export type CurrentAppointmentView = {
+  id: string;
+  at?: string;
 };
 
 export type Treatment = {

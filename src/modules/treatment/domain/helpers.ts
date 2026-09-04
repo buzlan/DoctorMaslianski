@@ -1,6 +1,12 @@
 import { dayIndex, isSameCalendarDate } from './calendar-date';
 import type { CalendarDate } from './calendar-date';
-import type { ActionAssignment, Treatment, TreatmentPeriod } from './types';
+import type {
+  ActionAssignment,
+  Appointment,
+  CurrentAppointmentView,
+  Treatment,
+  TreatmentPeriod,
+} from './types';
 
 export function getCurrentPeriod(treatment: Treatment): TreatmentPeriod | null {
   let current: TreatmentPeriod | null = null;
@@ -74,4 +80,65 @@ export function isAssignmentCompletedOnDate(
 
 export function isActiveTreatment(treatment: Treatment): boolean {
   return treatment.status === 'active';
+}
+
+function appointmentInstant(at: string | undefined): number | null {
+  if (at === undefined) {
+    return null;
+  }
+
+  const ms = Date.parse(at);
+  return Number.isNaN(ms) ? null : ms;
+}
+
+function isPreferredCurrentAppointment(candidate: Appointment, current: Appointment): boolean {
+  const candidateAt = appointmentInstant(candidate.at);
+  const currentAt = appointmentInstant(current.at);
+
+  if (candidateAt !== null && (currentAt === null || candidateAt > currentAt)) {
+    return true;
+  }
+
+  if (candidateAt === currentAt && candidate.id < current.id) {
+    return true;
+  }
+
+  return false;
+}
+
+export function getCurrentAppointment(treatment: Treatment): Appointment | null {
+  const current = treatment.appointments.filter((row) => row.status === 'current');
+
+  if (current.length === 0) {
+    return null;
+  }
+
+  let selected = current[0];
+  if (selected === undefined) {
+    return null;
+  }
+
+  for (const row of current.slice(1)) {
+    if (isPreferredCurrentAppointment(row, selected)) {
+      selected = row;
+    }
+  }
+
+  return selected;
+}
+
+export function toCurrentAppointmentView(
+  appointment: Appointment | null,
+): CurrentAppointmentView | null {
+  if (appointment === null) {
+    return null;
+  }
+
+  const view: CurrentAppointmentView = { id: appointment.id };
+
+  if (appointment.at !== undefined) {
+    view.at = appointment.at;
+  }
+
+  return view;
 }

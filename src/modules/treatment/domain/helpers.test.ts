@@ -2,11 +2,13 @@ import { calendarDate } from './calendar-date';
 import { createTreatment } from './create-treatment';
 import {
   getAssignmentsForDate,
+  getCurrentAppointment,
   getCurrentPeriod,
   getPeriodDayNumber,
   isActiveTreatment,
   isAssignmentCompletedOnDate,
   isDateInInclusiveRange,
+  toCurrentAppointmentView,
 } from './helpers';
 import type { ActionAssignment, TreatmentStatus } from './types';
 
@@ -15,6 +17,7 @@ function create(options: {
   periods?: Parameters<typeof createTreatment>[0]['periods'];
   assignments?: readonly ActionAssignment[];
   completions?: Parameters<typeof createTreatment>[0]['completions'];
+  appointments?: Parameters<typeof createTreatment>[0]['appointments'];
 } = {}) {
   return createTreatment({
     id: 'treatment-1',
@@ -23,6 +26,7 @@ function create(options: {
     periods: options.periods,
     assignments: options.assignments,
     completions: options.completions,
+    appointments: options.appointments,
   });
 }
 
@@ -263,5 +267,131 @@ describe('isActiveTreatment', () => {
     expect(isActiveTreatment(create())).toBe(true);
     expect(isActiveTreatment(create({ status: 'completed' }))).toBe(false);
     expect(isActiveTreatment(create({ status: 'cancelled' }))).toBe(false);
+  });
+});
+
+describe('getCurrentAppointment', () => {
+  it('returns null when there are no appointments', () => {
+    expect(getCurrentAppointment(create())).toBeNull();
+  });
+
+  it('returns the current row even when at is missing', () => {
+    const treatment = create({
+      appointments: [{ id: 'appointment-1', status: 'current' }],
+    });
+
+    expect(getCurrentAppointment(treatment)).toEqual({
+      id: 'appointment-1',
+      status: 'current',
+    });
+  });
+
+  it('returns the current row and keeps superseded history on the treatment', () => {
+    const treatment = create({
+      appointments: [
+        {
+          id: 'previous',
+          status: 'superseded',
+          at: '2026-08-10T09:00:00.000Z',
+        },
+        {
+          id: 'current',
+          status: 'current',
+          at: '2026-08-20T09:00:00.000Z',
+        },
+      ],
+    });
+
+    expect(getCurrentAppointment(treatment)).toEqual({
+      id: 'current',
+      status: 'current',
+      at: '2026-08-20T09:00:00.000Z',
+    });
+    expect(treatment.appointments.map((row) => row.id)).toEqual(['previous', 'current']);
+  });
+
+  it('does not treat a later superseded row as current', () => {
+    const treatment = create({
+      appointments: [
+        {
+          id: 'current',
+          status: 'current',
+          at: '2026-08-20T09:00:00.000Z',
+        },
+        {
+          id: 'later-superseded',
+          status: 'superseded',
+          at: '2026-09-01T09:00:00.000Z',
+        },
+      ],
+    });
+
+    expect(getCurrentAppointment(treatment)?.id).toBe('current');
+  });
+
+  it('picks the latest parseable at when more than one current row exists', () => {
+    const treatment = create({
+      appointments: [
+        {
+          id: 'earlier',
+          status: 'current',
+          at: '2026-08-10T09:00:00.000Z',
+        },
+        {
+          id: 'later',
+          status: 'current',
+          at: '2026-08-20T09:00:00.000Z',
+        },
+      ],
+    });
+
+    expect(getCurrentAppointment(treatment)?.id).toBe('later');
+    expect(treatment.appointments).toHaveLength(2);
+  });
+
+  it('prefers a parseable at over a current row without at', () => {
+    const treatment = create({
+      appointments: [
+        { id: 'undated', status: 'current' },
+        {
+          id: 'dated',
+          status: 'current',
+          at: '2026-08-20T09:00:00.000Z',
+        },
+      ],
+    });
+
+    expect(getCurrentAppointment(treatment)?.id).toBe('dated');
+  });
+
+  it('breaks remaining ties by id without deleting extras', () => {
+    const treatment = create({
+      appointments: [
+        { id: 'b-current', status: 'current' },
+        { id: 'a-current', status: 'current' },
+      ],
+    });
+
+    expect(getCurrentAppointment(treatment)?.id).toBe('a-current');
+    expect(treatment.appointments.map((row) => row.id)).toEqual(['b-current', 'a-current']);
+  });
+});
+
+describe('toCurrentAppointmentView', () => {
+  it('strips status and omits missing at', () => {
+    expect(toCurrentAppointmentView(null)).toBeNull();
+    expect(
+      toCurrentAppointmentView({ id: 'appointment-1', status: 'current' }),
+    ).toEqual({ id: 'appointment-1' });
+    expect(
+      toCurrentAppointmentView({
+        id: 'appointment-1',
+        status: 'current',
+        at: '2026-08-20T09:00:00.000Z',
+      }),
+    ).toEqual({
+      id: 'appointment-1',
+      at: '2026-08-20T09:00:00.000Z',
+    });
   });
 });

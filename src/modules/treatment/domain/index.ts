@@ -3,12 +3,14 @@ export type { CalendarDate } from './calendar-date';
 
 export {
   getAssignmentsForDate,
+  getCurrentAppointment,
   getCurrentPeriod,
   getPeriodDayNumber,
   isActiveTreatment,
   isAssignmentActiveOnDate,
   isAssignmentCompletedOnDate,
   isDateInInclusiveRange,
+  toCurrentAppointmentView,
 } from './helpers';
 
 export { createTreatment } from './create-treatment';
@@ -31,6 +33,7 @@ export type {
   ActionCompletion,
   Appointment,
   AppointmentRecordStatus,
+  CurrentAppointmentView,
   Patient,
   PilotCohort,
   Treatment,

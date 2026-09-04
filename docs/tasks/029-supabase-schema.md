@@ -35,6 +35,7 @@ Rules:
 - Catalog content edits must not rewrite historical assignments/completions.
 - Disabling an assignment does not delete completions.
 - Appointment changes supersede; they do not silently destroy history.
+- Appointment datetime must be specified explicitly: clinic timezone, storage normalization (timestamptz vs civil wall-clock), and patient display semantics. TASK-020 displays clinic-authored ISO `at` as wall-clock date/time from the string and does not convert through the device timezone. Do not leave that mapping implicit in schema.
 - Patient photos and doctor milestone photos are distinct objects / paths.
 - RLS: patients see only their rows; clinic staff role sees review data and can perform assignment writes.
 - Storage buckets for both photo kinds; URLs are not copied into ProductEvent.

@@ -1,10 +1,13 @@
 import {
   getAssignmentsForDate,
+  getCurrentAppointment,
   getCurrentPeriod,
   getPeriodDayNumber,
   isActiveTreatment,
   isAssignmentCompletedOnDate,
+  toCurrentAppointmentView,
   type CalendarDate,
+  type CurrentAppointmentView,
   type Treatment,
 } from '@/modules/treatment/domain';
 
@@ -26,6 +29,7 @@ export type TodayOverview =
       diaryOpen: boolean;
       photosRecordedToday: 0 | 1 | 2 | 3;
       photoAddOpen: boolean;
+      currentAppointment: CurrentAppointmentView | null;
     };
 
 function mapAssignment(
@@ -91,5 +95,6 @@ export function buildTodayOverview(
     diaryOpen: !todayDiaryEntryExists,
     photosRecordedToday: recorded,
     photoAddOpen: recorded < 3,
+    currentAppointment: toCurrentAppointmentView(getCurrentAppointment(treatment)),
   };
 }

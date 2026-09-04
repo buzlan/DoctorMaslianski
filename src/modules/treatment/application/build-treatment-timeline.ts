@@ -1,9 +1,12 @@
 import {
   dayIndex,
+  getCurrentAppointment,
   getCurrentPeriod,
   getPeriodDayNumber,
   isActiveTreatment,
+  toCurrentAppointmentView,
   type CalendarDate,
+  type CurrentAppointmentView,
   type Treatment,
   type TreatmentMilestone,
   type TreatmentPeriod,
@@ -45,6 +48,7 @@ export type TreatmentTimeline =
       currentPeriodId: string | null;
       periods: readonly TimelinePeriod[];
       ungroupedMilestones: readonly TimelineMilestone[];
+      currentAppointment: CurrentAppointmentView | null;
     };
 
 function periodContainsDate(period: TreatmentPeriod, date: CalendarDate): boolean {
@@ -197,5 +201,6 @@ export function buildTreatmentTimeline(
     currentPeriodId: currentPeriod?.id ?? null,
     periods,
     ungroupedMilestones: sortUngrouped(ungrouped),
+    currentAppointment: toCurrentAppointmentView(getCurrentAppointment(treatment)),
   };
 }

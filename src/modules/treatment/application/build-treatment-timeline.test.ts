@@ -218,6 +218,7 @@ describe('buildTreatmentTimeline', () => {
         },
       ],
       ungroupedMilestones: [],
+      currentAppointment: null,
     });
   });
 
@@ -344,6 +345,12 @@ describe('buildTreatmentTimeline', () => {
     expect(timeline).not.toHaveProperty('protocolKind');
     expect(timeline).not.toHaveProperty('protocolVersion');
     expect(timeline).not.toHaveProperty('currentStage');
+    expect(timeline).toMatchObject({
+      currentAppointment: { id: 'appointment-1', at: '2026-08-20T09:00:00.000Z' },
+    });
+    if (timeline.kind === 'ready') {
+      expect(timeline.currentAppointment).not.toHaveProperty('status');
+    }
     expect(JSON.stringify(timeline)).not.toContain('synthetic-assignment');
     expect(JSON.stringify(timeline)).not.toContain('Preparation');
     expect(JSON.stringify(timeline)).not.toContain('Day 7');
@@ -375,6 +382,7 @@ describe('buildTreatmentTimeline', () => {
         },
       ],
       ungroupedMilestones: [],
+      currentAppointment: null,
     });
     expect(JSON.stringify(timeline)).not.toContain('Preparation');
     expect(JSON.stringify(timeline)).not.toContain('TBD by clinic');

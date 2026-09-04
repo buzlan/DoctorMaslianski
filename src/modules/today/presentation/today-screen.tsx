@@ -8,12 +8,18 @@ import {
 } from "react-native";
 
 import {
+  ClinicContactSection,
+  loadSharedClinicContact,
+  type ClinicContact,
+} from "@/modules/clinic-contact";
+import {
   sharedTodayLoader,
   toLocalCalendarDate,
   type TodayAssignmentItem,
   type TodayLoadResult,
   type TodayOverview,
 } from "@/modules/today/application";
+import { CurrentAppointmentBlock } from "@/modules/treatment/presentation/current-appointment-block";
 import { copy } from "@/shared/copy";
 import { getColors, theme } from "@/shared/theme";
 import { AppText, Button, Screen, Stack } from "@/shared/ui";
@@ -42,14 +48,20 @@ function requestTodayLoad() {
   return sharedTodayLoader.load(todayDate());
 }
 
+function requestTodayAndContact() {
+  return Promise.all([requestTodayLoad(), loadSharedClinicContact()]);
+}
+
 function ReadyContent({
   overview,
+  clinicContact,
   pendingAssignmentId,
   onToggle,
   onFillDiary,
   onAddPhoto,
 }: {
   overview: ReadyOverview;
+  clinicContact: ClinicContact;
   pendingAssignmentId: string | null;
   onToggle: (assignment: TodayAssignmentItem) => void;
   onFillDiary: () => void;
@@ -105,6 +117,8 @@ function ReadyContent({
       {overview.photoAddOpen ? (
         <Button label={copy.today.addPhoto} onPress={onAddPhoto} />
       ) : null}
+      <CurrentAppointmentBlock appointment={overview.currentAppointment} />
+      <ClinicContactSection contact={clinicContact} />
     </Stack>
   );
 }
@@ -118,6 +132,7 @@ export function TodayScreen() {
   const [pendingAssignmentId, setPendingAssignmentId] = useState<string | null>(
     null,
   );
+  const [clinicContact, setClinicContact] = useState<ClinicContact>({});
   const loadGenerationRef = useRef(0);
 
   useFocusEffect(
@@ -125,9 +140,12 @@ export function TodayScreen() {
       const generation = loadGenerationRef.current + 1;
       loadGenerationRef.current = generation;
 
-      void requestTodayLoad().then((result) => {
+      void requestTodayAndContact().then(([result, contact]) => {
         if (loadGenerationRef.current === generation) {
           setViewState(toViewState(result));
+          if (result.status === "ready") {
+            setClinicContact(contact);
+          }
         }
       });
     }, []),
@@ -175,9 +193,12 @@ export function TodayScreen() {
                 const generation = loadGenerationRef.current + 1;
                 loadGenerationRef.current = generation;
                 setViewState({ status: "loading" });
-                void requestTodayLoad().then((result) => {
+                void requestTodayAndContact().then(([result, contact]) => {
                   if (loadGenerationRef.current === generation) {
                     setViewState(toViewState(result));
+                    if (result.status === "ready") {
+                      setClinicContact(contact);
+                    }
                   }
                 });
               }}
@@ -195,6 +216,7 @@ export function TodayScreen() {
           >
             <ReadyContent
               overview={viewState.overview}
+              clinicContact={clinicContact}
               pendingAssignmentId={pendingAssignmentId}
               onToggle={toggleAssignment}
               onFillDiary={() => {
