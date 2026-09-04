@@ -1,6 +1,6 @@
 # TASK-030 — Mobile environment and Supabase client
 
-Status: NOT STARTED
+Status: DONE
 
 Milestone: M9 — Supabase + sync
 
@@ -40,7 +40,8 @@ M1 must not speculate on env files. Networking needs a real backend boundary.
 
 ## New dependencies
 
-Likely `@supabase/supabase-js`. Justify in Plan Mode.
+- `@supabase/supabase-js`
+- `react-native-url-polyfill`
 
 ## Plan Mode
 

@@ -1,3 +1,35 @@
+if (typeof global.WebSocket === 'undefined') {
+  class JestWebSocket {
+    static CONNECTING = 0;
+    static OPEN = 1;
+    static CLOSING = 2;
+    static CLOSED = 3;
+    CONNECTING = 0;
+    OPEN = 1;
+    CLOSING = 2;
+    CLOSED = 3;
+    readyState = 3;
+    url = '';
+    protocol = '';
+    onopen = null;
+    onmessage = null;
+    onclose = null;
+    onerror = null;
+
+    constructor(url) {
+      this.url = url;
+    }
+
+    close() {}
+    send() {}
+    addEventListener() {}
+    removeEventListener() {}
+  }
+
+  global.WebSocket = JestWebSocket;
+  globalThis.WebSocket = JestWebSocket;
+}
+
 jest.mock('@react-native-async-storage/async-storage', () =>
   require('@react-native-async-storage/async-storage/jest/async-storage-mock'),
 );

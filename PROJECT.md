@@ -179,7 +179,7 @@ Pilot shared data uses Supabase (Postgres, Auth, Storage, RLS).
 
 Supabase infrastructure definitions such as database migrations, RLS policies, storage configuration, seed/invite tooling, and the clinic review application live in a separate pilot repository.
 
-The React Native application in this repository will later contain its own Supabase client integration and environment configuration when the corresponding Pilot MVP task is implemented.
+The React Native application contains environment configuration and a shared Supabase JS client (TASK-030). Product repositories remain local/mock until TASK-031. Patient auth session UX is TASK-022.
 
 State management, networking and persistence libraries will be selected when their corresponding requirements are implemented.
 
@@ -218,5 +218,6 @@ Currently implemented (code):
 - Diary tab: once-per-civil-date form + submitted history
 - ProductEvent local sink (`app_opened`, `task_completed`, diary/photo counts, `treatment_journey_completed`, `feedback_submitted` use patient/treatment ids + cohort; no snapshot protocol pair; `feedback_submitted` may include numeric usefulness/clarity only)
 - completed-treatment shell: when `Treatment.status` is `completed`, main tabs are hidden; completion screen reuses clinic contact and optional local feedback survey
+- Supabase public env + shared JS client in `src/core/` (no repository swap, no auth UX)
 
-The development backlog lives in `docs/ROADMAP.md` and `docs/tasks/`. The next implementation task is **TASK-029** (Supabase schema in the other repository).
+The development backlog lives in `docs/ROADMAP.md` and `docs/tasks/`. The next implementation task is **TASK-022** (authentication infrastructure). TASK-029 is complete in `doctor-maslianski-pilot`.

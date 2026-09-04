@@ -21,6 +21,7 @@ Remote patient data cannot be fetched anonymously.
 
 - Logged-out vs logged-in gate.
 - Secure session storage via Expo-compatible secure storage if required by Supabase/Expo.
+- TASK-030 persists Auth sessions with AsyncStorage as client plumbing only. Before enabling real-patient authentication, review and harden session-at-rest storage. Do not ship real-patient auth on unreviewed AsyncStorage.
 - No silent production backdoor.
 - Invite/activation UX is TASK-033; this task is session infrastructure.
 - Patient record must be able to hold consent timestamps and document version (populated in TASK-033).
