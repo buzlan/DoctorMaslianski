@@ -24,7 +24,16 @@ import { CurrentAppointmentBlock } from "@/modules/treatment/presentation/curren
 import { copy } from "@/shared/copy";
 import { loadCivilTodayDate } from "@/shared/date/load-civil-today-date";
 import { getColors, theme } from "@/shared/theme";
-import { AppText, Button, Screen, Stack } from "@/shared/ui";
+import {
+  AppText,
+  Card,
+  CompletionMark,
+  IconWell,
+  Screen,
+  ScreenHeader,
+  ScreenState,
+  Stack,
+} from "@/shared/ui";
 
 type ReadyOverview = Extract<TodayOverview, { kind: "ready" }>;
 
@@ -51,66 +60,116 @@ function requestTodayAndContact() {
   return Promise.all([requestTodayLoad(), loadSharedClinicContact()]);
 }
 
+function photoStatusCopy(count: 1 | 2 | 3): string {
+  if (count === 1) {
+    return copy.today.photoAdded1;
+  }
+  if (count === 2) {
+    return copy.today.photoAdded2;
+  }
+  return copy.today.photoAdded3;
+}
+
+function assignmentLabel(assignment: TodayAssignmentItem): string {
+  if (assignment.title !== undefined && assignment.title.length > 0) {
+    return assignment.title;
+  }
+  return copy.today.tasksLabel;
+}
+
 function TodayAssignmentRow({
   assignment,
   pending,
   onToggle,
+  showDivider,
 }: {
   assignment: TodayAssignmentItem;
   pending: boolean;
   onToggle: (assignment: TodayAssignmentItem) => void;
+  showDivider: boolean;
 }) {
   const colors = getColors(useColorScheme());
 
   return (
-    <Stack gap="xs">
+    <View>
       <View
-        accessible
-        accessibilityLabel={
-          assignment.completed ? copy.today.completed : undefined
-        }
-        style={styles.assignmentHeader}
+        style={[
+          styles.assignmentRow,
+          assignment.completed
+            ? { backgroundColor: colors.accentSoft }
+            : undefined,
+        ]}
       >
-        <View
-          style={[
-            styles.completionMark,
-            {
-              borderColor: colors.textSecondary,
-            },
+        <CompletionMark
+          completed={assignment.completed}
+          disabled={pending}
+          accessibilityLabel={assignmentLabel(assignment)}
+          accessibilityHint={
             assignment.completed
-              ? { backgroundColor: colors.accent, borderColor: colors.accent }
-              : undefined,
-          ]}
-        >
-          {assignment.completed ? (
-            <AppText
-              variant="caption"
-              style={[styles.completionCheck, { color: colors.background }]}
-            >
-              ✓
-            </AppText>
-          ) : null}
-        </View>
+              ? copy.today.markIncomplete
+              : copy.today.markComplete
+          }
+          onPress={() => onToggle(assignment)}
+        />
         <Stack gap="xs" style={styles.assignmentCopy}>
-          {assignment.title ? <AppText>{assignment.title}</AppText> : null}
+          {assignment.title ? (
+            <AppText variant="title">{assignment.title}</AppText>
+          ) : null}
           {assignment.instruction ? (
             <AppText tone="secondary">{assignment.instruction}</AppText>
           ) : null}
           {assignment.completed ? (
-            <AppText variant="caption">{copy.today.completed}</AppText>
+            <AppText variant="label" style={{ color: colors.accent }}>
+              {copy.today.completed}
+            </AppText>
           ) : null}
         </Stack>
       </View>
-      <Button
-        label={
-          assignment.completed
-            ? copy.today.markIncomplete
-            : copy.today.markComplete
-        }
-        disabled={pending}
-        onPress={() => onToggle(assignment)}
-      />
-    </Stack>
+      {showDivider ? (
+        <View style={[styles.divider, { backgroundColor: colors.border }]} />
+      ) : null}
+    </View>
+  );
+}
+
+function ActionCard({
+  title,
+  detail,
+  icon,
+  onPress,
+}: {
+  title: string;
+  detail?: string;
+  icon: "camera-outline" | "book-outline";
+  onPress?: () => void;
+}) {
+  const body = (
+    <Card variant="outlined">
+      <View style={styles.ctaRow}>
+        <IconWell name={icon} />
+        <Stack gap="xs" style={styles.ctaCopy}>
+          <AppText variant="title">{title}</AppText>
+          {detail !== undefined ? (
+            <AppText tone="secondary">{detail}</AppText>
+          ) : null}
+        </Stack>
+      </View>
+    </Card>
+  );
+
+  if (onPress === undefined) {
+    return body;
+  }
+
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={title}
+      onPress={onPress}
+      style={({ pressed }) => [{ opacity: pressed ? 0.84 : 1 }]}
+    >
+      {body}
+    </Pressable>
   );
 }
 
@@ -134,41 +193,53 @@ function ReadyContent({
   return (
     <Stack gap="md">
       {overview.periodDayNumber !== null ? (
-        <AppText>
-          {copy.today.periodDayLabel} {overview.periodDayNumber}
-        </AppText>
-      ) : null}
-      {!hasAssignments ? (
-        <AppText tone="secondary">{copy.today.noActionsForToday}</AppText>
-      ) : (
-        <Stack gap="sm">
-          <AppText variant="caption" tone="secondary">
-            {copy.today.tasksLabel}
+        <Card variant="tinted">
+          <AppText variant="display">
+            {copy.today.periodDayLabel} {overview.periodDayNumber}
           </AppText>
-          {overview.assignments.map((assignment) => (
-            <TodayAssignmentRow
-              key={assignment.id}
-              assignment={assignment}
-              pending={pendingAssignmentId !== null}
-              onToggle={onToggle}
-            />
-          ))}
+        </Card>
+      ) : null}
+      <Card variant="elevated" style={styles.tasksCard}>
+        <Stack gap="sm">
+          <AppText variant="title">{copy.today.tasksLabel}</AppText>
+          {!hasAssignments ? (
+            <AppText tone="secondary">{copy.today.noActionsForToday}</AppText>
+          ) : (
+            overview.assignments.map((assignment, index) => (
+              <TodayAssignmentRow
+                key={assignment.id}
+                assignment={assignment}
+                pending={pendingAssignmentId !== null}
+                onToggle={onToggle}
+                showDivider={index < overview.assignments.length - 1}
+              />
+            ))
+          )}
         </Stack>
-      )}
+      </Card>
       {overview.diaryOpen ? (
-        <Button label={copy.today.fillDiary} onPress={onFillDiary} />
+        <ActionCard
+          title={copy.today.fillDiary}
+          icon="book-outline"
+          onPress={onFillDiary}
+        />
       ) : null}
-      {overview.photosRecordedToday === 1 ? (
-        <AppText tone="secondary">{copy.today.photoAdded1}</AppText>
-      ) : null}
-      {overview.photosRecordedToday === 2 ? (
-        <AppText tone="secondary">{copy.today.photoAdded2}</AppText>
-      ) : null}
-      {overview.photosRecordedToday === 3 ? (
-        <AppText tone="secondary">{copy.today.photoAdded3}</AppText>
-      ) : null}
-      {overview.photoAddOpen ? (
-        <Button label={copy.today.addPhoto} onPress={onAddPhoto} />
+      {overview.photosRecordedToday === 1 ||
+      overview.photosRecordedToday === 2 ||
+      overview.photosRecordedToday === 3 ||
+      overview.photoAddOpen ? (
+        <ActionCard
+          title={copy.today.addPhoto}
+          detail={
+            overview.photosRecordedToday === 1 ||
+            overview.photosRecordedToday === 2 ||
+            overview.photosRecordedToday === 3
+              ? photoStatusCopy(overview.photosRecordedToday)
+              : undefined
+          }
+          icon="camera-outline"
+          onPress={overview.photoAddOpen ? onAddPhoto : undefined}
+        />
       ) : null}
       <CurrentAppointmentBlock appointment={overview.currentAppointment} />
       <ClinicContactSection contact={clinicContact} />
@@ -177,7 +248,6 @@ function ReadyContent({
 }
 
 export function TodayScreen() {
-  const colors = getColors(useColorScheme());
   const router = useRouter();
   const [viewState, setViewState] = useState<TodayViewState>({
     status: "loading",
@@ -237,43 +307,40 @@ export function TodayScreen() {
   return (
     <Screen edges={["top", "left", "right"]} style={styles.content}>
       <Stack gap="md" style={styles.body}>
-        <AppText variant="title">{copy.today.title}</AppText>
+        <ScreenHeader
+          title={copy.today.title}
+          subtitle={copy.today.subtitle}
+        />
         {viewState.status === "loading" ? (
-          <AppText tone="secondary">{copy.today.loading}</AppText>
+          <ScreenState message={copy.today.loading} />
         ) : null}
         {viewState.status === "no_active_treatment" ? (
-          <AppText tone="secondary">{copy.today.noActiveTreatment}</AppText>
+          <ScreenState message={copy.today.noActiveTreatment} />
         ) : null}
         {viewState.status === "error" ? (
-          <Stack gap="md">
-            <AppText tone="secondary">{copy.today.loadError}</AppText>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={copy.today.retry}
-              onPress={() => {
-                const generation = loadGenerationRef.current + 1;
-                loadGenerationRef.current = generation;
-                setViewState({ status: "loading" });
-                void requestTodayAndContact().then(([result, contact]) => {
-                  if (loadGenerationRef.current === generation) {
-                    setViewState(toViewState(result));
-                    if (result.status === "ready") {
-                      setClinicContact(contact);
-                    }
+          <ScreenState
+            message={copy.today.loadError}
+            actionLabel={copy.today.retry}
+            onAction={() => {
+              const generation = loadGenerationRef.current + 1;
+              loadGenerationRef.current = generation;
+              setViewState({ status: "loading" });
+              void requestTodayAndContact().then(([result, contact]) => {
+                if (loadGenerationRef.current === generation) {
+                  setViewState(toViewState(result));
+                  if (result.status === "ready") {
+                    setClinicContact(contact);
                   }
-                });
-              }}
-            >
-              <AppText style={{ color: colors.accent }}>
-                {copy.today.retry}
-              </AppText>
-            </Pressable>
-          </Stack>
+                }
+              });
+            }}
+          />
         ) : null}
         {viewState.status === "ready" ? (
           <ScrollView
             style={styles.scroll}
             contentContainerStyle={styles.scrollContent}
+            showsVerticalScrollIndicator={false}
           >
             <ReadyContent
               overview={viewState.overview}
@@ -306,25 +373,33 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flexGrow: 1,
+    paddingBottom: theme.spacing.xl,
   },
-  assignmentHeader: {
+  tasksCard: {
+    paddingVertical: theme.spacing.md,
+  },
+  assignmentRow: {
     flexDirection: "row",
     alignItems: "flex-start",
     gap: theme.spacing.sm,
-  },
-  completionMark: {
-    width: 22,
-    height: 22,
-    borderWidth: 1.5,
-    borderRadius: theme.radii.sm,
-    alignItems: "center",
-    justifyContent: "center",
-    marginTop: 2,
-  },
-  completionCheck: {
-    lineHeight: 16,
+    paddingVertical: theme.spacing.sm,
+    paddingHorizontal: theme.spacing.sm,
+    borderRadius: theme.radii.lg,
   },
   assignmentCopy: {
+    flex: 1,
+    paddingTop: 8,
+  },
+  divider: {
+    height: StyleSheet.hairlineWidth,
+    marginHorizontal: theme.spacing.sm,
+  },
+  ctaRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: theme.spacing.md,
+  },
+  ctaCopy: {
     flex: 1,
   },
 });

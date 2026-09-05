@@ -6,6 +6,7 @@ export type AppCopy = {
   };
   today: {
     title: string;
+    subtitle: string;
     loading: string;
     noActiveTreatment: string;
     noActionsForToday: string;
@@ -24,6 +25,7 @@ export type AppCopy = {
   };
   diary: {
     title: string;
+    subtitle: string;
     loading: string;
     noActiveTreatment: string;
     loadError: string;
@@ -40,11 +42,13 @@ export type AppCopy = {
   };
   treatment: {
     title: string;
+    subtitle: string;
     loading: string;
     noActiveTreatment: string;
     loadError: string;
     retry: string;
     periodDayLabel: string;
+    currentPeriodLabel: string;
     emptyMilestones: string;
     back: string;
     milestoneDetailTitle: string;
@@ -53,6 +57,8 @@ export type AppCopy = {
     doctorPhotosEmpty: string;
     doctorPhotosUnavailable: string;
     doctorPhotoAccessibilityLabel: string;
+    doctorPhotoCount: string;
+    photoCounterOf: string;
   };
   appointment: {
     label: string;

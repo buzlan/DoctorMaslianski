@@ -1,4 +1,3 @@
-import { Image } from "expo-image";
 import { useRouter } from "expo-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ScrollView, StyleSheet } from "react-native";
@@ -12,8 +11,17 @@ import {
 } from "@/modules/treatment/application";
 import { copy } from "@/shared/copy";
 import { theme } from "@/shared/theme";
-import { AppText, Button, Screen, Stack } from "@/shared/ui";
+import {
+  AppText,
+  Button,
+  Card,
+  Screen,
+  ScreenHeader,
+  ScreenState,
+  Stack,
+} from "@/shared/ui";
 
+import { DoctorPhotoPager } from "./doctor-photo-pager";
 import { formatCalendarDate } from "./format-calendar-date";
 
 type ReadyDetail = Extract<MilestoneDetail, { kind: "ready" }>;
@@ -61,32 +69,22 @@ function requestLoad(id: string) {
   return loadSharedMilestoneDetail(id);
 }
 
-function doctorPhotoLabel(index: number): string {
-  return `${copy.treatment.doctorPhotoAccessibilityLabel} ${index + 1}`;
-}
-
 function DoctorPhotosSection({ doctorPhotos }: { doctorPhotos: MilestoneDoctorPhotos }) {
   return (
-    <Stack gap="sm">
-      <AppText>{copy.treatment.doctorPhotosLabel}</AppText>
-      {doctorPhotos.status === "unavailable" ? (
-        <AppText tone="secondary">{copy.treatment.doctorPhotosUnavailable}</AppText>
-      ) : null}
-      {doctorPhotos.status === "ready" && doctorPhotos.items.length === 0 ? (
-        <AppText tone="secondary">{copy.treatment.doctorPhotosEmpty}</AppText>
-      ) : null}
-      {doctorPhotos.status === "ready"
-        ? doctorPhotos.items.map((photo, index) => (
-            <Image
-              key={photo.id}
-              source={{ uri: photo.displayUri }}
-              style={styles.photo}
-              contentFit="contain"
-              accessibilityLabel={doctorPhotoLabel(index)}
-            />
-          ))
-        : null}
-    </Stack>
+    <Card variant="elevated">
+      <Stack gap="sm">
+        <AppText variant="title">{copy.treatment.doctorPhotosLabel}</AppText>
+        {doctorPhotos.status === "unavailable" ? (
+          <AppText tone="secondary">{copy.treatment.doctorPhotosUnavailable}</AppText>
+        ) : null}
+        {doctorPhotos.status === "ready" && doctorPhotos.items.length === 0 ? (
+          <AppText tone="secondary">{copy.treatment.doctorPhotosEmpty}</AppText>
+        ) : null}
+        {doctorPhotos.status === "ready" && doctorPhotos.items.length > 0 ? (
+          <DoctorPhotoPager items={doctorPhotos.items} />
+        ) : null}
+      </Stack>
+    </Card>
   );
 }
 
@@ -123,49 +121,49 @@ export function MilestoneDetailScreen({ milestoneId }: MilestoneDetailScreenProp
     <Screen edges={["top", "left", "right"]} style={styles.content}>
       <Stack gap="md" style={styles.body}>
         <Button
+          variant="tertiary"
           label={copy.treatment.back}
           onPress={() => {
             goBack(router);
           }}
         />
         {viewState.status === "loading" ? (
-          <AppText tone="secondary">{copy.treatment.loading}</AppText>
+          <ScreenState message={copy.treatment.loading} />
         ) : null}
         {viewState.status === "not_found" ? (
-          <AppText tone="secondary">{copy.treatment.milestoneNotFound}</AppText>
+          <ScreenState message={copy.treatment.milestoneNotFound} />
         ) : null}
         {viewState.status === "error" ? (
-          <Stack gap="md">
-            <AppText tone="secondary">{copy.treatment.loadError}</AppText>
-            <Button
-              label={copy.treatment.retry}
-              onPress={() => {
-                const generation = loadGenerationRef.current + 1;
-                loadGenerationRef.current = generation;
-                setViewState({ status: "loading" });
-                void requestLoad(resolvedId).then((result) => {
-                  if (loadGenerationRef.current === generation) {
-                    setViewState(toViewState(result));
-                  }
-                });
-              }}
-            />
-          </Stack>
+          <ScreenState
+            message={copy.treatment.loadError}
+            actionLabel={copy.treatment.retry}
+            onAction={() => {
+              const generation = loadGenerationRef.current + 1;
+              loadGenerationRef.current = generation;
+              setViewState({ status: "loading" });
+              void requestLoad(resolvedId).then((result) => {
+                if (loadGenerationRef.current === generation) {
+                  setViewState(toViewState(result));
+                }
+              });
+            }}
+          />
         ) : null}
         {viewState.status === "ready" ? (
           <ScrollView
             style={styles.scroll}
             contentContainerStyle={styles.scrollContent}
+            showsVerticalScrollIndicator={false}
           >
             <Stack gap="md">
-              <Stack gap="xs">
-                <AppText variant="title">{headingFor(viewState.detail)}</AppText>
-                {viewState.detail.milestone.occurredOn !== undefined ? (
-                  <AppText variant="caption" tone="secondary">
-                    {formatCalendarDate(viewState.detail.milestone.occurredOn)}
-                  </AppText>
-                ) : null}
-              </Stack>
+              <ScreenHeader
+                title={headingFor(viewState.detail)}
+                subtitle={
+                  viewState.detail.milestone.occurredOn !== undefined
+                    ? formatCalendarDate(viewState.detail.milestone.occurredOn)
+                    : undefined
+                }
+              />
               <DoctorPhotosSection doctorPhotos={viewState.detail.doctorPhotos} />
             </Stack>
           </ScrollView>
@@ -187,10 +185,6 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flexGrow: 1,
-  },
-  photo: {
-    width: "100%",
-    height: 280,
-    backgroundColor: "transparent",
+    paddingBottom: theme.spacing.lg,
   },
 });

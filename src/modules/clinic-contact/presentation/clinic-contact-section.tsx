@@ -1,8 +1,9 @@
 import { useState } from "react";
-import { Linking } from "react-native";
+import { Linking, StyleSheet, View } from "react-native";
 
 import { copy } from "@/shared/copy";
-import { AppText, Button, Stack } from "@/shared/ui";
+import { theme } from "@/shared/theme";
+import { AppText, Button, Card, IconWell, Stack } from "@/shared/ui";
 
 import {
   clinicContactChannels,
@@ -53,36 +54,59 @@ export function ClinicContactSection({ contact }: { contact: ClinicContact }) {
 
   if (!hasClinicContactChannel(contact)) {
     return (
-      <Stack gap="xs">
-        <AppText variant="caption" tone="secondary">
-          {copy.clinicContact.label}
-        </AppText>
-        <AppText tone="secondary">{copy.clinicContact.unavailable}</AppText>
-      </Stack>
+      <Card variant="elevated">
+        <Stack gap="sm">
+          <View style={styles.header}>
+            <IconWell name="call-outline" />
+            <AppText variant="title" style={styles.headerCopy}>
+              {copy.clinicContact.label}
+            </AppText>
+          </View>
+          <AppText tone="secondary">{copy.clinicContact.unavailable}</AppText>
+        </Stack>
+      </Card>
     );
   }
 
   return (
-    <Stack gap="xs">
-      <AppText variant="caption" tone="secondary">
-        {copy.clinicContact.label}
-      </AppText>
-      {channels.map((channel) => (
-        <Button
-          key={channel.kind}
-          label={channelLabel(channel.kind)}
-          onPress={() => {
-            void openAllowlistedHref(channel.href).then((opened) => {
-              if (!opened) {
-                setOpenFailed(true);
-              }
-            });
-          }}
-        />
-      ))}
-      {openFailed ? (
-        <AppText tone="secondary">{copy.clinicContact.openError}</AppText>
-      ) : null}
-    </Stack>
+    <Card variant="elevated">
+      <Stack gap="md">
+        <View style={styles.header}>
+          <IconWell name="call-outline" />
+          <AppText variant="title" style={styles.headerCopy}>
+            {copy.clinicContact.label}
+          </AppText>
+        </View>
+        {channels.map((channel) => (
+          <Button
+            key={channel.kind}
+            variant="secondary"
+            label={channelLabel(channel.kind)}
+            accessibilityLabel={channelLabel(channel.kind)}
+            onPress={() => {
+              void openAllowlistedHref(channel.href).then((opened) => {
+                if (!opened) {
+                  setOpenFailed(true);
+                }
+              });
+            }}
+          />
+        ))}
+        {openFailed ? (
+          <AppText tone="secondary">{copy.clinicContact.openError}</AppText>
+        ) : null}
+      </Stack>
+    </Card>
   );
 }
+
+const styles = StyleSheet.create({
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: theme.spacing.md,
+  },
+  headerCopy: {
+    flex: 1,
+  },
+});

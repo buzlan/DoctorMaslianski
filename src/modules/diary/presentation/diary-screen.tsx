@@ -1,11 +1,6 @@
 import { useFocusEffect } from "expo-router";
 import { useCallback, useRef, useState } from "react";
-import {
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  useColorScheme,
-} from "react-native";
+import { ScrollView, StyleSheet } from "react-native";
 
 import { useCanonicalInvalidation } from "@/core/sync";
 import {
@@ -16,8 +11,8 @@ import {
 import type { VasScore, Wellbeing } from "@/modules/diary/domain";
 import { copy } from "@/shared/copy";
 import { loadCivilTodayDate } from "@/shared/date/load-civil-today-date";
-import { getColors, theme } from "@/shared/theme";
-import { AppText, Screen, Stack } from "@/shared/ui";
+import { theme } from "@/shared/theme";
+import { AppText, Card, Screen, ScreenHeader, ScreenState, Stack } from "@/shared/ui";
 
 import { DailyDiaryForm } from "./daily-diary-form";
 import { DiaryHistoryList } from "./diary-history-list";
@@ -37,7 +32,6 @@ function toViewState(result: DiaryTodayResult): DiaryViewState {
 }
 
 export function DiaryScreen() {
-  const colors = getColors(useColorScheme());
   const [viewState, setViewState] = useState<DiaryViewState>({
     status: "loading",
   });
@@ -94,45 +88,41 @@ export function DiaryScreen() {
   return (
     <Screen edges={["top", "left", "right"]} style={styles.content}>
       <Stack gap="md" style={styles.body}>
-        <AppText variant="title">{copy.diary.title}</AppText>
+        <ScreenHeader title={copy.diary.title} subtitle={copy.diary.subtitle} />
         {viewState.status === "loading" ? (
-          <AppText tone="secondary">{copy.diary.loading}</AppText>
+          <ScreenState message={copy.diary.loading} />
         ) : null}
         {viewState.status === "no_active_treatment" ? (
-          <AppText tone="secondary">{copy.diary.noActiveTreatment}</AppText>
+          <ScreenState message={copy.diary.noActiveTreatment} />
         ) : null}
         {viewState.status === "error" ? (
-          <Stack gap="md">
-            <AppText tone="secondary">{copy.diary.loadError}</AppText>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={copy.diary.retry}
-              onPress={() => {
-                const generation = loadGenerationRef.current + 1;
-                loadGenerationRef.current = generation;
-                setViewState({ status: "loading" });
-                void loadCivilTodayDate().then((onDate) =>
-                  sharedDiaryLoader.load(onDate).then((result) => {
-                    if (loadGenerationRef.current === generation) {
-                      setViewState(toViewState(result));
-                    }
-                  }),
-                );
-              }}
-            >
-              <AppText style={{ color: colors.accent }}>
-                {copy.diary.retry}
-              </AppText>
-            </Pressable>
-          </Stack>
+          <ScreenState
+            message={copy.diary.loadError}
+            actionLabel={copy.diary.retry}
+            onAction={() => {
+              const generation = loadGenerationRef.current + 1;
+              loadGenerationRef.current = generation;
+              setViewState({ status: "loading" });
+              void loadCivilTodayDate().then((onDate) =>
+                sharedDiaryLoader.load(onDate).then((result) => {
+                  if (loadGenerationRef.current === generation) {
+                    setViewState(toViewState(result));
+                  }
+                }),
+              );
+            }}
+          />
         ) : null}
         {viewState.status === "completed" ? (
-          <AppText tone="secondary">{copy.diary.completedToday}</AppText>
+          <Card variant="tinted">
+            <AppText>{copy.diary.completedToday}</AppText>
+          </Card>
         ) : null}
         {showHistory ? (
           <ScrollView
             style={styles.scroll}
             contentContainerStyle={styles.scrollContent}
+            showsVerticalScrollIndicator={false}
           >
             <Stack gap="md">
               {viewState.status === "open" ? (

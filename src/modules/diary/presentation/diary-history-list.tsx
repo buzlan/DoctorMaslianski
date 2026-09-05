@@ -2,7 +2,7 @@ import type { DiaryHistoryItem } from "@/modules/diary/application";
 import type { Wellbeing } from "@/modules/diary/domain";
 import { copy } from "@/shared/copy";
 import { formatCalendarDate } from "@/shared/date/format-calendar-date";
-import { AppText, Stack } from "@/shared/ui";
+import { AppText, Card, Stack } from "@/shared/ui";
 
 function wellbeingCopy(wellbeing: Wellbeing): string {
   switch (wellbeing) {
@@ -26,22 +26,22 @@ export function DiaryHistoryList({
 
   return (
     <Stack gap="md">
-      <AppText variant="caption" tone="secondary">
-        {copy.diary.entriesLabel}
-      </AppText>
+      <AppText variant="title">{copy.diary.entriesLabel}</AppText>
       {items.map((item) => (
-        <Stack key={item.id} gap="xs">
-          <AppText>{formatCalendarDate(item.submittedOn)}</AppText>
-          <AppText tone="secondary">
-            {copy.diary.painLabel}: {item.pain} / 10
-          </AppText>
-          <AppText tone="secondary">
-            {copy.diary.swellingLabel}: {item.swelling} / 10
-          </AppText>
-          <AppText tone="secondary">
-            {copy.diary.wellbeingLabel}: {wellbeingCopy(item.wellbeing)}
-          </AppText>
-        </Stack>
+        <Card key={item.id} variant="elevated">
+          <Stack gap="xs">
+            <AppText variant="title">{formatCalendarDate(item.submittedOn)}</AppText>
+            <AppText tone="secondary">
+              {copy.diary.painLabel}: {item.pain} / 10
+            </AppText>
+            <AppText tone="secondary">
+              {copy.diary.swellingLabel}: {item.swelling} / 10
+            </AppText>
+            <AppText tone="secondary">
+              {copy.diary.wellbeingLabel}: {wellbeingCopy(item.wellbeing)}
+            </AppText>
+          </Stack>
+        </Card>
       ))}
     </Stack>
   );

@@ -1,14 +1,21 @@
 import { Image } from "expo-image";
 import { useRouter } from "expo-router";
 import { useRef, useState } from "react";
-import { Pressable, ScrollView, StyleSheet, useColorScheme } from "react-native";
+import { ScrollView, StyleSheet, useColorScheme } from "react-native";
 
 import { sharedPatientPhotoLoader } from "@/modules/photos/application";
 import type { CapturedImage } from "@/modules/photos/domain";
 import { copy } from "@/shared/copy";
 import { loadCivilTodayDate } from "@/shared/date/load-civil-today-date";
 import { getColors, theme } from "@/shared/theme";
-import { AppText, Button, Screen, Stack } from "@/shared/ui";
+import {
+  AppText,
+  Button,
+  Card,
+  Screen,
+  ScreenHeader,
+  Stack,
+} from "@/shared/ui";
 
 export function PatientPhotoCaptureScreen() {
   const colors = getColors(useColorScheme());
@@ -92,64 +99,65 @@ export function PatientPhotoCaptureScreen() {
   return (
     <Screen edges={["top", "left", "right"]} style={styles.content}>
       <Stack gap="md" style={styles.body}>
-        <AppText variant="title">{copy.photos.title}</AppText>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={copy.photos.back}
-          onPress={goBack}
-        >
-          <AppText style={{ color: colors.accent }}>{copy.photos.back}</AppText>
-        </Pressable>
+        <Button variant="tertiary" label={copy.photos.back} onPress={goBack} />
+        <ScreenHeader title={copy.photos.title} />
         <ScrollView
           style={styles.scroll}
           contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
         >
-          <Stack gap="md">
-            {message !== null ? (
-              <AppText tone="secondary">{message}</AppText>
-            ) : null}
-            {captured !== null ? (
-              <Image
-                source={{ uri: captured.sourceUri }}
-                style={styles.preview}
-                contentFit="contain"
-                accessibilityLabel={copy.photos.title}
-              />
-            ) : null}
-            <Button
-              label={copy.photos.takePhoto}
-              disabled={confirming}
-              onPress={() => {
-                void capture("camera");
-              }}
-            />
-            <Button
-              label={copy.photos.chooseFromLibrary}
-              disabled={confirming}
-              onPress={() => {
-                void capture("library");
-              }}
-            />
-            {captured !== null ? (
+          <Card variant="elevated">
+            <Stack gap="md">
+              {message !== null ? (
+                <AppText tone="secondary">{message}</AppText>
+              ) : null}
+              {captured !== null ? (
+                <Image
+                  source={{ uri: captured.sourceUri }}
+                  style={[styles.preview, { backgroundColor: colors.accentSoft }]}
+                  contentFit="contain"
+                  accessibilityLabel={copy.photos.title}
+                />
+              ) : null}
               <Button
-                label={copy.photos.retry}
+                variant="secondary"
+                label={copy.photos.takePhoto}
                 disabled={confirming}
                 onPress={() => {
-                  setCaptured(null);
-                  setMessage(null);
+                  void capture("camera");
                 }}
               />
-            ) : null}
-            {captured !== null ? (
               <Button
-                label={copy.photos.confirm}
+                variant="secondary"
+                label={copy.photos.chooseFromLibrary}
                 disabled={confirming}
                 onPress={() => {
-                  void confirm();
+                  void capture("library");
                 }}
               />
-            ) : null}
-          </Stack>
+              {captured !== null ? (
+                <Button
+                  variant="tertiary"
+                  label={copy.photos.retry}
+                  disabled={confirming}
+                  onPress={() => {
+                    setCaptured(null);
+                    setMessage(null);
+                  }}
+                />
+              ) : null}
+              {captured !== null ? (
+                <Button
+                  variant="primary"
+                  label={copy.photos.confirm}
+                  disabled={confirming}
+                  onPress={() => {
+                    void confirm();
+                  }}
+                />
+              ) : null}
+            </Stack>
+          </Card>
         </ScrollView>
       </Stack>
     </Screen>
@@ -173,6 +181,6 @@ const styles = StyleSheet.create({
   preview: {
     width: "100%",
     height: 280,
-    backgroundColor: "transparent",
+    borderRadius: theme.radii.lg,
   },
 });

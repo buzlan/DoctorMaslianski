@@ -8,6 +8,7 @@ export const copy: AppCopy = {
   },
   today: {
     title: "Сегодня",
+    subtitle: "Что делать сегодня",
     loading: "Загрузка…",
     noActiveTreatment: "Сейчас нет активного лечения.",
     noActionsForToday: "На сегодня в приложении нет доступных действий.",
@@ -17,7 +18,7 @@ export const copy: AppCopy = {
     retry: "Повторить",
     markComplete: "Отметить выполненным",
     completed: "Выполнено",
-    markIncomplete: "Отменить отметку",
+    markIncomplete: "Снять отметку",
     fillDiary: "Заполнить дневник",
     addPhoto: "Добавить фото",
     photoAdded1: "Фото добавлено: 1 из 3",
@@ -26,6 +27,7 @@ export const copy: AppCopy = {
   },
   diary: {
     title: "Дневник",
+    subtitle: "Отметьте самочувствие за сегодня.",
     loading: "Загрузка…",
     noActiveTreatment: "Сейчас нет активного лечения.",
     loadError: "Не удалось загрузить данные.",
@@ -42,11 +44,13 @@ export const copy: AppCopy = {
   },
   treatment: {
     title: "Лечение",
+    subtitle: "Визиты и даты, которые указала клиника.",
     loading: "Загрузка…",
     noActiveTreatment: "Сейчас нет активного лечения.",
     loadError: "Не удалось загрузить данные.",
     retry: "Повторить",
     periodDayLabel: "День",
+    currentPeriodLabel: "Текущий период",
     emptyMilestones: "Пока нет визитов в ходе лечения.",
     back: "Назад",
     milestoneDetailTitle: "Этап лечения",
@@ -55,6 +59,8 @@ export const copy: AppCopy = {
     doctorPhotosEmpty: "Пока нет фотографий этого визита.",
     doctorPhotosUnavailable: "Не удалось загрузить фотографии.",
     doctorPhotoAccessibilityLabel: "Фотография визита",
+    doctorPhotoCount: "Фото врача",
+    photoCounterOf: "из",
   },
   appointment: {
     label: "Ближайшая запись",

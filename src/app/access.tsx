@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ActivityIndicator, Pressable, TextInput, useColorScheme } from 'react-native';
+import { ActivityIndicator, ScrollView, StyleSheet, useColorScheme } from 'react-native';
 
 import { resolveAuthGate, useAuthSession } from '@/core/auth';
 import {
@@ -11,7 +11,17 @@ import {
 } from '@/modules/invite';
 import { copy } from '@/shared/copy';
 import { getColors, theme } from '@/shared/theme';
-import { AppText, Button, Screen, Stack } from '@/shared/ui';
+import {
+  AppText,
+  Button,
+  Card,
+  CheckboxRow,
+  IconWell,
+  Screen,
+  ScreenHeader,
+  Stack,
+  TextField,
+} from '@/shared/ui';
 
 export default function AccessScreen() {
   const auth = useAuthSession();
@@ -58,95 +68,106 @@ export default function AccessScreen() {
 
   if (reason === 'service_unavailable') {
     return (
-      <Screen style={{ padding: theme.spacing.lg }}>
-        <Stack gap="md">
-          <AppText variant="title">{intro.title}</AppText>
-          <AppText tone="secondary">{intro.body}</AppText>
+      <Screen style={styles.content}>
+        <Stack gap="lg">
+          <IconWell name="shield-checkmark-outline" shape="circle" size={64} />
+          <ScreenHeader title={intro.title} subtitle={intro.body} />
         </Stack>
       </Screen>
     );
   }
 
   return (
-    <Screen style={{ padding: theme.spacing.lg }}>
-      <Stack gap="md">
-        <AppText variant="title">
-          {hasToken ? copy.access.consentTitle : intro.title}
-        </AppText>
-        <AppText tone="secondary">
-          {hasToken ? copy.access.consentBody : intro.body}
-        </AppText>
+    <Screen style={styles.content}>
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        <Stack gap="lg">
+          <Stack gap="md" style={styles.hero}>
+            <IconWell name="shield-checkmark-outline" shape="circle" size={64} />
+            <ScreenHeader
+              title={hasToken ? copy.access.consentTitle : intro.title}
+              subtitle={hasToken ? copy.access.consentBody : intro.body}
+            />
+          </Stack>
 
-        {!hasToken ? (
-          <>
-            <AppText>{copy.access.tokenLabel}</AppText>
-            <TextInput
-              accessibilityLabel={copy.access.tokenLabel}
-              autoCapitalize="none"
-              autoCorrect={false}
-              onChangeText={setDraft}
-              placeholder={copy.access.tokenPlaceholder}
-              placeholderTextColor={colors.textSecondary}
-              style={{
-                color: colors.textPrimary,
-                borderColor: colors.textSecondary,
-                borderWidth: 1,
-                borderRadius: theme.radii.sm,
-                padding: theme.spacing.sm,
-                minHeight: 48,
-              }}
-              value={draft}
-            />
-            <Button
-              label={copy.access.continueWithInvite}
-              onPress={() => {
-                void onContinueWithPaste();
-              }}
-            />
-          </>
-        ) : (
-          <>
-            <Pressable
-              accessibilityRole="checkbox"
-              accessibilityState={{ checked: privacyAccepted }}
-              onPress={() => setPrivacyAccepted((value) => !value)}
-            >
-              <AppText>
-                {privacyAccepted ? "[x] " : "[ ] "}
-                {copy.access.privacyAccept}
-              </AppText>
-            </Pressable>
-            <Pressable
-              accessibilityRole="checkbox"
-              accessibilityState={{ checked: pilotConsentAccepted }}
-              onPress={() => setPilotConsentAccepted((value) => !value)}
-            >
-              <AppText>
-                {pilotConsentAccepted ? "[x] " : "[ ] "}
-                {copy.access.pilotConsentAccept}
-              </AppText>
-            </Pressable>
-            {busy ? (
-              <Stack gap="sm">
-                <ActivityIndicator color={colors.accent} />
-                <AppText tone="secondary">{copy.access.activating}</AppText>
+          {!hasToken ? (
+            <Card variant="elevated">
+              <Stack gap="md">
+                <AppText variant="label">{copy.access.tokenLabel}</AppText>
+                <TextField
+                  label={copy.access.tokenLabel}
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  onChangeText={setDraft}
+                  placeholder={copy.access.tokenPlaceholder}
+                  value={draft}
+                />
+                <Button
+                  variant="primary"
+                  label={copy.access.continueWithInvite}
+                  onPress={() => {
+                    void onContinueWithPaste();
+                  }}
+                />
               </Stack>
-            ) : (
-              <Button
-                disabled={!privacyAccepted || !pilotConsentAccepted}
-                label={copy.access.activate}
-                onPress={() => {
-                  void onActivate();
-                }}
-              />
-            )}
-          </>
-        )}
+            </Card>
+          ) : (
+            <Card variant="elevated">
+              <Stack gap="md">
+                <CheckboxRow
+                  label={copy.access.privacyAccept}
+                  checked={privacyAccepted}
+                  disabled={busy}
+                  onPress={() => setPrivacyAccepted((value) => !value)}
+                />
+                <CheckboxRow
+                  label={copy.access.pilotConsentAccept}
+                  checked={pilotConsentAccepted}
+                  disabled={busy}
+                  onPress={() => setPilotConsentAccepted((value) => !value)}
+                />
+                {busy ? (
+                  <Stack gap="sm" style={styles.activating}>
+                    <ActivityIndicator color={colors.accent} />
+                    <AppText tone="secondary">{copy.access.activating}</AppText>
+                  </Stack>
+                ) : (
+                  <Button
+                    variant="primary"
+                    disabled={!privacyAccepted || !pilotConsentAccepted}
+                    label={copy.access.activate}
+                    onPress={() => {
+                      void onActivate();
+                    }}
+                  />
+                )}
+              </Stack>
+            </Card>
+          )}
 
-        {inviteError !== null ? (
-          <AppText tone="secondary">{copy.access.errors[inviteError]}</AppText>
-        ) : null}
-      </Stack>
+          {inviteError !== null ? (
+            <AppText tone="secondary">{copy.access.errors[inviteError]}</AppText>
+          ) : null}
+        </Stack>
+      </ScrollView>
     </Screen>
   );
 }
+
+const styles = StyleSheet.create({
+  content: {
+    padding: theme.spacing.lg,
+  },
+  scrollContent: {
+    flexGrow: 1,
+    paddingBottom: theme.spacing.lg,
+  },
+  hero: {
+    alignItems: 'center',
+  },
+  activating: {
+    alignItems: 'center',
+  },
+});

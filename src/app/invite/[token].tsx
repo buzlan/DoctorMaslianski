@@ -3,7 +3,8 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 
 import { parseInviteToken, setPendingInviteToken } from '@/modules/invite';
 import { copy } from '@/shared/copy';
-import { AppText, Screen } from '@/shared/ui';
+import { theme } from '@/shared/theme';
+import { Screen, ScreenState } from '@/shared/ui';
 
 export default function InviteDeepLinkScreen() {
   const router = useRouter();
@@ -19,8 +20,8 @@ export default function InviteDeepLinkScreen() {
   }, [router, token]);
 
   return (
-    <Screen>
-      <AppText>{copy.access.loading}</AppText>
+    <Screen style={{ padding: theme.spacing.md }}>
+      <ScreenState message={copy.access.loading} />
     </Screen>
   );
 }

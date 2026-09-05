@@ -1,15 +1,18 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import {
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  useColorScheme,
-} from "react-native";
+import { ScrollView, StyleSheet, View } from "react-native";
 
 import { ClinicContactSection, type ClinicContact } from "@/modules/clinic-contact";
 import { copy } from "@/shared/copy";
-import { getColors, theme } from "@/shared/theme";
-import { AppText, Screen, Stack } from "@/shared/ui";
+import { theme } from "@/shared/theme";
+import {
+  AppText,
+  Card,
+  IconWell,
+  Screen,
+  ScreenHeader,
+  ScreenState,
+  Stack,
+} from "@/shared/ui";
 
 import {
   sharedCompletionLoader,
@@ -41,7 +44,6 @@ function toViewState(result: CompletionScreenResult): CompletionViewState {
 }
 
 export function CompletionScreen() {
-  const colors = getColors(useColorScheme());
   const [viewState, setViewState] = useState<CompletionViewState>({
     status: "loading",
   });
@@ -88,40 +90,41 @@ export function CompletionScreen() {
   return (
     <Screen edges={["top", "left", "right"]} style={styles.content}>
       <Stack gap="md" style={styles.body}>
-        <AppText variant="title">{copy.completion.title}</AppText>
         {viewState.status === "loading" ? (
-          <AppText tone="secondary">{copy.completion.loading}</AppText>
+          <ScreenState message={copy.completion.loading} />
         ) : null}
         {viewState.status === "not_completed" ? (
-          <AppText tone="secondary">{copy.completion.notCompleted}</AppText>
+          <ScreenState message={copy.completion.notCompleted} />
         ) : null}
         {viewState.status === "error" ? (
-          <Stack gap="md">
-            <AppText tone="secondary">{copy.completion.loadError}</AppText>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={copy.completion.retry}
-              onPress={() => {
-                setViewState({ status: "loading" });
-                load();
-              }}
-            >
-              <AppText style={{ color: colors.accent }}>
-                {copy.completion.retry}
-              </AppText>
-            </Pressable>
-          </Stack>
+          <ScreenState
+            message={copy.completion.loadError}
+            actionLabel={copy.completion.retry}
+            onAction={() => {
+              setViewState({ status: "loading" });
+              load();
+            }}
+          />
         ) : null}
         {viewState.status === "ready" ? (
           <ScrollView
             style={styles.scroll}
             contentContainerStyle={styles.scrollContent}
+            showsVerticalScrollIndicator={false}
           >
-            <Stack gap="lg">
-              <AppText tone="secondary">{copy.completion.body}</AppText>
+            <Stack gap="lg" style={styles.ready}>
+              <View style={styles.heroMark}>
+                <IconWell name="checkmark" shape="circle" size={64} />
+              </View>
+              <ScreenHeader
+                title={copy.completion.title}
+                subtitle={copy.completion.body}
+              />
               <ClinicContactSection contact={viewState.clinicContact} />
               {viewState.survey !== null ? (
-                <AppText tone="secondary">{copy.completion.submitted}</AppText>
+                <Card variant="elevated">
+                  <AppText tone="secondary">{copy.completion.submitted}</AppText>
+                </Card>
               ) : (
                 <FeedbackSurveyForm submitting={submitting} onSubmit={submit} />
               )}
@@ -147,4 +150,11 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     paddingBottom: theme.spacing.lg,
   },
+  ready: {
+    alignItems: "stretch",
+  },
+  heroMark: {
+    alignItems: "center",
+  },
 });
+

@@ -19,12 +19,13 @@ import {
 } from "@/modules/feedback";
 import { sharedTreatmentRepository } from "@/modules/treatment/infrastructure";
 import { copy } from "@/shared/copy";
-import { AppText, Screen } from "@/shared/ui";
+import { theme } from "@/shared/theme";
+import { Screen, ScreenState } from "@/shared/ui";
 
 function LoadingScreen({ message }: { message: string }) {
   return (
-    <Screen>
-      <AppText>{message}</AppText>
+    <Screen style={{ padding: theme.spacing.md }}>
+      <ScreenState message={message} />
     </Screen>
   );
 }

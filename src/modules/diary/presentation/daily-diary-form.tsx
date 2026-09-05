@@ -1,10 +1,17 @@
 import { useState } from "react";
-import { Pressable, StyleSheet, useColorScheme, View } from "react-native";
+import { StyleSheet, View } from "react-native";
 
 import type { VasScore, Wellbeing } from "@/modules/diary/domain";
 import { copy } from "@/shared/copy";
-import { getColors, theme } from "@/shared/theme";
-import { AppText, Button, Stack } from "@/shared/ui";
+import { theme } from "@/shared/theme";
+import {
+  AppText,
+  Button,
+  Card,
+  ChoiceChip,
+  ScoreStepper,
+  Stack,
+} from "@/shared/ui";
 
 const VAS_SCORES: readonly VasScore[] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
 
@@ -36,31 +43,48 @@ export function DailyDiaryForm({ submitting, onSubmit }: DailyDiaryFormProps) {
 
   return (
     <Stack gap="lg">
-      <VasField
-        label={copy.diary.painLabel}
-        value={pain}
-        onChange={setPain}
-        disabled={submitting}
-      />
-      <VasField
-        label={copy.diary.swellingLabel}
-        value={swelling}
-        onChange={setSwelling}
-        disabled={submitting}
-      />
-      <Stack gap="sm">
-        <AppText>{copy.diary.wellbeingLabel}</AppText>
-        {WELLBEING_CHOICES.map((choice) => (
-          <WellbeingChoice
-            key={choice.value}
-            label={choice.label}
-            selected={wellbeing === choice.value}
+      <Card variant="elevated">
+        <Stack gap="sm">
+          <AppText variant="title">{copy.diary.painLabel}</AppText>
+          <ScoreStepper
+            label={copy.diary.painLabel}
+            scores={VAS_SCORES}
+            value={pain}
+            onChange={setPain}
             disabled={submitting}
-            onPress={() => setWellbeing(choice.value)}
           />
-        ))}
-      </Stack>
+        </Stack>
+      </Card>
+      <Card variant="elevated">
+        <Stack gap="sm">
+          <AppText variant="title">{copy.diary.swellingLabel}</AppText>
+          <ScoreStepper
+            label={copy.diary.swellingLabel}
+            scores={VAS_SCORES}
+            value={swelling}
+            onChange={setSwelling}
+            disabled={submitting}
+          />
+        </Stack>
+      </Card>
+      <Card variant="elevated">
+        <Stack gap="sm">
+          <AppText variant="title">{copy.diary.wellbeingLabel}</AppText>
+          <View style={styles.wellbeingRow}>
+            {WELLBEING_CHOICES.map((choice) => (
+              <ChoiceChip
+                key={choice.value}
+                label={choice.label}
+                selected={wellbeing === choice.value}
+                disabled={submitting}
+                onPress={() => setWellbeing(choice.value)}
+              />
+            ))}
+          </View>
+        </Stack>
+      </Card>
       <Button
+        variant="primary"
         label={copy.diary.submit}
         disabled={!canSubmit}
         onPress={() => {
@@ -74,97 +98,10 @@ export function DailyDiaryForm({ submitting, onSubmit }: DailyDiaryFormProps) {
   );
 }
 
-function VasField({
-  label,
-  value,
-  onChange,
-  disabled,
-}: {
-  label: string;
-  value: VasScore | null;
-  onChange: (score: VasScore) => void;
-  disabled: boolean;
-}) {
-  const colors = getColors(useColorScheme());
-
-  return (
-    <Stack gap="sm">
-      <AppText>{label}</AppText>
-      <View style={styles.vasGrid}>
-        {VAS_SCORES.map((score) => {
-          const selected = value === score;
-          return (
-            <Pressable
-              key={score}
-              accessibilityRole="button"
-              accessibilityLabel={`${label}, ${score}`}
-              accessibilityState={{ selected, disabled }}
-              disabled={disabled}
-              onPress={() => onChange(score)}
-              style={[styles.vasCell, { borderColor: colors.textSecondary }]}
-            >
-              <AppText
-                style={{
-                  color: selected ? colors.accent : colors.textPrimary,
-                }}
-              >
-                {score}
-              </AppText>
-            </Pressable>
-          );
-        })}
-      </View>
-    </Stack>
-  );
-}
-
-function WellbeingChoice({
-  label,
-  selected,
-  disabled,
-  onPress,
-}: {
-  label: string;
-  selected: boolean;
-  disabled: boolean;
-  onPress: () => void;
-}) {
-  const colors = getColors(useColorScheme());
-
-  return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityLabel={label}
-      accessibilityState={{ selected, disabled }}
-      disabled={disabled}
-      onPress={onPress}
-      style={styles.wellbeingChoice}
-    >
-      <AppText style={{ color: selected ? colors.accent : colors.textPrimary }}>
-        {label}
-      </AppText>
-    </Pressable>
-  );
-}
-
 const styles = StyleSheet.create({
-  vasGrid: {
+  wellbeingRow: {
     flexDirection: "row",
     flexWrap: "wrap",
     gap: theme.spacing.sm,
-  },
-  vasCell: {
-    minWidth: 44,
-    minHeight: 44,
-    paddingHorizontal: theme.spacing.md,
-    paddingVertical: theme.spacing.sm,
-    alignItems: "center",
-    justifyContent: "center",
-    borderWidth: StyleSheet.hairlineWidth,
-    borderRadius: theme.radii.sm,
-  },
-  wellbeingChoice: {
-    minHeight: 44,
-    justifyContent: "center",
   },
 });

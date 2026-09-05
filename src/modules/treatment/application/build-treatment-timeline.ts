@@ -28,6 +28,7 @@ export type TimelineMilestone = {
   id: string;
   title?: string;
   occurredOn?: CalendarDate;
+  doctorPhotoCount?: number;
 };
 
 export type TimelinePeriod = {
