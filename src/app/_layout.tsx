@@ -1,12 +1,23 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Redirect, Stack, useSegments } from "expo-router";
+import { AppState } from "react-native";
 
 import { resolveAuthGate, signOut, useAuthSession } from "@/core/auth";
 import { getSharedRemotePatientContextResolver } from "@/core/auth/shared-remote-patient-context";
+import { shouldUseRemoteRepositories } from "@/core/runtime/should-use-remote-repositories";
+import { getSharedSupabaseClient } from "@/core/supabase/client";
+import {
+  createRealtimeSubscriber,
+  flushSubscribedTargets,
+  useCanonicalInvalidation,
+} from "@/core/sync";
+import type { RealtimeSubscriberClient } from "@/core/sync/realtime-subscriber";
+import { flushRegisteredRemoteOutboxes } from "@/core/sync/remote-outbox-flush";
 import {
   loadSharedTreatmentShell,
   type TreatmentShell,
 } from "@/modules/feedback";
+import { sharedTreatmentRepository } from "@/modules/treatment/infrastructure";
 import { copy } from "@/shared/copy";
 import { AppText, Screen } from "@/shared/ui";
 
@@ -23,6 +34,11 @@ function ClinicalStack() {
     status: "loading",
   });
 
+  const refreshShell = useCallback(async () => {
+    const next = await loadSharedTreatmentShell();
+    setShell(next);
+  }, []);
+
   useEffect(() => {
     let cancelled = false;
 
@@ -36,6 +52,8 @@ function ClinicalStack() {
       cancelled = true;
     };
   }, []);
+
+  useCanonicalInvalidation("treatment-shell", refreshShell);
 
   if (shell.status === "loading") {
     return <LoadingScreen message={copy.completion.loading} />;
@@ -106,7 +124,38 @@ function LinkedClinicalShell() {
     return <LoadingScreen message={copy.access.loading} />;
   }
 
-  return <ClinicalStack />;
+  return (
+    <>
+      <RemoteRealtimeBridge />
+      <ClinicalStack />
+    </>
+  );
+}
+
+function RemoteRealtimeBridge() {
+  const auth = useAuthSession();
+
+  useEffect(() => {
+    const subscriber = createRealtimeSubscriber({
+      client: getSharedSupabaseClient() as unknown as RealtimeSubscriberClient | null,
+      shouldSubscribe: () => shouldUseRemoteRepositories(),
+      resolveTreatmentId: async () => {
+        const treatment = await sharedTreatmentRepository.getActiveTreatment();
+        return treatment?.id ?? null;
+      },
+      onForeground: async () => {
+        await flushRegisteredRemoteOutboxes();
+        await flushSubscribedTargets();
+      },
+      appState: AppState,
+    });
+    subscriber.start();
+    return () => {
+      subscriber.stop();
+    };
+  }, [auth]);
+
+  return null;
 }
 
 export default function RootLayout() {

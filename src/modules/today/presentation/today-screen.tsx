@@ -5,8 +5,10 @@ import {
   ScrollView,
   StyleSheet,
   useColorScheme,
+  View,
 } from "react-native";
 
+import { useCanonicalInvalidation } from "@/core/sync";
 import {
   ClinicContactSection,
   loadSharedClinicContact,
@@ -49,6 +51,69 @@ function requestTodayAndContact() {
   return Promise.all([requestTodayLoad(), loadSharedClinicContact()]);
 }
 
+function TodayAssignmentRow({
+  assignment,
+  pending,
+  onToggle,
+}: {
+  assignment: TodayAssignmentItem;
+  pending: boolean;
+  onToggle: (assignment: TodayAssignmentItem) => void;
+}) {
+  const colors = getColors(useColorScheme());
+
+  return (
+    <Stack gap="xs">
+      <View
+        accessible
+        accessibilityLabel={
+          assignment.completed ? copy.today.completed : undefined
+        }
+        style={styles.assignmentHeader}
+      >
+        <View
+          style={[
+            styles.completionMark,
+            {
+              borderColor: colors.textSecondary,
+            },
+            assignment.completed
+              ? { backgroundColor: colors.accent, borderColor: colors.accent }
+              : undefined,
+          ]}
+        >
+          {assignment.completed ? (
+            <AppText
+              variant="caption"
+              style={[styles.completionCheck, { color: colors.background }]}
+            >
+              ✓
+            </AppText>
+          ) : null}
+        </View>
+        <Stack gap="xs" style={styles.assignmentCopy}>
+          {assignment.title ? <AppText>{assignment.title}</AppText> : null}
+          {assignment.instruction ? (
+            <AppText tone="secondary">{assignment.instruction}</AppText>
+          ) : null}
+          {assignment.completed ? (
+            <AppText variant="caption">{copy.today.completed}</AppText>
+          ) : null}
+        </Stack>
+      </View>
+      <Button
+        label={
+          assignment.completed
+            ? copy.today.markIncomplete
+            : copy.today.markComplete
+        }
+        disabled={pending}
+        onPress={() => onToggle(assignment)}
+      />
+    </Stack>
+  );
+}
+
 function ReadyContent({
   overview,
   clinicContact,
@@ -81,21 +146,12 @@ function ReadyContent({
             {copy.today.tasksLabel}
           </AppText>
           {overview.assignments.map((assignment) => (
-            <Stack key={assignment.id} gap="xs">
-              {assignment.title ? <AppText>{assignment.title}</AppText> : null}
-              {assignment.instruction ? (
-                <AppText tone="secondary">{assignment.instruction}</AppText>
-              ) : null}
-              <Button
-                label={
-                  assignment.completed
-                    ? copy.today.markIncomplete
-                    : copy.today.markComplete
-                }
-                disabled={pendingAssignmentId !== null}
-                onPress={() => onToggle(assignment)}
-              />
-            </Stack>
+            <TodayAssignmentRow
+              key={assignment.id}
+              assignment={assignment}
+              pending={pendingAssignmentId !== null}
+              onToggle={onToggle}
+            />
           ))}
         </Stack>
       )}
@@ -132,21 +188,27 @@ export function TodayScreen() {
   const [clinicContact, setClinicContact] = useState<ClinicContact>({});
   const loadGenerationRef = useRef(0);
 
+  const refresh = useCallback(() => {
+    const generation = loadGenerationRef.current + 1;
+    loadGenerationRef.current = generation;
+
+    return requestTodayAndContact().then(([result, contact]) => {
+      if (loadGenerationRef.current === generation) {
+        setViewState(toViewState(result));
+        if (result.status === "ready") {
+          setClinicContact(contact);
+        }
+      }
+    });
+  }, []);
+
   useFocusEffect(
     useCallback(() => {
-      const generation = loadGenerationRef.current + 1;
-      loadGenerationRef.current = generation;
-
-      void requestTodayAndContact().then(([result, contact]) => {
-        if (loadGenerationRef.current === generation) {
-          setViewState(toViewState(result));
-          if (result.status === "ready") {
-            setClinicContact(contact);
-          }
-        }
-      });
-    }, []),
+      void refresh();
+    }, [refresh]),
   );
+
+  useCanonicalInvalidation("today", refresh);
 
   function toggleAssignment(assignment: TodayAssignmentItem) {
     const generation = loadGenerationRef.current + 1;
@@ -244,5 +306,25 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flexGrow: 1,
+  },
+  assignmentHeader: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: theme.spacing.sm,
+  },
+  completionMark: {
+    width: 22,
+    height: 22,
+    borderWidth: 1.5,
+    borderRadius: theme.radii.sm,
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 2,
+  },
+  completionCheck: {
+    lineHeight: 16,
+  },
+  assignmentCopy: {
+    flex: 1,
   },
 });

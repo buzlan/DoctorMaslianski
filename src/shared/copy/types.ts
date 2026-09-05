@@ -14,6 +14,7 @@ export type AppCopy = {
     loadError: string;
     retry: string;
     markComplete: string;
+    completed: string;
     markIncomplete: string;
     fillDiary: string;
     addPhoto: string;

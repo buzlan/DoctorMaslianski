@@ -1,6 +1,6 @@
 # TASK-034 — Minimal clinic review (separate repository)
 
-Status: NOT STARTED
+Status: DONE (other repository: `doctor-maslianski-pilot` / `clinic-review`)
 
 Milestone: M11 — Clinic review
 
@@ -9,6 +9,8 @@ Milestone: M11 — Clinic review
 Proposed other repo: `doctor-maslianski-pilot` (`clinic-review/` + `supabase/`).
 
 This mobile repo only documents the contract.
+
+Clinic-facing `patients.clinic_label` is not shown in this app. Mobile continues to read assignments, periods, appointments, milestones, and doctor photos from the existing remote repositories. Invite QR remains `doctormaslianski://invite/{token}` until TASK-037.
 
 ## Goal
 

@@ -29,7 +29,7 @@ Clinic review and real patients need shared data. Completions and events must no
 - Flush ProductEvents **without** clinical payloads and without revived snapshot `protocolVersion` semantics.
 - Treatment sync sends/receives patient-specific records (assignments, periods, milestones, current appointment), not “latest protocol snapshot”.
 - The client still does not prescribe or change treatment; it applies clinic-authored schedule updates.
-- Prompt visibility of doctor changes when the app is opened (push is TASK-025 after TASK-034).
+- Prompt visibility of doctor changes when the app is opened (push is TASK-025 after TASK-034). Open-app Realtime invalidation is separate from push and does not replace this fallback.
 
 ## Out of scope
 

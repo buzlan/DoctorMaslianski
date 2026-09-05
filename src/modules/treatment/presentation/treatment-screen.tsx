@@ -1,5 +1,5 @@
-import { useRouter } from "expo-router";
-import { useEffect, useRef, useState } from "react";
+import { useFocusEffect, useRouter } from "expo-router";
+import { useCallback, useRef, useState } from "react";
 import {
   Pressable,
   ScrollView,
@@ -7,6 +7,7 @@ import {
   useColorScheme,
 } from "react-native";
 
+import { useCanonicalInvalidation } from "@/core/sync";
 import {
   loadSharedTreatmentTimeline,
   type TimelineMilestone,
@@ -139,16 +140,24 @@ export function TreatmentScreen() {
   });
   const loadGenerationRef = useRef(0);
 
-  useEffect(() => {
+  const refresh = useCallback(() => {
     const generation = loadGenerationRef.current + 1;
     loadGenerationRef.current = generation;
 
-    void requestTimelineLoad().then((result) => {
+    return requestTimelineLoad().then((result) => {
       if (loadGenerationRef.current === generation) {
         setViewState(toViewState(result));
       }
     });
   }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      void refresh();
+    }, [refresh]),
+  );
+
+  useCanonicalInvalidation("treatment", refresh);
 
   return (
     <Screen edges={["top", "left", "right"]} style={styles.content}>

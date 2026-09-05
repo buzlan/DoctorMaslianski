@@ -7,6 +7,7 @@ import {
   useColorScheme,
 } from "react-native";
 
+import { useCanonicalInvalidation } from "@/core/sync";
 import {
   sharedDiaryLoader,
   type DiaryHistoryItem,
@@ -43,20 +44,26 @@ export function DiaryScreen() {
   const [submitting, setSubmitting] = useState(false);
   const loadGenerationRef = useRef(0);
 
+  const refresh = useCallback(() => {
+    const generation = loadGenerationRef.current + 1;
+    loadGenerationRef.current = generation;
+
+    return loadCivilTodayDate().then((onDate) =>
+      sharedDiaryLoader.load(onDate).then((result) => {
+        if (loadGenerationRef.current === generation) {
+          setViewState(toViewState(result));
+        }
+      }),
+    );
+  }, []);
+
   useFocusEffect(
     useCallback(() => {
-      const generation = loadGenerationRef.current + 1;
-      loadGenerationRef.current = generation;
-
-      void loadCivilTodayDate().then((onDate) =>
-        sharedDiaryLoader.load(onDate).then((result) => {
-          if (loadGenerationRef.current === generation) {
-            setViewState(toViewState(result));
-          }
-        }),
-      );
-    }, []),
+      void refresh();
+    }, [refresh]),
   );
+
+  useCanonicalInvalidation("diary", refresh);
 
   function submit(answers: {
     pain: VasScore;

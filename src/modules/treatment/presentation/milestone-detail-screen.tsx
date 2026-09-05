@@ -1,8 +1,9 @@
 import { Image } from "expo-image";
 import { useRouter } from "expo-router";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { ScrollView, StyleSheet } from "react-native";
 
+import { useCanonicalInvalidation } from "@/core/sync";
 import {
   loadSharedMilestoneDetail,
   type MilestoneDetail,
@@ -101,16 +102,22 @@ export function MilestoneDetailScreen({ milestoneId }: MilestoneDetailScreenProp
   });
   const loadGenerationRef = useRef(0);
 
-  useEffect(() => {
+  const refresh = useCallback(() => {
     const generation = loadGenerationRef.current + 1;
     loadGenerationRef.current = generation;
 
-    void requestLoad(resolvedId).then((result) => {
+    return requestLoad(resolvedId).then((result) => {
       if (loadGenerationRef.current === generation) {
         setViewState(toViewState(result));
       }
     });
   }, [resolvedId]);
+
+  useEffect(() => {
+    void refresh();
+  }, [refresh]);
+
+  useCanonicalInvalidation("milestone-detail", refresh);
 
   return (
     <Screen edges={["top", "left", "right"]} style={styles.content}>

@@ -42,3 +42,13 @@ export type {
 export type { Database } from './supabase/database.types';
 
 export { shouldUseRemoteRepositories } from './runtime/should-use-remote-repositories';
+
+export {
+  createRealtimeSubscriber,
+  flushSubscribedTargets,
+  invalidateFromHint,
+  resetCanonicalInvalidationForTests,
+  subscribeCanonicalInvalidation,
+  useCanonicalInvalidation,
+} from './sync';
+export type { InvalidationHint, InvalidationTarget } from './sync';
