@@ -110,6 +110,7 @@ export type AppCopy = {
       revoked: string;
       consumed: string;
       unusable: string;
+      service: string;
       network: string;
     };
   };

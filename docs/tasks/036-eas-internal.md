@@ -1,6 +1,8 @@
 # TASK-036 — EAS development builds and internal distribution
 
-Status: NOT STARTED
+Status: IN PROGRESS
+
+First slice (this implementation): hosted Pilot Supabase, Vercel clinic-review, iOS EAS `development` build on one physical iPhone, synthetic E2E. Android and TestFlight are follow-on. The `production` EAS profile/environment stays reserved for TASK-039.
 
 Milestone: M13 — Pilot readiness & distribution
 
@@ -20,9 +22,11 @@ Development completion on simulators is not enough for a device camera/photo pil
 ## Requirements
 
 - Follow Expo SDK 57 EAS docs: https://docs.expo.dev/versions/v57.0.0/
-- iOS and Android development builds
+- iOS development build on one physical device first; Android after iOS E2E
 - Internal distribution for ~2–3 internal testers
+- Invite verification: copy `doctormaslianski://invite/{token}` and open it on the device. Camera QR is optional and not a blocker.
 - Do not submit to App Store / Play production in this task
+- Do not configure EAS `production` with Pilot Supabase credentials (TASK-039)
 
 ## Out of scope
 

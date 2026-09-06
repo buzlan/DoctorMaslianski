@@ -13,6 +13,18 @@ export type ConsumePatientInviteInput = {
   pilotConsentAccepted: boolean;
 };
 
+type InvokeErrorContext = {
+  json?: () => Promise<unknown>;
+  status?: number;
+  statusCode?: number;
+};
+
+type InvokeError = {
+  name?: string;
+  message?: string;
+  context?: InvokeErrorContext;
+};
+
 type ConsumeClient = {
   functions: {
     invoke(
@@ -20,22 +32,21 @@ type ConsumeClient = {
       args: { body: Record<string, unknown> },
     ): Promise<{
       data: unknown;
-      error: { message: string; context?: { json?: () => Promise<unknown> } } | null;
+      error: InvokeError | null;
     }>;
   };
 };
 
-const CONSUME_ERRORS = new Set<InviteConsumeError>([
+const CONTRACT_ERRORS = new Set<InviteConsumeError>([
   'invalid',
   'expired',
   'revoked',
   'consumed',
   'unusable',
-  'network',
 ]);
 
-function asConsumeError(value: unknown): InviteConsumeError | null {
-  if (typeof value !== 'string' || !CONSUME_ERRORS.has(value as InviteConsumeError)) {
+function asContractError(value: unknown): InviteConsumeError | null {
+  if (typeof value !== 'string' || !CONTRACT_ERRORS.has(value as InviteConsumeError)) {
     return null;
   }
   return value as InviteConsumeError;
@@ -60,12 +71,58 @@ function asTokens(data: unknown): InviteSessionTokens | null {
   };
 }
 
+function httpStatus(error: InvokeError): number | null {
+  const status = error.context?.status ?? error.context?.statusCode;
+  return typeof status === 'number' ? status : null;
+}
+
+async function readContractError(error: InvokeError): Promise<InviteConsumeError | null> {
+  if (typeof error.context?.json !== 'function') {
+    return null;
+  }
+
+  try {
+    const body = await error.context.json();
+    if (body === null || typeof body !== 'object') {
+      return null;
+    }
+    return asContractError((body as { error?: unknown }).error);
+  } catch {
+    return null;
+  }
+}
+
+function mapHttpStatus(status: number | null): InviteConsumeError {
+  if (status === null) {
+    return 'network';
+  }
+  if (status >= 500 || status === 401 || status === 403) {
+    return 'service';
+  }
+  if (status >= 400) {
+    return 'unusable';
+  }
+  return 'network';
+}
+
+async function mapInvokeError(error: InvokeError): Promise<InviteConsumeError> {
+  const status = httpStatus(error);
+  const code = await readContractError(error);
+  if (code === 'unusable' && status !== null && status >= 500) {
+    return 'service';
+  }
+  if (code !== null) {
+    return code;
+  }
+  return mapHttpStatus(status);
+}
+
 export async function consumePatientInvite(
   client: ConsumeClient | AppSupabaseClient,
   input: ConsumePatientInviteInput,
 ): Promise<ConsumePatientInviteResult> {
   let data: unknown;
-  let error: { message: string; context?: { json?: () => Promise<unknown> } } | null;
+  let error: InvokeError | null;
 
   try {
     const result = await client.functions.invoke('consume-patient-invite', {
@@ -78,32 +135,20 @@ export async function consumePatientInvite(
     });
     data = result.data;
     error = result.error;
-  } catch {
-    return { status: 'error', error: 'network' };
-  }
-
-  if (error !== null) {
-    if (typeof error.context?.json === 'function') {
-      try {
-        const body = await error.context.json();
-        const code = asConsumeError(
-          body !== null && typeof body === 'object'
-            ? (body as { error?: unknown }).error
-            : null,
-        );
-        if (code !== null && code !== 'network') {
-          return { status: 'error', error: code };
-        }
-      } catch {
-        return { status: 'error', error: 'network' };
-      }
+  } catch (thrown) {
+    if (thrown !== null && typeof thrown === 'object') {
+      return { status: 'error', error: await mapInvokeError(thrown as InvokeError) };
     }
     return { status: 'error', error: 'network' };
   }
 
+  if (error !== null) {
+    return { status: 'error', error: await mapInvokeError(error) };
+  }
+
   const tokens = asTokens(data);
   if (tokens === null) {
-    const code = asConsumeError(
+    const code = asContractError(
       data !== null && typeof data === 'object'
         ? (data as { error?: unknown }).error
         : null,

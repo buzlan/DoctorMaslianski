@@ -8,6 +8,7 @@ export type InviteConsumeError =
   | 'revoked'
   | 'consumed'
   | 'unusable'
+  | 'service'
   | 'network';
 
 export type InviteSessionTokens = {

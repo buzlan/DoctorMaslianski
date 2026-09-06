@@ -45,7 +45,7 @@ export async function activatePendingInvite(
   const getClient = deps.getClient ?? getSharedSupabaseClient;
   const client = getClient();
   if (client === null) {
-    return { status: 'error', error: 'network' };
+    return { status: 'error', error: 'service' };
   }
 
   const consume = deps.consume ?? consumePatientInvite;

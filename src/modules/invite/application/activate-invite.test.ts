@@ -56,6 +56,21 @@ describe('activatePendingInvite', () => {
     expect(result).toEqual({ status: 'activated' });
   });
 
+  it('maps a missing backend client as a service failure', async () => {
+    const consume = jest.fn();
+    const result = await activatePendingInvite(
+      { privacyAccepted: true, pilotConsentAccepted: true },
+      {
+        consume,
+        getClient: () => null,
+        readPending: () => token,
+      },
+    );
+
+    expect(result).toEqual({ status: 'error', error: 'service' });
+    expect(consume).not.toHaveBeenCalled();
+  });
+
   it('does not apply a session when consume fails', async () => {
     const apply = jest.fn();
     const result = await activatePendingInvite(
