@@ -1,0 +1,518 @@
+import {
+  createInMemoryProductEventSink,
+  DEVELOPMENT_PILOT_COHORT,
+  InvalidProductEventError,
+  sharedProductEventSink,
+} from '@/modules/product-events';
+import type { ProductEvent } from '@/modules/product-events';
+import * as productEvents from '@/modules/product-events';
+
+const AT = '2026-08-19T15:00:00.000Z';
+
+function treatmentContext() {
+  return {
+    at: AT,
+    patientId: 'patient-1',
+    treatmentId: 'treatment-1',
+    protocolKind: 'sclerotherapy' as const,
+    protocolVersion: 1,
+    pilotCohort: DEVELOPMENT_PILOT_COHORT,
+  };
+}
+
+function treatmentStartedEvent(): ProductEvent {
+  return {
+    name: 'treatment_started',
+    ...treatmentContext(),
+  };
+}
+
+function taskCompletedEvent(): ProductEvent {
+  return {
+    name: 'task_completed',
+    at: AT,
+    patientId: 'patient-1',
+    treatmentId: 'treatment-1',
+    pilotCohort: DEVELOPMENT_PILOT_COHORT,
+    entityId: 'assignment-1',
+  };
+}
+
+function checkinSubmittedEvent(): ProductEvent {
+  return {
+    name: 'checkin_submitted',
+    at: AT,
+    patientId: 'patient-1',
+    treatmentId: 'treatment-1',
+    pilotCohort: DEVELOPMENT_PILOT_COHORT,
+    entityId: 'treatment-1:2026-8-19',
+  };
+}
+
+function appOpenedBase(): ProductEvent {
+  return {
+    name: 'app_opened',
+    at: AT,
+    pilotCohort: DEVELOPMENT_PILOT_COHORT,
+  };
+}
+
+describe('createInMemoryProductEventSink', () => {
+  it('appends an event and preserves required segmentation', async () => {
+    const sink = createInMemoryProductEventSink();
+    const event = treatmentStartedEvent();
+
+    await sink.append(event);
+
+    expect(sink.getAll()).toEqual([event]);
+    expect(sink.getAll()[0]).toMatchObject({
+      name: 'treatment_started',
+      patientId: 'patient-1',
+      treatmentId: 'treatment-1',
+      protocolKind: 'sclerotherapy',
+      protocolVersion: 1,
+      pilotCohort: DEVELOPMENT_PILOT_COHORT,
+      at: AT,
+    });
+  });
+
+  it('preserves insertion order', async () => {
+    const sink = createInMemoryProductEventSink();
+    const first = appOpenedBase();
+    const second = treatmentStartedEvent();
+    const third = taskCompletedEvent();
+
+    await sink.append(first);
+    await sink.append(second);
+    await sink.append(third);
+
+    expect(sink.getAll().map((event) => event.name)).toEqual([
+      'app_opened',
+      'treatment_started',
+      'task_completed',
+    ]);
+  });
+
+  it('isolates factory instances from each other and from the shared sink', async () => {
+    const first = createInMemoryProductEventSink();
+    const second = createInMemoryProductEventSink();
+    const sharedBefore = sharedProductEventSink.getAll().length;
+
+    await first.append(appOpenedBase());
+    await second.append(treatmentStartedEvent());
+
+    expect(first.getAll()).toHaveLength(1);
+    expect(first.getAll()[0]?.name).toBe('app_opened');
+    expect(second.getAll()).toHaveLength(1);
+    expect(second.getAll()[0]?.name).toBe('treatment_started');
+    expect(sharedProductEventSink.getAll()).toHaveLength(sharedBefore);
+  });
+
+  it('carries protocol kind and version on a treatment-related event', async () => {
+    const sink = createInMemoryProductEventSink();
+    await sink.append(treatmentStartedEvent());
+
+    const stored = sink.getAll()[0];
+    expect(stored).toMatchObject({
+      name: 'treatment_started',
+      protocolKind: 'sclerotherapy',
+      protocolVersion: 1,
+    });
+  });
+});
+
+describe('app_opened context', () => {
+  it('accepts base, patient-scoped, and treatment-scoped events', async () => {
+    const sink = createInMemoryProductEventSink();
+
+    await sink.append(appOpenedBase());
+    await sink.append({
+      name: 'app_opened',
+      at: AT,
+      pilotCohort: DEVELOPMENT_PILOT_COHORT,
+      patientId: 'patient-1',
+    });
+    await sink.append({
+      name: 'app_opened',
+      at: AT,
+      pilotCohort: DEVELOPMENT_PILOT_COHORT,
+      patientId: 'patient-1',
+      treatmentId: 'treatment-1',
+    });
+
+    expect(sink.getAll()).toHaveLength(3);
+    expect(sink.getAll()[0]).toEqual(appOpenedBase());
+    expect(sink.getAll()[1]).toMatchObject({ patientId: 'patient-1' });
+    expect(sink.getAll()[2]).toMatchObject({
+      patientId: 'patient-1',
+      treatmentId: 'treatment-1',
+    });
+    expect(sink.getAll()[2]).not.toHaveProperty('protocolKind');
+    expect(sink.getAll()[2]).not.toHaveProperty('protocolVersion');
+  });
+
+  it('accepts treatmentId without protocolKind or protocolVersion', async () => {
+    const sink = createInMemoryProductEventSink();
+
+    await sink.append({
+      name: 'app_opened',
+      at: AT,
+      pilotCohort: DEVELOPMENT_PILOT_COHORT,
+      patientId: 'patient-1',
+      treatmentId: 'treatment-1',
+    });
+
+    expect(sink.getAll()[0]).toEqual({
+      name: 'app_opened',
+      at: AT,
+      pilotCohort: DEVELOPMENT_PILOT_COHORT,
+      patientId: 'patient-1',
+      treatmentId: 'treatment-1',
+    });
+  });
+
+  it('rejects protocolKind and protocolVersion on app_opened', async () => {
+    const sink = createInMemoryProductEventSink();
+
+    await expect(
+      sink.append({
+        name: 'app_opened',
+        at: AT,
+        pilotCohort: DEVELOPMENT_PILOT_COHORT,
+        patientId: 'patient-1',
+        treatmentId: 'treatment-1',
+        protocolKind: 'sclerotherapy',
+        protocolVersion: 1,
+      } as ProductEvent),
+    ).rejects.toThrow(InvalidProductEventError);
+  });
+
+  it('rejects entityId', async () => {
+    const sink = createInMemoryProductEventSink();
+
+    await expect(
+      sink.append({
+        ...appOpenedBase(),
+        entityId: 'task-1',
+      } as ProductEvent),
+    ).rejects.toThrow(InvalidProductEventError);
+  });
+});
+
+describe('entityId', () => {
+  it('accepts entityId on task_completed as an assignment id without snapshot protocol fields', async () => {
+    const sink = createInMemoryProductEventSink();
+    await sink.append(taskCompletedEvent());
+    expect(sink.getAll()[0]).toEqual({
+      name: 'task_completed',
+      at: AT,
+      patientId: 'patient-1',
+      treatmentId: 'treatment-1',
+      pilotCohort: DEVELOPMENT_PILOT_COHORT,
+      entityId: 'assignment-1',
+    });
+    expect(sink.getAll()[0]).not.toHaveProperty('protocolKind');
+    expect(sink.getAll()[0]).not.toHaveProperty('protocolVersion');
+    expect(sink.getAll()[0]).not.toHaveProperty('title');
+    expect(sink.getAll()[0]).not.toHaveProperty('instruction');
+  });
+
+  it('rejects protocolKind and protocolVersion on task_completed', async () => {
+    const sink = createInMemoryProductEventSink();
+
+    await expect(
+      sink.append({
+        ...taskCompletedEvent(),
+        protocolKind: 'sclerotherapy',
+        protocolVersion: 1,
+      } as ProductEvent),
+    ).rejects.toThrow(InvalidProductEventError);
+  });
+
+  it('rejects title and instruction on task_completed', async () => {
+    const sink = createInMemoryProductEventSink();
+
+    await expect(
+      sink.append({
+        ...taskCompletedEvent(),
+        title: 'synthetic-title',
+      } as unknown as ProductEvent),
+    ).rejects.toThrow(InvalidProductEventError);
+
+    await expect(
+      sink.append({
+        ...taskCompletedEvent(),
+        instruction: 'synthetic-instruction',
+      } as unknown as ProductEvent),
+    ).rejects.toThrow(InvalidProductEventError);
+  });
+
+  it('rejects entityId on treatment_started', async () => {
+    const sink = createInMemoryProductEventSink();
+
+    await expect(
+      sink.append({
+        ...treatmentStartedEvent(),
+        entityId: 'task-1',
+      } as ProductEvent),
+    ).rejects.toThrow(InvalidProductEventError);
+  });
+});
+
+describe('checkin events', () => {
+  it('accepts checkin_submitted with structural identifiers only', async () => {
+    const sink = createInMemoryProductEventSink();
+    await sink.append(checkinSubmittedEvent());
+    expect(sink.getAll()[0]).toEqual(checkinSubmittedEvent());
+    expect(sink.getAll()[0]).not.toHaveProperty('protocolKind');
+    expect(sink.getAll()[0]).not.toHaveProperty('protocolVersion');
+    expect(sink.getAll()[0]).not.toHaveProperty('pain');
+    expect(sink.getAll()[0]).not.toHaveProperty('answers');
+  });
+
+  it('rejects protocolKind and protocolVersion on checkin_requested and checkin_submitted', async () => {
+    const sink = createInMemoryProductEventSink();
+
+    await expect(
+      sink.append({
+        ...checkinSubmittedEvent(),
+        protocolKind: 'sclerotherapy',
+        protocolVersion: 1,
+      } as unknown as ProductEvent),
+    ).rejects.toThrow(InvalidProductEventError);
+
+    await expect(
+      sink.append({
+        name: 'checkin_requested',
+        at: AT,
+        patientId: 'patient-1',
+        treatmentId: 'treatment-1',
+        pilotCohort: DEVELOPMENT_PILOT_COHORT,
+        entityId: 'treatment-1:2026-8-19',
+        protocolKind: 'sclerotherapy',
+        protocolVersion: 1,
+      } as unknown as ProductEvent),
+    ).rejects.toThrow(InvalidProductEventError);
+  });
+});
+
+describe('patient_photo_added', () => {
+  function patientPhotoAddedEvent(): ProductEvent {
+    return {
+      name: 'patient_photo_added',
+      at: AT,
+      patientId: 'patient-1',
+      treatmentId: 'treatment-1',
+      pilotCohort: DEVELOPMENT_PILOT_COHORT,
+      entityId: 'treatment-1:2026-8-19:1',
+    };
+  }
+
+  it('accepts identifier-only patient_photo_added', async () => {
+    const sink = createInMemoryProductEventSink();
+    await sink.append(patientPhotoAddedEvent());
+    expect(sink.getAll()[0]).toEqual(patientPhotoAddedEvent());
+    expect(sink.getAll()[0]).not.toHaveProperty('protocolKind');
+    expect(sink.getAll()[0]).not.toHaveProperty('localFileRef');
+    expect(sink.getAll()[0]).not.toHaveProperty('uri');
+    expect(sink.getAll()[0]).not.toHaveProperty('mimeType');
+  });
+
+  it('rejects protocol pair and photo payload fields', async () => {
+    const sink = createInMemoryProductEventSink();
+
+    await expect(
+      sink.append({
+        ...patientPhotoAddedEvent(),
+        protocolKind: 'sclerotherapy',
+        protocolVersion: 1,
+      } as unknown as ProductEvent),
+    ).rejects.toThrow(InvalidProductEventError);
+
+    await expect(
+      sink.append({
+        ...patientPhotoAddedEvent(),
+        localFileRef: 'photo.jpg',
+      } as unknown as ProductEvent),
+    ).rejects.toThrow(InvalidProductEventError);
+
+    await expect(
+      sink.append({
+        ...patientPhotoAddedEvent(),
+        uri: 'file:///tmp/photo.jpg',
+      } as unknown as ProductEvent),
+    ).rejects.toThrow(InvalidProductEventError);
+  });
+});
+
+describe('privacy boundary', () => {
+  it.each([
+    ['answers', { pain: 8 }],
+    ['pain', 8],
+    ['swelling', 4],
+    ['wellbeing', 'worse'],
+    ['metadata', { note: 'clinical' }],
+    ['photoUrl', 'https://example.test/photo.jpg'],
+    ['diagnosis', 'varices'],
+    ['notes', 'doctor note'],
+    ['text', 'free text'],
+  ])('rejects clinical or free-form field %s', async (field, value) => {
+    const sink = createInMemoryProductEventSink();
+
+    await expect(
+      sink.append({
+        ...checkinSubmittedEvent(),
+        [field]: value,
+      } as unknown as ProductEvent),
+    ).rejects.toThrow(InvalidProductEventError);
+  });
+
+  it('does not include rejected payload values in the error message', async () => {
+    const sink = createInMemoryProductEventSink();
+
+    await expect(
+      sink.append({
+        ...checkinSubmittedEvent(),
+        answers: { pain: 8 },
+      } as unknown as ProductEvent),
+    ).rejects.toThrow('unsupported event field: answers');
+  });
+});
+
+describe('treatment_journey_completed', () => {
+  it('accepts patient and treatment ids without snapshot protocol context', async () => {
+    const sink = createInMemoryProductEventSink();
+    const event: ProductEvent = {
+      name: 'treatment_journey_completed',
+      at: AT,
+      patientId: 'patient-1',
+      treatmentId: 'treatment-1',
+      pilotCohort: DEVELOPMENT_PILOT_COHORT,
+    };
+
+    await sink.append(event);
+
+    expect(sink.getAll()[0]).toEqual(event);
+    expect(sink.getAll()[0]).not.toHaveProperty('protocolKind');
+    expect(sink.getAll()[0]).not.toHaveProperty('protocolVersion');
+  });
+
+  it('rejects protocolKind and protocolVersion on patient_activated', async () => {
+    const sink = createInMemoryProductEventSink();
+
+    await expect(
+      sink.append({
+        name: 'patient_activated',
+        at: AT,
+        patientId: 'patient-1',
+        treatmentId: 'treatment-1',
+        protocolKind: 'sclerotherapy',
+        protocolVersion: 1,
+        pilotCohort: DEVELOPMENT_PILOT_COHORT,
+      } as unknown as ProductEvent),
+    ).rejects.toBeInstanceOf(InvalidProductEventError);
+
+    await sink.append({
+      name: 'patient_activated',
+      at: AT,
+      patientId: 'patient-1',
+      treatmentId: 'treatment-1',
+      pilotCohort: DEVELOPMENT_PILOT_COHORT,
+    });
+
+    expect(sink.getAll()[0]).not.toHaveProperty('protocolKind');
+    expect(sink.getAll()[0]).not.toHaveProperty('protocolVersion');
+  });
+
+  it('rejects protocolKind and protocolVersion on treatment_journey_completed', async () => {
+    const sink = createInMemoryProductEventSink();
+
+    await expect(
+      sink.append({
+        name: 'treatment_journey_completed',
+        at: AT,
+        patientId: 'patient-1',
+        treatmentId: 'treatment-1',
+        protocolKind: 'sclerotherapy',
+        protocolVersion: 1,
+        pilotCohort: DEVELOPMENT_PILOT_COHORT,
+      } as unknown as ProductEvent),
+    ).rejects.toThrow(InvalidProductEventError);
+  });
+});
+
+describe('feedback_submitted', () => {
+  it('accepts numeric usefulness and clarity scores and stores them unchanged', async () => {
+    const sink = createInMemoryProductEventSink();
+    const event: ProductEvent = {
+      name: 'feedback_submitted',
+      at: AT,
+      patientId: 'patient-1',
+      treatmentId: 'treatment-1',
+      pilotCohort: DEVELOPMENT_PILOT_COHORT,
+      usefulnessScore: 1,
+      clarityScore: 5,
+    };
+
+    await sink.append(event);
+
+    expect(sink.getAll()[0]).toEqual(event);
+    expect(sink.getAll()[0]).not.toHaveProperty('passed');
+    expect(sink.getAll()[0]).not.toHaveProperty('successful');
+    expect(sink.getAll()[0]).not.toHaveProperty('protocolKind');
+    expect(sink.getAll()[0]).not.toHaveProperty('protocolVersion');
+  });
+
+  it('rejects protocolKind and protocolVersion on feedback_submitted', async () => {
+    const sink = createInMemoryProductEventSink();
+
+    await expect(
+      sink.append({
+        name: 'feedback_submitted',
+        at: AT,
+        patientId: 'patient-1',
+        treatmentId: 'treatment-1',
+        protocolKind: 'sclerotherapy',
+        protocolVersion: 1,
+        pilotCohort: DEVELOPMENT_PILOT_COHORT,
+        usefulnessScore: 4,
+      } as unknown as ProductEvent),
+    ).rejects.toThrow(InvalidProductEventError);
+  });
+
+  it('rejects free text on feedback_submitted', async () => {
+    const sink = createInMemoryProductEventSink();
+
+    await expect(
+      sink.append({
+        name: 'feedback_submitted',
+        at: AT,
+        patientId: 'patient-1',
+        treatmentId: 'treatment-1',
+        pilotCohort: DEVELOPMENT_PILOT_COHORT,
+        usefulnessScore: 4,
+        text: 'I felt better',
+      } as unknown as ProductEvent),
+    ).rejects.toThrow(InvalidProductEventError);
+
+    await expect(
+      sink.append({
+        name: 'feedback_submitted',
+        at: AT,
+        patientId: 'patient-1',
+        treatmentId: 'treatment-1',
+        pilotCohort: DEVELOPMENT_PILOT_COHORT,
+        comment: 'unclear instructions',
+      } as unknown as ProductEvent),
+    ).rejects.toThrow(InvalidProductEventError);
+  });
+});
+
+describe('product-events module', () => {
+  it('does not export success thresholds', () => {
+    const exportedNames = Object.keys(productEvents);
+    expect(exportedNames.some((name) => /threshold|successRate|passed/i.test(name))).toBe(
+      false,
+    );
+  });
+});
