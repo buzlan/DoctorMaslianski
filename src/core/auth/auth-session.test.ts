@@ -1,6 +1,7 @@
 import {
   applySession,
   getAuthSessionSnapshot,
+  publishLocalUnauthenticated,
   resetAuthSessionForTests,
   signOut,
   startAuthSession,
@@ -247,5 +248,17 @@ describe('auth session', () => {
     resetAuthSessionForTests();
     expect(appState.listenerCount()).toBe(0);
     expect(getAuthSessionSnapshot()).toEqual({ status: 'loading' });
+  });
+
+  it('can force the unauthenticated gate after a local reset', () => {
+    const client = createFakeAuthClient({
+      initialSession: { user: { id: 'user-1' } },
+    });
+    startAuthSession({ client, appState: createFakeAppState() });
+
+    publishLocalUnauthenticated();
+
+    expect(getAuthSessionSnapshot()).toEqual({ status: 'unauthenticated' });
+    expect(client.stopCount()).toBe(1);
   });
 });

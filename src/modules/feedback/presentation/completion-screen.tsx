@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ScrollView, StyleSheet, View } from "react-native";
 
+import { DevResetLocalSessionControl } from "@/core/auth/dev-reset-local-session-control";
 import { ClinicContactSection, type ClinicContact } from "@/modules/clinic-contact";
 import { copy } from "@/shared/copy";
 import { theme } from "@/shared/theme";
@@ -128,9 +129,11 @@ export function CompletionScreen() {
               ) : (
                 <FeedbackSurveyForm submitting={submitting} onSubmit={submit} />
               )}
+              <DevResetLocalSessionControl />
             </Stack>
           </ScrollView>
         ) : null}
+        {viewState.status !== "ready" ? <DevResetLocalSessionControl /> : null}
       </Stack>
     </Screen>
   );

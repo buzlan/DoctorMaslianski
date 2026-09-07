@@ -169,6 +169,23 @@ async function deleteGeneration(
   }
 }
 
+/**
+ * Keys supabase-js `_removeSession` deletes through this adapter.
+ * Read from the live client's `storageKey`; do not invent a project ref.
+ */
+export function authSessionStorageKeysForBaseKey(baseKey: string): string[] {
+  return [baseKey, `${baseKey}-code-verifier`, `${baseKey}-user`];
+}
+
+export async function removeAuthSessionStorageKeys(
+  baseKey: string,
+  storage: SupabaseAuthStorage = createChunkedSecureStoreAuthStorage(),
+): Promise<void> {
+  for (const key of authSessionStorageKeysForBaseKey(baseKey)) {
+    await storage.removeItem(key);
+  }
+}
+
 export function createChunkedSecureStoreAuthStorage(
   store: SecureStoreLike = createDefaultSecureStore(),
 ): SupabaseAuthStorage {

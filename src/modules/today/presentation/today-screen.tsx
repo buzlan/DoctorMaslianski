@@ -8,6 +8,7 @@ import {
   View,
 } from "react-native";
 
+import { DevResetLocalSessionControl } from "@/core/auth/dev-reset-local-session-control";
 import { useCanonicalInvalidation } from "@/core/sync";
 import {
   ClinicContactSection,
@@ -342,20 +343,24 @@ export function TodayScreen() {
             contentContainerStyle={styles.scrollContent}
             showsVerticalScrollIndicator={false}
           >
-            <ReadyContent
-              overview={viewState.overview}
-              clinicContact={clinicContact}
-              pendingAssignmentId={pendingAssignmentId}
-              onToggle={toggleAssignment}
-              onFillDiary={() => {
-                router.navigate("/diary");
-              }}
-              onAddPhoto={() => {
-                router.push("/photo-capture");
-              }}
-            />
+            <Stack gap="md">
+              <ReadyContent
+                overview={viewState.overview}
+                clinicContact={clinicContact}
+                pendingAssignmentId={pendingAssignmentId}
+                onToggle={toggleAssignment}
+                onFillDiary={() => {
+                  router.navigate("/diary");
+                }}
+                onAddPhoto={() => {
+                  router.push("/photo-capture");
+                }}
+              />
+              <DevResetLocalSessionControl />
+            </Stack>
           </ScrollView>
         ) : null}
+        {viewState.status !== "ready" ? <DevResetLocalSessionControl /> : null}
       </Stack>
     </Screen>
   );

@@ -67,8 +67,12 @@ export function getSharedRemotePatientContextResolver(): RemotePatientContextRes
   return sharedResolver;
 }
 
-export function resetSharedRemotePatientContextResolverForTests(): void {
+export function resetSharedRemotePatientContextResolver(): void {
   sharedResolver = null;
+}
+
+export function resetSharedRemotePatientContextResolverForTests(): void {
+  resetSharedRemotePatientContextResolver();
 }
 
 export async function resolveSharedRemotePatientContext() {

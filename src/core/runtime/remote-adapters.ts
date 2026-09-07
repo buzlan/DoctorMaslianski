@@ -1,9 +1,15 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as SecureStore from 'expo-secure-store';
+
 import {
   getAuthSessionSnapshot,
 } from '../auth/auth-session';
 import { getSharedRemotePatientContextResolver } from '../auth/shared-remote-patient-context';
 import { createAsyncStorageWriteOutboxStore } from '../sync/async-storage-write-outbox-store';
-import { registerRemoteOutboxFlusher } from '../sync/remote-outbox-flush';
+import {
+  clearRegisteredRemoteOutboxFlushers,
+  registerRemoteOutboxFlusher,
+} from '../sync/remote-outbox-flush';
 import { createSecureStoreWriteOutboxStore } from '../sync/secure-store-write-outbox-store';
 import { getSharedSupabaseClient } from '../supabase/client';
 import type { ClinicContactRepository } from '@/modules/clinic-contact/infrastructure/clinic-contact-repository';
@@ -45,6 +51,14 @@ async function resolveContext() {
   return resolver.resolve();
 }
 
+export const REMOTE_OUTBOX_STORAGE_KEYS = {
+  completions: 'remote.outbox.v1.completions',
+  diary: 'remote.outbox.v1.diary',
+  feedback: 'remote.outbox.v1.feedback',
+  productEvents: 'remote.outbox.v1.product-events',
+  patientPhotos: 'remote.outbox.v1.patient-photos',
+} as const;
+
 type RemoteAdapters = {
   treatment: TreatmentRepository;
   diary: DiaryRepository;
@@ -70,35 +84,35 @@ export function getRemoteAdapters(): RemoteAdapters | null {
   const treatment = createRemoteTreatmentRepository({
     gateway: createSupabaseTreatmentGateway(client),
     resolveContext,
-    outboxStore: createAsyncStorageWriteOutboxStore('remote.outbox.v1.completions'),
+    outboxStore: createAsyncStorageWriteOutboxStore(REMOTE_OUTBOX_STORAGE_KEYS.completions),
     readAuthUserId,
   });
 
   const diary = createRemoteDiaryRepository({
     gateway: createSupabaseDiaryGateway(client),
     resolveContext,
-    outboxStore: createSecureStoreWriteOutboxStore('remote.outbox.v1.diary'),
+    outboxStore: createSecureStoreWriteOutboxStore(REMOTE_OUTBOX_STORAGE_KEYS.diary),
     readAuthUserId,
   });
 
   const feedback = createRemoteFeedbackSurveyRepository({
     gateway: createSupabaseFeedbackGateway(client),
     resolveContext,
-    outboxStore: createAsyncStorageWriteOutboxStore('remote.outbox.v1.feedback'),
+    outboxStore: createAsyncStorageWriteOutboxStore(REMOTE_OUTBOX_STORAGE_KEYS.feedback),
     readAuthUserId,
   });
 
   const productEvents = createRemoteProductEventSink({
     gateway: createSupabaseProductEventGateway(client),
     resolveContext,
-    outboxStore: createAsyncStorageWriteOutboxStore('remote.outbox.v1.product-events'),
+    outboxStore: createAsyncStorageWriteOutboxStore(REMOTE_OUTBOX_STORAGE_KEYS.productEvents),
     readAuthUserId,
   });
 
   const patientPhotos = createRemotePatientPhotoRepository({
     gateway: createSupabasePatientPhotoGateway(client),
     resolveContext,
-    outboxStore: createAsyncStorageWriteOutboxStore('remote.outbox.v1.patient-photos'),
+    outboxStore: createAsyncStorageWriteOutboxStore(REMOTE_OUTBOX_STORAGE_KEYS.patientPhotos),
     readAuthUserId,
     fileOps: createExpoPatientPhotoFileOps(),
     eventSink: productEvents,
@@ -132,6 +146,23 @@ export function getRemoteAdapters(): RemoteAdapters | null {
   return adapters;
 }
 
-export function resetRemoteAdaptersForTests(): void {
+export async function clearRemoteUserScopedCaches(): Promise<void> {
+  clearRegisteredRemoteOutboxFlushers();
   adapters = null;
+
+  await Promise.all([
+    AsyncStorage.removeItem(REMOTE_OUTBOX_STORAGE_KEYS.completions),
+    AsyncStorage.removeItem(REMOTE_OUTBOX_STORAGE_KEYS.feedback),
+    AsyncStorage.removeItem(REMOTE_OUTBOX_STORAGE_KEYS.productEvents),
+    AsyncStorage.removeItem(REMOTE_OUTBOX_STORAGE_KEYS.patientPhotos),
+    SecureStore.deleteItemAsync(REMOTE_OUTBOX_STORAGE_KEYS.diary),
+  ]);
+}
+
+export function resetRemoteAdapters(): void {
+  adapters = null;
+}
+
+export function resetRemoteAdaptersForTests(): void {
+  resetRemoteAdapters();
 }

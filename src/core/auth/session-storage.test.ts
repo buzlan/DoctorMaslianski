@@ -4,6 +4,7 @@ import {
   authStorageManifestKey,
   createChunkedSecureStoreAuthStorage,
   parseAuthSessionManifest,
+  removeAuthSessionStorageKeys,
   splitUtf8Chunks,
   type SecureStoreLike,
 } from './session-storage';
@@ -125,6 +126,21 @@ describe('createChunkedSecureStoreAuthStorage', () => {
     await storage.removeItem('session');
 
     expect(await storage.getItem('session')).toBeNull();
+    expect(Object.keys(memory.snapshot())).toEqual([]);
+  });
+
+  it('removes the client key and supabase-js session suffixes through the adapter', async () => {
+    const memory = createMemorySecureStore();
+    const storage = createChunkedSecureStoreAuthStorage(memory);
+    await storage.setItem('sb-test-auth-token', 'D'.repeat(4000));
+    await storage.setItem('sb-test-auth-token-code-verifier', 'verifier');
+    await storage.setItem('sb-test-auth-token-user', '{"id":"user-1"}');
+
+    await removeAuthSessionStorageKeys('sb-test-auth-token', storage);
+
+    expect(await storage.getItem('sb-test-auth-token')).toBeNull();
+    expect(await storage.getItem('sb-test-auth-token-code-verifier')).toBeNull();
+    expect(await storage.getItem('sb-test-auth-token-user')).toBeNull();
     expect(Object.keys(memory.snapshot())).toEqual([]);
   });
 });

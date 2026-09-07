@@ -28,7 +28,11 @@ export function ensureRemoteOutboxFlushStarted(): void {
   });
 }
 
-export function resetRemoteOutboxFlushersForTests(): void {
+export function clearRegisteredRemoteOutboxFlushers(): void {
   flushers.clear();
+}
+
+export function resetRemoteOutboxFlushersForTests(): void {
+  clearRegisteredRemoteOutboxFlushers();
   started = false;
 }

@@ -243,6 +243,18 @@ export async function signOut(): Promise<SignOutResult> {
   return { status: 'unauthenticated' };
 }
 
+export function publishLocalUnauthenticated(): void {
+  if (client !== null) {
+    try {
+      client.auth.stopAutoRefresh();
+    } catch {
+      // Local reset must still reach the access screen.
+    }
+  }
+
+  publishConfirmed({ status: 'unauthenticated' });
+}
+
 export function resetAuthSessionForTests(): void {
   authSubscription?.unsubscribe();
   authSubscription = null;
