@@ -10,6 +10,10 @@ import {
 
 import { useCanonicalInvalidation } from "@/core/sync";
 import {
+  loadSharedClinicContact,
+  type ClinicContact,
+} from "@/modules/clinic-contact";
+import {
   loadSharedTreatmentTimeline,
   type TimelineMilestone,
   type TimelinePeriod,
@@ -31,6 +35,7 @@ import {
   type TimelineNodeState,
 } from "@/shared/ui";
 
+import { AppointmentContactSection } from "./appointment-contact-section";
 import { CurrentAppointmentBlock } from "./current-appointment-block";
 import { formatCalendarDate } from "./format-calendar-date";
 import { milestoneVisualState } from "./milestone-visual-state";
@@ -47,14 +52,20 @@ type TreatmentViewState =
   | { status: "loading" }
   | { status: "error" }
   | { status: "no_active_treatment" }
-  | { status: "ready"; timeline: ReadyTimeline; onDate: CalendarDate };
+  | {
+      status: "ready";
+      timeline: ReadyTimeline;
+      onDate: CalendarDate;
+      contact: ClinicContact;
+    };
 
 function toViewState(
   result: TreatmentTimelineLoadResult,
   onDate: CalendarDate,
+  contact: ClinicContact,
 ): TreatmentViewState {
   if (result.status === "ready") {
-    return { status: "ready", timeline: result.timeline, onDate };
+    return { status: "ready", timeline: result.timeline, onDate, contact };
   }
 
   return result;
@@ -62,8 +73,11 @@ function toViewState(
 
 async function requestTimelineLoad() {
   const onDate = await loadCivilTodayDate();
-  const result = await loadSharedTreatmentTimeline(onDate);
-  return { result, onDate };
+  const [result, contact] = await Promise.all([
+    loadSharedTreatmentTimeline(onDate),
+    loadSharedClinicContact(),
+  ]);
+  return { result, onDate, contact };
 }
 
 function formatPeriodRange(period: TimelinePeriod): string {
@@ -155,7 +169,9 @@ function MilestoneRow({
         <Card
           variant={isCurrent ? "tinted" : isUndated ? "outlined" : "elevated"}
           style={
-            isCurrent ? { borderColor: colors.accent, borderWidth: 2 } : undefined
+            isCurrent
+              ? { borderColor: colors.accent, borderWidth: 2 }
+              : undefined
           }
         >
           <Stack gap="xs">
@@ -200,7 +216,9 @@ function PeriodBlock({
     <Stack gap="sm">
       {header}
       {milestones.map((milestone) => {
-        const index = visibleSequence.findIndex((item) => item.id === milestone.id);
+        const index = visibleSequence.findIndex(
+          (item) => item.id === milestone.id,
+        );
         const next = index >= 0 ? visibleSequence[index + 1] : undefined;
         return (
           <MilestoneRow
@@ -222,9 +240,11 @@ function PeriodBlock({
 function ReadyContent({
   timeline,
   onDate,
+  contact,
 }: {
   timeline: ReadyTimeline;
   onDate: CalendarDate;
+  contact: ClinicContact;
 }) {
   const colors = getColors(useColorScheme());
   const currentPeriod = currentTimelinePeriod(timeline.periods);
@@ -311,6 +331,9 @@ function ReadyContent({
         </Card>
       ) : null}
       <CurrentAppointmentBlock appointment={timeline.currentAppointment} />
+      {timeline.currentAppointment !== null ? (
+        <AppointmentContactSection contact={contact} />
+      ) : null}
     </Stack>
   );
 }
@@ -325,9 +348,9 @@ export function TreatmentScreen() {
     const generation = loadGenerationRef.current + 1;
     loadGenerationRef.current = generation;
 
-    return requestTimelineLoad().then(({ result, onDate }) => {
+    return requestTimelineLoad().then(({ result, onDate, contact }) => {
       if (loadGenerationRef.current === generation) {
-        setViewState(toViewState(result, onDate));
+        setViewState(toViewState(result, onDate, contact));
       }
     });
   }, []);
@@ -361,9 +384,9 @@ export function TreatmentScreen() {
               const generation = loadGenerationRef.current + 1;
               loadGenerationRef.current = generation;
               setViewState({ status: "loading" });
-              void requestTimelineLoad().then(({ result, onDate }) => {
+              void requestTimelineLoad().then(({ result, onDate, contact }) => {
                 if (loadGenerationRef.current === generation) {
-                  setViewState(toViewState(result, onDate));
+                  setViewState(toViewState(result, onDate, contact));
                 }
               });
             }}
@@ -378,6 +401,7 @@ export function TreatmentScreen() {
             <ReadyContent
               timeline={viewState.timeline}
               onDate={viewState.onDate}
+              contact={viewState.contact}
             />
           </ScrollView>
         ) : null}

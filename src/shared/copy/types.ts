@@ -63,6 +63,11 @@ export type AppCopy = {
   appointment: {
     label: string;
     empty: string;
+    contactTitle: string;
+    contactBody: string;
+    phoneLabel: string;
+    emailLabel: string;
+    contactsUnavailable: string;
   };
   clinicContact: {
     label: string;
@@ -127,5 +132,12 @@ export type AppCopy = {
     invalidSource: string;
     dailyCap: string;
     noActiveTreatment: string;
+  };
+  supportContact: {
+    title: string;
+    subtitle: string;
+    accessibilityLabel: string;
+    accessibilityHint: string;
+    openError: string;
   };
 };
