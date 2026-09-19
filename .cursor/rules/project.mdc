@@ -1,0 +1,123 @@
+---
+description: Core project rules for Doctor Maslianski
+globs:
+alwaysApply: true
+---
+
+# Doctor Maslianski — Project Rules
+
+This repository contains the Doctor Maslianski mobile application.
+
+Before making product or architectural decisions, read:
+
+- PROJECT.md
+- docs/ROADMAP.md
+- the relevant task file inside docs/tasks/
+
+## Current technical foundation
+
+The mobile application uses:
+
+- React Native
+- Expo
+- Expo Router
+- TypeScript
+
+Do not replace the existing technical foundation unless a task explicitly requires it.
+
+## Product direction
+
+Doctor Maslianski is a patient companion application for phlebological treatment.
+
+The website is responsible for attracting and informing patients.
+
+The mobile application is responsible for accompanying the patient during treatment and follow-up.
+
+The main patient question the product should answer is:
+
+"What should I do today?"
+
+The core product concept is:
+
+Treatment Timeline.
+
+## Development scope
+
+Work only on the currently approved task.
+
+Do not implement functionality from future roadmap milestones unless the current task explicitly requires it.
+
+Do not expand the scope because a feature might be useful later.
+
+Prefer small, reviewable changes.
+
+Keep the application working after every completed task.
+
+## Dependencies
+
+Do not add a new dependency unless it solves a concrete requirement in the current task.
+
+Before adding a dependency:
+
+1. explain why it is needed;
+2. check whether the current stack can solve the requirement;
+3. prefer established and actively maintained packages;
+4. avoid packages for trivial functionality.
+
+Do not install libraries speculatively for future features.
+
+## Architecture
+
+Business logic should not be placed inside React components.
+
+React components should primarily:
+
+- render UI;
+- receive state;
+- handle presentation-specific interactions;
+- dispatch application actions.
+
+Domain and application logic should remain independent from React Native where practical.
+
+Native platform integrations should be hidden behind application-owned boundaries when useful.
+
+Do not create abstractions only because they may be useful in the future.
+
+## Medical product constraints
+
+The application must not independently:
+
+- diagnose patients;
+- prescribe treatment;
+- change treatment;
+- create medical recommendations;
+- determine medical risk thresholds;
+- provide emergency medical conclusions.
+
+Medical recommendations and medical thresholds must originate from a doctor or a doctor-defined treatment protocol.
+
+The application may:
+
+- collect structured patient information;
+- display doctor-defined recommendations;
+- show treatment progress;
+- collect symptoms;
+- collect photos;
+- collect permitted health/activity data;
+- send reminders;
+- present appointments.
+
+## Planning
+
+For non-trivial features, prefer this workflow:
+
+1. understand the current repository;
+2. read the relevant task;
+3. create an implementation plan;
+4. review the plan before coding;
+5. implement only the approved plan;
+6. verify the result;
+7. review the diff;
+8. commit the completed task.
+
+Do not start implementing a large feature before understanding its scope and existing architecture.
