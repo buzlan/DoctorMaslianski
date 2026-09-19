@@ -1,4 +1,3 @@
-import { useState } from "react";
 import {
   Linking,
   Pressable,
@@ -11,85 +10,88 @@ import { copy } from "@/shared/copy";
 import { getColors, theme } from "@/shared/theme";
 import { AppText, Card, Stack } from "@/shared/ui";
 
-const CONTACTS_URL = "https://maslianski.by/#contacts";
-
 function isAllowedUrl(url: string): boolean {
   return url.startsWith("https://");
 }
 
-async function openContactForm(): Promise<boolean> {
-  if (!isAllowedUrl(CONTACTS_URL)) {
-    return false;
+function openContactForm(url: string): void {
+  if (!isAllowedUrl(url)) {
+    return;
   }
 
-  try {
-    await Linking.openURL(CONTACTS_URL);
-    return true;
-  } catch {
-    return false;
-  }
+  void Linking.openURL(url).catch(() => undefined);
 }
 
-export function SupportContactCard() {
+export function SupportContactCard({ bookingUrl }: { bookingUrl?: string }) {
   const colors = getColors(useColorScheme());
-  const [openFailed, setOpenFailed] = useState(false);
+
+  const canOpenContactForm =
+    bookingUrl !== undefined && isAllowedUrl(bookingUrl);
 
   function handlePress() {
-    setOpenFailed(false);
+    if (!canOpenContactForm || bookingUrl === undefined) {
+      return;
+    }
 
-    void openContactForm().then((opened) => {
-      if (!opened) {
-        setOpenFailed(true);
-      }
-    });
+    openContactForm(bookingUrl);
   }
+
+  const card = (
+    <Card variant="tinted" style={styles.card}>
+      <View style={styles.row}>
+        <View
+          style={[
+            styles.infoIcon,
+            {
+              backgroundColor: colors.accentSoft,
+              borderColor: colors.accent,
+            },
+          ]}
+        >
+          <AppText style={{ color: colors.accent, fontWeight: "700" }}>
+            i
+          </AppText>
+        </View>
+
+        <View style={styles.copy}>
+          <AppText variant="title">{copy.supportContact.title}</AppText>
+          <AppText variant="caption" tone="secondary">
+            {copy.supportContact.subtitle}
+          </AppText>
+        </View>
+
+        {canOpenContactForm ? (
+          <AppText
+            variant="title"
+            accessibilityElementsHidden
+            importantForAccessibility="no"
+            style={{ color: colors.accent }}
+          >
+            ›
+          </AppText>
+        ) : null}
+      </View>
+    </Card>
+  );
 
   return (
     <Stack gap="xs">
-      <Pressable
-        accessibilityRole="link"
-        accessibilityLabel={copy.supportContact.accessibilityLabel}
-        accessibilityHint={copy.supportContact.accessibilityHint}
-        onPress={handlePress}
-        style={({ pressed }) => [{ opacity: pressed ? 0.84 : 1 }]}
-      >
-        <Card variant="tinted" style={styles.card}>
-          <View style={styles.row}>
-            <View
-              style={[
-                styles.infoIcon,
-                {
-                  backgroundColor: colors.accentSoft,
-                  borderColor: colors.accent,
-                },
-              ]}
-            >
-              <AppText style={{ color: colors.accent, fontWeight: "700" }}>
-                i
-              </AppText>
-            </View>
+      {canOpenContactForm ? (
+        <Pressable
+          accessibilityRole="link"
+          accessibilityLabel={copy.supportContact.accessibilityLabel}
+          accessibilityHint={copy.supportContact.accessibilityHint}
+          onPress={handlePress}
+          style={({ pressed }) => [{ opacity: pressed ? 0.84 : 1 }]}
+        >
+          {card}
+        </Pressable>
+      ) : (
+        card
+      )}
 
-            <View style={styles.copy}>
-              <AppText variant="title">{copy.supportContact.title}</AppText>
-              <AppText variant="caption" tone="secondary">
-                {copy.supportContact.subtitle}
-              </AppText>
-            </View>
-
-            <AppText
-              variant="title"
-              accessibilityElementsHidden
-              importantForAccessibility="no"
-              style={{ color: colors.accent }}
-            >
-              ›
-            </AppText>
-          </View>
-        </Card>
-      </Pressable>
-
-      {openFailed ? (
-        <AppText tone="secondary">{copy.supportContact.openError}</AppText>
+      {!canOpenContactForm ? (
+        <AppText tone="secondary">{copy.supportContact.unavailable}</AppText>
       ) : null}
     </Stack>
   );

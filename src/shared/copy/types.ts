@@ -136,6 +136,7 @@ export type AppCopy = {
   supportContact: {
     title: string;
     subtitle: string;
+    unavailable: string;
     accessibilityLabel: string;
     accessibilityHint: string;
     openError: string;

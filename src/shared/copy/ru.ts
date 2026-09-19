@@ -140,6 +140,7 @@ export const copy: AppCopy = {
   supportContact: {
     title: "Мы рядом на каждом этапе",
     subtitle: "Если у вас есть вопросы — свяжитесь с нами",
+    unavailable: "Контакты клиники пока недоступны.",
     accessibilityLabel: "Связаться с нами",
     accessibilityHint: "Открывает форму контактов и записи на сайте",
     openError: "Не удалось открыть страницу контактов.",
