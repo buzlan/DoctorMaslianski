@@ -1,3 +1,224 @@
 ---
+description: Required development workflow for Doctor Maslianski
 alwaysApply: true
 ---
+
+# Doctor Maslianski — Development Workflow
+
+This repository is developed using small, reviewable tasks.
+
+The preferred workflow is:
+
+Task specification
+→ Planning
+→ Plan review
+→ Implementation
+→ Verification
+→ Diff review
+→ Commit
+
+Do not skip directly from a vague idea to implementation for non-trivial work.
+
+## Before starting a task
+
+Before implementing a non-trivial task:
+
+1. Read PROJECT.md.
+2. Read docs/ROADMAP.md.
+3. Read the relevant file inside docs/tasks/.
+4. Inspect the existing repository and relevant source files.
+5. Understand the current architecture before proposing changes.
+
+Do not assume the repository structure from memory.
+
+Always inspect the actual current code first.
+
+## Planning requirement
+
+For non-trivial tasks, create an implementation plan before writing code.
+
+The plan should identify:
+
+- the goal of the task;
+- files that need to be created;
+- files that need to be modified;
+- dependencies that may be required;
+- architectural decisions;
+- implementation order;
+- verification steps;
+- risks or unresolved questions.
+
+Do not write application code while the task is still in planning mode.
+
+If important product or architectural information is ambiguous, ask for clarification before implementation.
+
+## Scope control
+
+Implement only the currently approved task.
+
+Do not:
+
+- implement future roadmap tasks;
+- add unrelated improvements;
+- perform unrelated refactoring;
+- introduce speculative abstractions;
+- add functionality because it may be useful later.
+
+If an unrelated problem is discovered, report it separately instead of silently expanding the task.
+
+## Dependencies
+
+Do not add a dependency without explaining why it is required.
+
+Before adding a dependency:
+
+1. identify the current requirement it solves;
+2. check whether the existing stack already solves the requirement;
+3. prefer established and actively maintained packages;
+4. avoid dependencies for trivial functionality;
+5. ensure compatibility with the current Expo / React Native setup.
+
+Never install dependencies speculatively for future tasks.
+
+## Implementation
+
+During implementation:
+
+- follow the approved plan;
+- keep changes focused;
+- preserve existing working behavior;
+- reuse existing architecture where appropriate;
+- avoid rewriting unrelated code;
+- keep files reasonably small and focused;
+- prefer explicit code over unnecessary abstraction.
+
+If implementation reveals that the approved plan is no longer appropriate, stop and explain why before making a major architectural deviation.
+
+## React Native and Expo
+
+Preserve compatibility with the current Expo project.
+
+Do not modify native iOS or Android configuration unless the current task requires it.
+
+If native configuration is changed, verify the affected platform.
+
+When a shared native configuration may affect both platforms, verify both iOS and Android.
+
+## Verification
+
+After TypeScript application changes, run:
+
+```bash
+npx tsc --noEmit
+```
+
+Run lint:
+
+```bash
+npm run lint
+```
+
+Run additional tests when the task introduces or modifies testable business logic.
+
+For UI changes, manually verify the relevant screen.
+
+For platform-specific functionality, verify the relevant platform.
+
+Do not report a task as complete if required verification is failing.
+
+## Review before completion
+
+Before declaring a task complete:
+
+1. review the changed files;
+2. check for accidental unrelated changes;
+3. check for unnecessary dependencies;
+4. check for dead code;
+5. check for debug code or temporary logs;
+6. verify acceptance criteria from the task specification;
+7. verify that no future-task functionality was introduced.
+
+## Task status
+
+Task files live inside:
+
+docs/tasks/
+
+A task should normally progress through:
+
+IN PROGRESS
+→ DONE
+
+Do not mark a task DONE until all acceptance criteria are satisfied.
+
+## Git
+
+Prefer one focused commit per completed task.
+
+Do not automatically commit changes unless explicitly requested.
+
+Suggested commit style:
+
+- chore: ...
+- feat: ...
+- fix: ...
+- refactor: ...
+- test: ...
+- docs: ...
+
+Commit messages should describe the completed task, not individual implementation steps.
+
+## Final report
+
+After implementing a task, report:
+
+1. what was implemented;
+2. files created;
+3. files modified;
+4. dependencies added;
+5. verification performed;
+6. unresolved issues;
+7. whether all acceptance criteria are satisfied.
+
+Keep the report factual.
+
+Do not claim success when checks are failing.
+
+## Plan Mode
+
+Use Plan Mode for tasks that involve meaningful architecture, multiple files, new dependencies, native integrations, state management, data flows, or product behavior.
+
+Examples where Plan Mode is expected:
+
+- application architecture;
+- navigation architecture;
+- state management;
+- treatment domain;
+- Today screen data flow;
+- persistence;
+- symptom diary;
+- camera integration;
+- HealthKit;
+- Health Connect;
+- backend integration;
+- authentication;
+- deep links;
+- notifications.
+
+Plan Mode is not required for trivial changes such as:
+
+- correcting text;
+- changing spacing;
+- renaming a local variable;
+- fixing a simple lint issue;
+- small isolated style changes.
+
+## Core principle
+
+For substantial work:
+
+Understand first.
+Plan second.
+Implement third.
+Verify fourth.
+Commit last.

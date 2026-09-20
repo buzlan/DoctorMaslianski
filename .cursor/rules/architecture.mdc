@@ -1,3 +1,318 @@
 ---
-alwaysApply: true
+description: Architecture rules for Doctor Maslianski application source code
+globs:
+  - "src/**/*.{ts,tsx}"
+alwaysApply: false
 ---
+
+# Doctor Maslianski — Architecture Rules
+
+These rules apply to application source code inside `src`.
+
+Before making architectural changes, also read:
+
+- PROJECT.md
+- docs/ROADMAP.md
+- the currently approved task
+
+Do not create architecture for requirements that do not exist yet.
+
+## General principle
+
+Prefer simple, explicit and maintainable architecture.
+
+Architecture should support the current product requirements without introducing unnecessary layers.
+
+Do not create abstractions only because they might become useful later.
+
+Refactor when real complexity or duplication appears.
+
+## Source structure
+
+The application source lives inside:
+
+src/
+
+The intended high-level structure is:
+
+src/
+app/
+core/
+modules/
+shared/
+
+Do not create all folders or modules in advance.
+
+Create them only when required by an approved task.
+
+## src/app
+
+`src/app` is owned by Expo Router.
+
+It should primarily contain:
+
+- route files
+- layouts
+- navigation composition
+- application entry points
+
+Do not place significant business logic inside Expo Router route files.
+
+Route files should remain small and delegate product behavior to application modules.
+
+For example, avoid a route file containing:
+
+- API calls
+- treatment calculations
+- persistence logic
+- health data logic
+- large state management logic
+
+## src/modules
+
+Product-specific functionality should normally live inside:
+
+src/modules/
+
+Examples of future modules may include:
+
+- treatment
+- today
+- diary
+- photos
+- activity
+- appointments
+- doctor
+
+Do not create these modules until a task actually requires them.
+
+A module owns functionality specific to its product domain.
+
+Depending on the complexity of the module, it may contain concepts such as:
+
+- domain
+- application
+- infrastructure
+- presentation
+
+These folders are optional.
+
+Do not create empty architectural layers.
+
+Use them only when the module has enough complexity to justify them.
+
+## src/core
+
+`src/core` is reserved for application-wide technical infrastructure.
+
+Possible future examples:
+
+- API client
+- environment configuration
+- secure storage
+- error handling
+- logging
+- authentication infrastructure
+
+Do not place product-specific business logic in `core`.
+
+For example:
+
+Treatment logic belongs to a treatment-related module, not to `core`.
+
+## src/shared
+
+`src/shared` is reserved for code that is genuinely reusable across multiple product modules.
+
+Possible examples:
+
+- generic UI primitives
+- generic formatting utilities
+- shared TypeScript types with no product ownership
+
+Do not move code into `shared` simply because it might be reusable someday.
+
+Keep code inside the owning module until reuse is real.
+
+## React components
+
+React components should primarily:
+
+- render UI
+- receive data
+- handle presentation-specific state
+- dispatch user actions
+- compose other components
+
+Avoid significant business logic inside React components.
+
+Avoid complex calculations directly inside JSX.
+
+Avoid direct persistence or API implementation details inside presentation components.
+
+## Business logic
+
+Business rules should live outside React components.
+
+Examples of business rules include:
+
+- determining the current treatment stage
+- determining today's treatment tasks
+- calculating treatment progress
+- deciding whether a task is complete
+- transforming symptom data
+- handling treatment state transitions
+
+Business logic should remain independent from React Native APIs where practical.
+
+## State management
+
+Do not introduce a global state management library until an approved task demonstrates the need for one.
+
+When state management is introduced:
+
+- business behavior should not depend on React hooks when avoidable;
+- application state should remain testable outside components;
+- do not store every piece of UI state globally;
+- local presentation state should remain local.
+
+Do not install Redux, MobX, Zustand or another state library speculatively.
+
+The state management decision must be documented in the task or approved implementation plan.
+
+## Data access
+
+UI code should not become coupled directly to backend implementation details.
+
+When remote data is introduced, prefer application-owned boundaries where they provide real value.
+
+Example:
+
+TreatmentRepository
+
+may eventually have implementations such as:
+
+MockTreatmentRepository
+
+and:
+
+HttpTreatmentRepository
+
+Do not create repository interfaces for trivial local code.
+
+Introduce these boundaries when they allow meaningful separation or replacement of infrastructure.
+
+## Mock implementations
+
+Early product development may use mock data and mock infrastructure.
+
+Mocks should satisfy the same application-facing contract that a future real implementation will use when such a contract is justified.
+
+Do not shape the whole architecture around temporary mock data.
+
+## Native integrations
+
+Platform-specific integrations should be isolated from product business logic.
+
+Examples:
+
+- HealthKit
+- Health Connect
+- camera
+- push notifications
+- secure storage
+- deep links
+
+Product logic should not need to know unnecessary platform implementation details.
+
+For example, future activity functionality may depend on an application-owned abstraction such as:
+
+HealthRepository
+
+with separate iOS and Android implementations.
+
+The exact abstraction must be introduced only when the corresponding task is implemented.
+
+## Expo
+
+Keep Expo as the current React Native framework.
+
+Use Expo-compatible solutions when they satisfy the requirement.
+
+Do not eject or replace Expo without an explicit architectural decision and approved task.
+
+Expo Router remains the routing foundation unless an approved task explicitly changes that decision.
+
+## Platform files
+
+Do not modify native iOS or Android project files unless the current feature actually requires native configuration.
+
+When native changes are necessary:
+
+- explain why;
+- keep changes minimal;
+- verify the affected platform;
+- verify the other platform when the change can affect shared configuration.
+
+## Dependencies
+
+External libraries must not define the application's architecture.
+
+Prefer wrapping important external infrastructure when doing so prevents product logic from becoming tightly coupled to a vendor-specific API.
+
+Do not wrap every dependency automatically.
+
+## Imports and module ownership
+
+Keep product code close to the module that owns it.
+
+Avoid circular dependencies between modules.
+
+Avoid reaching deep into another module's internal implementation when a clear public boundary exists.
+
+Do not create global dumping-ground folders such as:
+
+- services
+- helpers
+- managers
+- utils
+- hooks
+- components
+
+for unrelated product functionality.
+
+Generic folders are acceptable only when their contents are genuinely generic.
+
+## Naming
+
+Use descriptive names based on product concepts.
+
+Prefer:
+
+Treatment
+TreatmentStage
+TreatmentTask
+CheckIn
+ActivityGoal
+
+over vague names such as:
+
+DataManager
+CommonService
+Helper
+Item
+Handler
+
+Names should communicate domain meaning.
+
+## Architecture changes
+
+Before introducing a significant architectural pattern:
+
+1. identify the concrete problem;
+2. explain why the existing architecture cannot handle it cleanly;
+3. compare the simplest reasonable alternatives;
+4. choose the smallest solution that satisfies the requirement;
+5. document the decision when it materially affects future development.
+
+Do not perform large architecture refactors as part of unrelated feature work.
