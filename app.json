@@ -47,7 +47,8 @@
           "photosPermission": "Приложение использует фотоплёнку, чтобы вы могли добавить фото к вашему лечению.",
           "microphonePermission": false
         }
-      ]
+      ],
+      "@react-native-vector-icons/ionicons"
     ],
     "experiments": {
       "typedRoutes": true,

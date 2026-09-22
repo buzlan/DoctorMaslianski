@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useState } from "react";
 import { Redirect, Stack, useSegments } from "expo-router";
+import { useCallback, useEffect, useState } from "react";
 import { AppState } from "react-native";
 
 import { resolveAuthGate, signOut, useAuthSession } from "@/core/auth";
@@ -21,6 +21,14 @@ import { sharedTreatmentRepository } from "@/modules/treatment/infrastructure";
 import { copy } from "@/shared/copy";
 import { theme } from "@/shared/theme";
 import { Screen, ScreenState } from "@/shared/ui";
+import { Inter_400Regular } from "@expo-google-fonts/inter/400Regular";
+import { Inter_500Medium } from "@expo-google-fonts/inter/500Medium";
+import { Inter_600SemiBold } from "@expo-google-fonts/inter/600SemiBold";
+import { Inter_700Bold } from "@expo-google-fonts/inter/700Bold";
+import { useFonts } from "expo-font";
+import * as SplashScreen from "expo-splash-screen";
+
+void SplashScreen.preventAutoHideAsync();
 
 function LoadingScreen({ message }: { message: string }) {
   return (
@@ -138,7 +146,8 @@ function RemoteRealtimeBridge() {
 
   useEffect(() => {
     const subscriber = createRealtimeSubscriber({
-      client: getSharedSupabaseClient() as unknown as RealtimeSubscriberClient | null,
+      client:
+        getSharedSupabaseClient() as unknown as RealtimeSubscriberClient | null,
       shouldSubscribe: () => shouldUseRemoteRepositories(),
       resolveTreatmentId: async () => {
         const treatment = await sharedTreatmentRepository.getActiveTreatment();
@@ -160,8 +169,29 @@ function RemoteRealtimeBridge() {
 }
 
 export default function RootLayout() {
+  const [fontsLoaded, fontError] = useFonts({
+    Inter_400Regular,
+    Inter_500Medium,
+    Inter_600SemiBold,
+    Inter_700Bold,
+  });
+
   const auth = useAuthSession();
   const gate = resolveAuthGate(auth, __DEV__);
+
+  useEffect(() => {
+    if (fontsLoaded || fontError) {
+      void SplashScreen.hideAsync();
+    }
+  }, [fontsLoaded, fontError]);
+
+  if (fontError) {
+    throw fontError;
+  }
+
+  if (!fontsLoaded) {
+    return null;
+  }
 
   if (gate.screen === "loading") {
     return <LoadingScreen message={copy.access.loading} />;

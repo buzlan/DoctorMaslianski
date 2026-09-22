@@ -54,12 +54,36 @@ export const theme = {
   },
   spacing: { xs: 4, sm: 8, md: 16, lg: 24, xl: 32, xxl: 40 },
   typography: {
-    display: { fontSize: 32, fontWeight: "700" as const, lineHeight: 38 },
-    title: { fontSize: 20, fontWeight: "600" as const, lineHeight: 28 },
-    body: { fontSize: 16, fontWeight: "400" as const, lineHeight: 24 },
-    caption: { fontSize: 14, fontWeight: "400" as const, lineHeight: 20 },
-    label: { fontSize: 13, fontWeight: "600" as const, lineHeight: 18 },
-    button: { fontSize: 16, fontWeight: "600" as const, lineHeight: 22 },
+    display: {
+      fontFamily: "Inter_700Bold",
+      fontSize: 28,
+      lineHeight: 34,
+    },
+    title: {
+      fontFamily: "Inter_600SemiBold",
+      fontSize: 18,
+      lineHeight: 24,
+    },
+    body: {
+      fontFamily: "Inter_400Regular",
+      fontSize: 15,
+      lineHeight: 22,
+    },
+    caption: {
+      fontFamily: "Inter_400Regular",
+      fontSize: 13,
+      lineHeight: 18,
+    },
+    label: {
+      fontFamily: "Inter_600SemiBold",
+      fontSize: 12,
+      lineHeight: 16,
+    },
+    button: {
+      fontFamily: "Inter_600SemiBold",
+      fontSize: 15,
+      lineHeight: 20,
+    },
   },
   radii: { sm: 8, md: 12, lg: 16, xl: 20, xxl: 24 },
   elevation: {

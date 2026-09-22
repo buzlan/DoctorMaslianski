@@ -1,5 +1,5 @@
 import { Tabs } from "expo-router";
-import { StyleSheet, useColorScheme, View, type ColorValue } from "react-native";
+import { StyleSheet, useColorScheme, type ColorValue } from "react-native";
 
 import { copy } from "@/shared/copy";
 import { getColors, theme } from "@/shared/theme";
@@ -10,22 +10,13 @@ function tabIcon(
   color: ColorValue,
   outline: AppIconName,
   filled: AppIconName,
-  wellColor: string,
 ) {
-  return (
-    <View
-      style={[
-        styles.iconWell,
-        focused ? { backgroundColor: wellColor } : undefined,
-      ]}
-    >
-      <AppIcon name={focused ? filled : outline} color={color} size={20} />
-    </View>
-  );
+  return <AppIcon name={focused ? filled : outline} color={color} size={24} />;
 }
 
 export default function TabsLayout() {
-  const colors = getColors(useColorScheme());
+  const scheme = useColorScheme();
+  const colors = getColors(scheme);
 
   return (
     <Tabs
@@ -33,19 +24,29 @@ export default function TabsLayout() {
         headerShown: false,
         tabBarActiveTintColor: colors.accent,
         tabBarInactiveTintColor: colors.textSecondary,
+        tabBarActiveBackgroundColor:
+          scheme === "dark" ? colors.accentSoft : "#E8F2FF",
         tabBarStyle: {
           backgroundColor: colors.surface,
           borderTopColor: colors.border,
           borderTopWidth: StyleSheet.hairlineWidth,
-          paddingTop: 8,
-          paddingBottom: 6,
+          paddingBottom: theme.spacing.md,
         },
         tabBarItemStyle: {
-          paddingVertical: 2,
+          marginHorizontal: theme.spacing.lg,
+          marginVertical: theme.spacing.xs,
+          borderRadius: theme.radii.lg,
+          paddingVertical: theme.spacing.xs,
+          overflow: "hidden",
+        },
+        tabBarIconStyle: {
+          width: 24,
+          height: 24,
         },
         tabBarLabelStyle: {
+          fontFamily: "Inter_500Medium",
+          fontWeight: "normal",
           fontSize: 11,
-          fontWeight: "600",
           marginTop: 2,
         },
       }}
@@ -55,7 +56,7 @@ export default function TabsLayout() {
         options={{
           title: copy.tabs.today,
           tabBarIcon: ({ color, focused }) =>
-            tabIcon(focused, color, "home-outline", "home", colors.accentSoft),
+            tabIcon(focused, color, "home-outline", "home"),
         }}
       />
       <Tabs.Screen
@@ -63,13 +64,7 @@ export default function TabsLayout() {
         options={{
           title: copy.tabs.treatment,
           tabBarIcon: ({ color, focused }) =>
-            tabIcon(
-              focused,
-              color,
-              "clipboard-outline",
-              "clipboard",
-              colors.accentSoft,
-            ),
+            tabIcon(focused, color, "clipboard-outline", "clipboard"),
         }}
       />
       <Tabs.Screen
@@ -77,19 +72,9 @@ export default function TabsLayout() {
         options={{
           title: copy.tabs.diary,
           tabBarIcon: ({ color, focused }) =>
-            tabIcon(focused, color, "book-outline", "book", colors.accentSoft),
+            tabIcon(focused, color, "book-outline", "book"),
         }}
       />
     </Tabs>
   );
 }
-
-const styles = StyleSheet.create({
-  iconWell: {
-    width: 36,
-    height: 28,
-    borderRadius: theme.radii.md,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-});
