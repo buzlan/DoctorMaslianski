@@ -35,9 +35,19 @@
         "expo-splash-screen",
         {
           "backgroundColor": "#E8F2FA",
-          "image": "./assets/images/patient/splash_logo.png",
-          "imageWidth": 200,
-          "resizeMode": "contain"
+          "enableFullScreenImage_legacy": true,
+          "resizeMode": "cover",
+          "image": "./assets/images/patient/splash_screen.png",
+          "ios": {
+            "image": "./assets/images/patient/splash_screen.png",
+            "resizeMode": "cover",
+            "enableFullScreenImage_legacy": true
+          },
+          "android": {
+            "image": "./assets/images/patient/splash_logo.png",
+            "imageWidth": 200,
+            "resizeMode": "contain"
+          }
         }
       ],
       "expo-secure-store",

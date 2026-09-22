@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { Redirect, Stack, useSegments } from "expo-router";
+import * as SplashScreen from "expo-splash-screen";
 import { AppState, StyleSheet } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 
@@ -22,6 +23,9 @@ import { sharedTreatmentRepository } from "@/modules/treatment/infrastructure";
 import { copy } from "@/shared/copy";
 import { theme } from "@/shared/theme";
 import { Screen, ScreenState } from "@/shared/ui";
+
+// Keep native splash until RootLayout hides it (required before first render).
+void SplashScreen.preventAutoHideAsync();
 
 function LoadingScreen({ message }: { message: string }) {
   return (
@@ -177,6 +181,29 @@ function RemoteRealtimeBridge() {
 export default function RootLayout() {
   const auth = useAuthSession();
   const gate = resolveAuthGate(auth, __DEV__);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function hideSplash() {
+      // DEV-only: hold splash ~2s to preview native splash design.
+      // Do not ship this delay; production hides immediately when ready.
+      if (__DEV__) {
+        await new Promise((resolve) => {
+          setTimeout(resolve, 2000);
+        });
+      }
+      if (!cancelled) {
+        await SplashScreen.hideAsync();
+      }
+    }
+
+    void hideSplash();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   let content;
   if (gate.screen === "loading") {
