@@ -44,8 +44,9 @@
             "enableFullScreenImage_legacy": true
           },
           "android": {
+            "backgroundColor": "#E8F2FA",
             "image": "./assets/images/patient/splash_logo.png",
-            "imageWidth": 200,
+            "imageWidth": 220,
             "resizeMode": "contain"
           }
         }

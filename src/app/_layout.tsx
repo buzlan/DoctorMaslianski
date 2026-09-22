@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { Redirect, Stack, useSegments } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
-import { AppState, StyleSheet } from "react-native";
+import { AppState, Platform, StyleSheet } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 
 import { resolveAuthGate, signOut, useAuthSession } from "@/core/auth";
@@ -21,6 +21,10 @@ import {
 } from "@/modules/feedback";
 import { sharedTreatmentRepository } from "@/modules/treatment/infrastructure";
 import { copy } from "@/shared/copy";
+import {
+  AndroidBrandedSplashOverlay,
+  shouldShowAndroidBrandedSplash,
+} from "@/shared/launch/android-branded-splash";
 import { theme } from "@/shared/theme";
 import { Screen, ScreenState } from "@/shared/ui";
 
@@ -181,13 +185,18 @@ function RemoteRealtimeBridge() {
 export default function RootLayout() {
   const auth = useAuthSession();
   const gate = resolveAuthGate(auth, __DEV__);
+  const [androidBrandedSplashVisible, setAndroidBrandedSplashVisible] =
+    useState(shouldShowAndroidBrandedSplash);
+
+  const dismissAndroidBrandedSplash = useCallback(() => {
+    setAndroidBrandedSplashVisible(false);
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
 
-    async function hideSplash() {
-      // DEV-only: hold splash ~2s to preview native splash design.
-      // Do not ship this delay; production hides immediately when ready.
+    async function hideNativeSplash() {
+      // DEV-only: hold native splash ~2s to preview design (existing behavior).
       if (__DEV__) {
         await new Promise((resolve) => {
           setTimeout(resolve, 2000);
@@ -198,7 +207,7 @@ export default function RootLayout() {
       }
     }
 
-    void hideSplash();
+    void hideNativeSplash();
 
     return () => {
       cancelled = true;
@@ -217,6 +226,9 @@ export default function RootLayout() {
   return (
     <GestureHandlerRootView style={styles.root}>
       {content}
+      {Platform.OS === "android" && androidBrandedSplashVisible ? (
+        <AndroidBrandedSplashOverlay onFinished={dismissAndroidBrandedSplash} />
+      ) : null}
     </GestureHandlerRootView>
   );
 }
