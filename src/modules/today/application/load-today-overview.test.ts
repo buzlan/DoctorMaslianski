@@ -70,6 +70,11 @@ describe('loadTodayOverview', () => {
         patientId: 'dev-patient-1',
         treatmentId: 'treatment-1',
         periodDayNumber: 1,
+        periodProgress: {
+          periodDayNumber: 1,
+          completedAssignments: 0,
+          totalAssignments: 1,
+        },
         assignments: [{ id: 'on-start', title: 'synthetic-start', completed: false }],
         diaryOpen: true,
         photosRecordedToday: 0,

@@ -8,11 +8,15 @@ export const APP_ICON_NAMES = [
   "book",
   "book-outline",
   "camera-outline",
+  "images-outline",
+  "trash-outline",
   "calendar-outline",
   "call-outline",
   "mail-outline",
   "open-outline",
   "shield-checkmark-outline",
+  "chevron-left",
+  "chevron-right",
   "checkmark",
 ] as const;
 
@@ -166,6 +170,65 @@ export function AppIcon({ name, color, size = 22 }: AppIconProps) {
     );
   }
 
+  if (name === "images-outline") {
+    return (
+      <View style={[styles.box, { width: size, height: size }]}>
+        <View
+          style={[
+            stroke(color),
+            {
+              width: size * 0.58,
+              height: size * 0.46,
+              borderRadius: 4,
+              marginTop: size * 0.08,
+              marginLeft: size * 0.06,
+            },
+          ]}
+        />
+        <View
+          style={[
+            stroke(color),
+            {
+              width: size * 0.58,
+              height: size * 0.46,
+              borderRadius: 4,
+              position: "absolute",
+              top: size * 0.08,
+              left: size * 0.08,
+              backgroundColor: "transparent",
+            },
+          ]}
+        />
+      </View>
+    );
+  }
+
+  if (name === "trash-outline") {
+    return (
+      <View style={[styles.box, { width: size, height: size }]}>
+        <View
+          style={{
+            width: size * 0.36,
+            height: 1.8,
+            backgroundColor: color,
+            marginBottom: 2,
+          }}
+        />
+        <View
+          style={[
+            stroke(color),
+            {
+              width: size * 0.42,
+              height: size * 0.48,
+              borderRadius: 3,
+              borderTopWidth: 1.8,
+            },
+          ]}
+        />
+      </View>
+    );
+  }
+
   if (name === "calendar-outline") {
     return (
       <View style={[styles.box, { width: size, height: size }]}>
@@ -237,6 +300,42 @@ export function AppIcon({ name, color, size = 22 }: AppIconProps) {
               borderRadius: size * 0.24,
             },
           ]}
+        />
+      </View>
+    );
+  }
+
+  if (name === "chevron-left") {
+    return (
+      <View style={[styles.box, { width: size, height: size }]}>
+        <View
+          style={{
+            width: size * 0.38,
+            height: size * 0.38,
+            borderLeftWidth: 2.2,
+            borderBottomWidth: 2.2,
+            borderColor: color,
+            transform: [{ rotate: "45deg" }],
+            marginLeft: size * 0.12,
+          }}
+        />
+      </View>
+    );
+  }
+
+  if (name === "chevron-right") {
+    return (
+      <View style={[styles.box, { width: size, height: size }]}>
+        <View
+          style={{
+            width: size * 0.38,
+            height: size * 0.38,
+            borderRightWidth: 2.2,
+            borderTopWidth: 2.2,
+            borderColor: color,
+            transform: [{ rotate: "45deg" }],
+            marginRight: size * 0.12,
+          }}
         />
       </View>
     );

@@ -31,10 +31,20 @@ describe('buildTodayOverview', () => {
     expect(buildTodayOverview(treatment, calendarDate(2026, 8, 1))).toMatchObject({
       kind: 'ready',
       periodDayNumber: 1,
+      periodProgress: {
+        periodDayNumber: 1,
+        completedAssignments: 0,
+        totalAssignments: 0,
+      },
     });
     expect(buildTodayOverview(treatment, calendarDate(2026, 8, 4))).toMatchObject({
       kind: 'ready',
       periodDayNumber: 4,
+      periodProgress: {
+        periodDayNumber: 4,
+        completedAssignments: 0,
+        totalAssignments: 0,
+      },
     });
   });
 
@@ -144,6 +154,7 @@ describe('buildTodayOverview', () => {
       patientId: 'patient-1',
       treatmentId: 'treatment-1',
       periodDayNumber: null,
+      periodProgress: null,
       assignments: [],
       diaryOpen: true,
       photosRecordedToday: 0,
@@ -167,6 +178,72 @@ describe('buildTodayOverview', () => {
     expect(buildTodayOverview(create({ status: 'cancelled' }), calendarDate(2026, 8, 1)).kind).toBe(
       'no_active_treatment',
     );
+  });
+
+  it('projects assignment progress for the period progress card', () => {
+    const treatment = create({
+      periods: [{ id: 'current', startedOn: calendarDate(2026, 8, 1) }],
+      assignments: [
+        {
+          id: 'a-1',
+          catalogItemId: 'catalog-1',
+          title: 'synthetic-a',
+          startDate: calendarDate(2026, 8, 1),
+          endDate: calendarDate(2026, 8, 3),
+          status: 'active',
+        },
+        {
+          id: 'a-2',
+          catalogItemId: 'catalog-2',
+          title: 'synthetic-b',
+          startDate: calendarDate(2026, 8, 1),
+          endDate: calendarDate(2026, 8, 3),
+          status: 'active',
+        },
+      ],
+      completions: [
+        {
+          id: 'completion-1',
+          assignmentId: 'a-1',
+          completedOn: calendarDate(2026, 8, 1),
+        },
+      ],
+    });
+
+    const overview = buildTodayOverview(treatment, calendarDate(2026, 8, 1));
+    expect(overview).toMatchObject({
+      kind: 'ready',
+      periodProgress: {
+        periodDayNumber: 1,
+        completedAssignments: 1,
+        totalAssignments: 2,
+      },
+    });
+    if (overview.kind === 'ready') {
+      expect(overview.periodProgress).not.toHaveProperty('periodTitle');
+      expect(overview.periodProgress).not.toHaveProperty('periodDescription');
+    }
+  });
+
+  it('omits periodProgress when there is no current treatment period', () => {
+    const overview = buildTodayOverview(
+      create({
+        periods: [
+          {
+            id: 'ended',
+            startedOn: calendarDate(2026, 7, 1),
+            endedOn: calendarDate(2026, 7, 31),
+          },
+        ],
+      }),
+      calendarDate(2026, 8, 1),
+    );
+
+    expect(overview).toMatchObject({
+      kind: 'ready',
+      periodDayNumber: null,
+      periodProgress: null,
+    });
   });
 
   it('does not invent medical instructions or thresholds', () => {

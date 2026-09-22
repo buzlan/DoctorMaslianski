@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
 import { Redirect, Stack, useSegments } from "expo-router";
-import { AppState } from "react-native";
+import * as SplashScreen from "expo-splash-screen";
+import { AppState, StyleSheet } from "react-native";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 
 import { resolveAuthGate, signOut, useAuthSession } from "@/core/auth";
 import { getSharedRemotePatientContextResolver } from "@/core/auth/shared-remote-patient-context";
@@ -21,6 +23,9 @@ import { sharedTreatmentRepository } from "@/modules/treatment/infrastructure";
 import { copy } from "@/shared/copy";
 import { theme } from "@/shared/theme";
 import { Screen, ScreenState } from "@/shared/ui";
+
+// Keep native splash until RootLayout hides it (required before first render).
+void SplashScreen.preventAutoHideAsync();
 
 function LoadingScreen({ message }: { message: string }) {
   return (
@@ -66,8 +71,22 @@ function ClinicalStack() {
     <Stack screenOptions={{ headerShown: false }}>
       <Stack.Protected guard={!treatmentCompleted}>
         <Stack.Screen name="(tabs)" />
-        <Stack.Screen name="treatment/[milestoneId]" />
-        <Stack.Screen name="photo-capture" />
+        <Stack.Screen
+          name="treatment/[milestoneId]"
+          options={{
+            gestureEnabled: false,
+            fullScreenGestureEnabled: false,
+            animation: "fade",
+          }}
+        />
+        <Stack.Screen
+          name="photo-capture"
+          options={{
+            gestureEnabled: false,
+            fullScreenGestureEnabled: false,
+            animation: "fade",
+          }}
+        />
       </Stack.Protected>
       <Stack.Protected guard={treatmentCompleted}>
         <Stack.Screen name="completed" />
@@ -163,13 +182,47 @@ export default function RootLayout() {
   const auth = useAuthSession();
   const gate = resolveAuthGate(auth, __DEV__);
 
+  useEffect(() => {
+    let cancelled = false;
+
+    async function hideSplash() {
+      // DEV-only: hold splash ~2s to preview native splash design.
+      // Do not ship this delay; production hides immediately when ready.
+      if (__DEV__) {
+        await new Promise((resolve) => {
+          setTimeout(resolve, 2000);
+        });
+      }
+      if (!cancelled) {
+        await SplashScreen.hideAsync();
+      }
+    }
+
+    void hideSplash();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  let content;
   if (gate.screen === "loading") {
-    return <LoadingScreen message={copy.access.loading} />;
+    content = <LoadingScreen message={copy.access.loading} />;
+  } else if (gate.screen === "access") {
+    content = <AccessGate />;
+  } else {
+    content = <LinkedClinicalShell />;
   }
 
-  if (gate.screen === "access") {
-    return <AccessGate />;
-  }
-
-  return <LinkedClinicalShell />;
+  return (
+    <GestureHandlerRootView style={styles.root}>
+      {content}
+    </GestureHandlerRootView>
+  );
 }
+
+const styles = StyleSheet.create({
+  root: {
+    flex: 1,
+  },
+});
