@@ -1,7 +1,13 @@
 import { Image } from "expo-image";
 import { useRouter } from "expo-router";
 import { useRef, useState } from "react";
-import { ScrollView, StyleSheet, useColorScheme } from "react-native";
+import {
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  useColorScheme,
+  View,
+} from "react-native";
 
 import { sharedPatientPhotoLoader } from "@/modules/photos/application";
 import type { CapturedImage } from "@/modules/photos/domain";
@@ -9,13 +15,16 @@ import { copy } from "@/shared/copy";
 import { loadCivilTodayDate } from "@/shared/date/load-civil-today-date";
 import { getColors, theme } from "@/shared/theme";
 import {
+  AppIcon,
   AppText,
   BackIconButton,
   Button,
   Card,
+  IconWell,
   Screen,
   ScreenHeader,
   Stack,
+  type AppIconName,
 } from "@/shared/ui";
 
 export function PatientPhotoCaptureScreen() {
@@ -32,6 +41,11 @@ export function PatientPhotoCaptureScreen() {
       return;
     }
     router.replace("/");
+  }
+
+  function clearCaptured() {
+    setCaptured(null);
+    setMessage(null);
   }
 
   async function capture(kind: "camera" | "library") {
@@ -104,53 +118,95 @@ export function PatientPhotoCaptureScreen() {
           accessibilityLabel={copy.photos.back}
           onPress={goBack}
         />
-        <ScreenHeader title={copy.photos.title} />
+        {captured === null ? (
+          <Stack gap="xs">
+            <ScreenHeader title={copy.photos.title} />
+            <AppText variant="title">{copy.photos.addPrompt}</AppText>
+            <AppText tone="secondary">{copy.photos.addHint}</AppText>
+          </Stack>
+        ) : (
+          <ScreenHeader
+            title={copy.photos.title}
+            subtitle={copy.photos.readySubtitle}
+          />
+        )}
         <ScrollView
           style={styles.scroll}
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
         >
-          <Card variant="elevated">
-            <Stack gap="md">
-              {message !== null ? (
-                <AppText tone="secondary">{message}</AppText>
-              ) : null}
-              {captured !== null ? (
-                <Image
-                  source={{ uri: captured.sourceUri }}
-                  style={[styles.preview, { backgroundColor: colors.accentSoft }]}
-                  contentFit="contain"
-                  accessibilityLabel={copy.photos.title}
-                />
-              ) : null}
-              <Button
-                variant="secondary"
-                label={copy.photos.takePhoto}
-                disabled={confirming}
-                onPress={() => {
-                  void capture("camera");
-                }}
-              />
-              <Button
-                variant="secondary"
-                label={copy.photos.chooseFromLibrary}
-                disabled={confirming}
-                onPress={() => {
-                  void capture("library");
-                }}
-              />
-              {captured !== null ? (
-                <Button
-                  variant="tertiary"
-                  label={copy.photos.retry}
-                  disabled={confirming}
-                  onPress={() => {
-                    setCaptured(null);
-                    setMessage(null);
-                  }}
-                />
-              ) : null}
-              {captured !== null ? (
+          <Stack gap="md">
+            {message !== null ? (
+              <AppText tone="secondary">{message}</AppText>
+            ) : null}
+            {captured === null ? (
+              <>
+                <View style={styles.sourceRow}>
+                  <SourceCard
+                    icon="camera-outline"
+                    title={copy.photos.takePhoto}
+                    hint={copy.photos.takePhotoHint}
+                    disabled={confirming}
+                    onPress={() => {
+                      void capture("camera");
+                    }}
+                  />
+                  <SourceCard
+                    icon="images-outline"
+                    title={copy.photos.chooseFromLibrary}
+                    hint={copy.photos.chooseFromLibraryHint}
+                    disabled={confirming}
+                    onPress={() => {
+                      void capture("library");
+                    }}
+                  />
+                </View>
+                <Card variant="tinted">
+                  <Stack gap="xs">
+                    <AppText variant="title">{copy.photos.tipTitle}</AppText>
+                    <AppText tone="secondary">{copy.photos.tipBody}</AppText>
+                  </Stack>
+                </Card>
+              </>
+            ) : (
+              <>
+                <View
+                  style={[
+                    styles.previewFrame,
+                    {
+                      backgroundColor: colors.accentSoft,
+                      borderColor: colors.border,
+                    },
+                  ]}
+                >
+                  <Image
+                    source={{ uri: captured.sourceUri }}
+                    style={styles.preview}
+                    contentFit="cover"
+                    accessibilityLabel={copy.photos.title}
+                  />
+                  <Pressable
+                    accessibilityRole="button"
+                    accessibilityLabel={copy.photos.removePhoto}
+                    disabled={confirming}
+                    onPress={clearCaptured}
+                    style={({ pressed }) => [
+                      styles.trashButton,
+                      {
+                        backgroundColor: colors.surface,
+                        borderColor: colors.border,
+                        opacity: pressed ? 0.82 : 1,
+                      },
+                    ]}
+                  >
+                    <AppIcon
+                      name="trash-outline"
+                      color={colors.accent}
+                      size={18}
+                    />
+                  </Pressable>
+                </View>
+                <AppText tone="secondary">{copy.photos.doctorAccessNote}</AppText>
                 <Button
                   variant="primary"
                   label={copy.photos.confirm}
@@ -159,12 +215,51 @@ export function PatientPhotoCaptureScreen() {
                     void confirm();
                   }}
                 />
-              ) : null}
-            </Stack>
-          </Card>
+              </>
+            )}
+          </Stack>
         </ScrollView>
       </Stack>
     </Screen>
+  );
+}
+
+function SourceCard({
+  icon,
+  title,
+  hint,
+  disabled,
+  onPress,
+}: {
+  icon: AppIconName;
+  title: string;
+  hint: string;
+  disabled: boolean;
+  onPress: () => void;
+}) {
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={title}
+      disabled={disabled}
+      onPress={onPress}
+      style={({ pressed }) => [
+        styles.sourceCardPressable,
+        { opacity: pressed || disabled ? 0.82 : 1 },
+      ]}
+    >
+      <Card variant="tinted" style={styles.sourceCard}>
+        <Stack gap="sm">
+          <IconWell name={icon} size={40} />
+          <Stack gap="xs">
+            <AppText variant="title">{title}</AppText>
+            <AppText variant="caption" tone="secondary">
+              {hint}
+            </AppText>
+          </Stack>
+        </Stack>
+      </Card>
+    </Pressable>
   );
 }
 
@@ -181,10 +276,39 @@ const styles = StyleSheet.create({
   scrollContent: {
     flexGrow: 1,
     paddingBottom: theme.spacing.lg,
+    gap: theme.spacing.md,
+  },
+  sourceRow: {
+    flexDirection: "row",
+    gap: theme.spacing.sm,
+  },
+  sourceCardPressable: {
+    flex: 1,
+  },
+  sourceCard: {
+    flex: 1,
+    minHeight: 148,
+  },
+  previewFrame: {
+    width: "100%",
+    aspectRatio: 4 / 3,
+    borderRadius: theme.radii.xl,
+    borderWidth: StyleSheet.hairlineWidth,
+    overflow: "hidden",
   },
   preview: {
     width: "100%",
-    height: 280,
-    borderRadius: theme.radii.lg,
+    height: "100%",
+  },
+  trashButton: {
+    position: "absolute",
+    top: theme.spacing.sm,
+    right: theme.spacing.sm,
+    width: 40,
+    height: 40,
+    borderRadius: theme.radii.md,
+    borderWidth: StyleSheet.hairlineWidth,
+    alignItems: "center",
+    justifyContent: "center",
   },
 });

@@ -11,6 +11,8 @@ export type AppCopy = {
     noActiveTreatment: string;
     noActionsForToday: string;
     periodDayLabel: string;
+    progressCountOf: string;
+    progressSupportText: string;
     tasksLabel: string;
     loadError: string;
     retry: string;
@@ -19,6 +21,10 @@ export type AppCopy = {
     markIncomplete: string;
     fillDiary: string;
     addPhoto: string;
+    photoControlTitle: string;
+    photoControlBody: string;
+    photoControlAction: string;
+    appointmentDetails: string;
     photoAdded1: string;
     photoAdded2: string;
     photoAdded3: string;
@@ -121,10 +127,18 @@ export type AppCopy = {
   };
   photos: {
     title: string;
+    addPrompt: string;
+    addHint: string;
     takePhoto: string;
+    takePhotoHint: string;
     chooseFromLibrary: string;
+    chooseFromLibraryHint: string;
+    tipTitle: string;
+    tipBody: string;
+    readySubtitle: string;
+    doctorAccessNote: string;
     confirm: string;
-    retry: string;
+    removePhoto: string;
     back: string;
     permissionDenied: string;
     cameraUnavailable: string;

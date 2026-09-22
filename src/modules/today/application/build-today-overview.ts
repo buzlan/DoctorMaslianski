@@ -18,6 +18,19 @@ export type TodayAssignmentItem = {
   instruction?: string;
 };
 
+/**
+ * Today header progress card. Present only when a current treatment period exists.
+ * periodTitle / periodDescription are copied from period fields when the domain
+ * provides them; they are never invented from day number or medical heuristics.
+ */
+export type TodayPeriodProgress = {
+  periodDayNumber: number | null;
+  completedAssignments: number;
+  totalAssignments: number;
+  periodTitle?: string;
+  periodDescription?: string;
+};
+
 export type TodayOverview =
   | { kind: 'no_active_treatment' }
   | {
@@ -25,6 +38,7 @@ export type TodayOverview =
       patientId: string;
       treatmentId: string;
       periodDayNumber: number | null;
+      periodProgress: TodayPeriodProgress | null;
       assignments: readonly TodayAssignmentItem[];
       diaryOpen: boolean;
       photosRecordedToday: 0 | 1 | 2 | 3;
@@ -66,6 +80,44 @@ function clampPhotoCount(count: number): 0 | 1 | 2 | 3 {
   return 3;
 }
 
+function buildPeriodProgress(
+  currentPeriod: ReturnType<typeof getCurrentPeriod>,
+  periodDayNumber: number | null,
+  assignments: readonly TodayAssignmentItem[],
+): TodayPeriodProgress | null {
+  if (currentPeriod === null) {
+    return null;
+  }
+
+  const progress: TodayPeriodProgress = {
+    periodDayNumber,
+    completedAssignments: assignments.filter((item) => item.completed).length,
+    totalAssignments: assignments.length,
+  };
+
+  // TreatmentPeriod has no clinic title in the current domain/schema.
+  // When a real period title exists on the loaded period record, copy it here
+  // only — never invent medical stage names from day number or heuristics.
+  const periodRecord = currentPeriod as {
+    title?: string;
+    description?: string;
+  };
+  if (
+    typeof periodRecord.title === "string" &&
+    periodRecord.title.trim().length > 0
+  ) {
+    progress.periodTitle = periodRecord.title.trim();
+  }
+  if (
+    typeof periodRecord.description === "string" &&
+    periodRecord.description.trim().length > 0
+  ) {
+    progress.periodDescription = periodRecord.description.trim();
+  }
+
+  return progress;
+}
+
 export function buildTodayOverview(
   treatment: Treatment | null,
   onDate: CalendarDate,
@@ -80,18 +132,20 @@ export function buildTodayOverview(
   const periodDayNumber =
     currentPeriod === null ? null : getPeriodDayNumber(currentPeriod, onDate);
   const recorded = clampPhotoCount(photosRecordedToday);
+  const assignments = getAssignmentsForDate(treatment, onDate).map((assignment) =>
+    mapAssignment(
+      assignment,
+      isAssignmentCompletedOnDate(treatment, assignment.id, onDate),
+    ),
+  );
 
   return {
     kind: 'ready',
     patientId: treatment.patientId,
     treatmentId: treatment.id,
     periodDayNumber,
-    assignments: getAssignmentsForDate(treatment, onDate).map((assignment) =>
-      mapAssignment(
-        assignment,
-        isAssignmentCompletedOnDate(treatment, assignment.id, onDate),
-      ),
-    ),
+    periodProgress: buildPeriodProgress(currentPeriod, periodDayNumber, assignments),
+    assignments,
     diaryOpen: !todayDiaryEntryExists,
     photosRecordedToday: recorded,
     photoAddOpen: recorded < 3,
