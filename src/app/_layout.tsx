@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { Redirect, Stack, useSegments } from "expo-router";
-import { AppState } from "react-native";
+import { AppState, StyleSheet } from "react-native";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 
 import { resolveAuthGate, signOut, useAuthSession } from "@/core/auth";
 import { getSharedRemotePatientContextResolver } from "@/core/auth/shared-remote-patient-context";
@@ -66,8 +67,22 @@ function ClinicalStack() {
     <Stack screenOptions={{ headerShown: false }}>
       <Stack.Protected guard={!treatmentCompleted}>
         <Stack.Screen name="(tabs)" />
-        <Stack.Screen name="treatment/[milestoneId]" />
-        <Stack.Screen name="photo-capture" />
+        <Stack.Screen
+          name="treatment/[milestoneId]"
+          options={{
+            gestureEnabled: false,
+            fullScreenGestureEnabled: false,
+            animation: "fade",
+          }}
+        />
+        <Stack.Screen
+          name="photo-capture"
+          options={{
+            gestureEnabled: false,
+            fullScreenGestureEnabled: false,
+            animation: "fade",
+          }}
+        />
       </Stack.Protected>
       <Stack.Protected guard={treatmentCompleted}>
         <Stack.Screen name="completed" />
@@ -163,13 +178,24 @@ export default function RootLayout() {
   const auth = useAuthSession();
   const gate = resolveAuthGate(auth, __DEV__);
 
+  let content;
   if (gate.screen === "loading") {
-    return <LoadingScreen message={copy.access.loading} />;
+    content = <LoadingScreen message={copy.access.loading} />;
+  } else if (gate.screen === "access") {
+    content = <AccessGate />;
+  } else {
+    content = <LinkedClinicalShell />;
   }
 
-  if (gate.screen === "access") {
-    return <AccessGate />;
-  }
-
-  return <LinkedClinicalShell />;
+  return (
+    <GestureHandlerRootView style={styles.root}>
+      {content}
+    </GestureHandlerRootView>
+  );
 }
+
+const styles = StyleSheet.create({
+  root: {
+    flex: 1,
+  },
+});

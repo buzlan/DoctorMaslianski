@@ -1,6 +1,7 @@
 export { AppIcon, APP_ICON_NAMES } from "./app-icon";
 export type { AppIconName } from "./app-icon";
 export { AppText } from "./app-text";
+export { BackIconButton } from "./back-icon-button";
 export { Button } from "./button";
 export type { ButtonVariant } from "./button";
 export { Card } from "./card";

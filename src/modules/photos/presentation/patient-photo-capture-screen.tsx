@@ -10,6 +10,7 @@ import { loadCivilTodayDate } from "@/shared/date/load-civil-today-date";
 import { getColors, theme } from "@/shared/theme";
 import {
   AppText,
+  BackIconButton,
   Button,
   Card,
   Screen,
@@ -99,7 +100,10 @@ export function PatientPhotoCaptureScreen() {
   return (
     <Screen edges={["top", "left", "right"]} style={styles.content}>
       <Stack gap="md" style={styles.body}>
-        <Button variant="tertiary" label={copy.photos.back} onPress={goBack} />
+        <BackIconButton
+          accessibilityLabel={copy.photos.back}
+          onPress={goBack}
+        />
         <ScreenHeader title={copy.photos.title} />
         <ScrollView
           style={styles.scroll}
