@@ -4,12 +4,12 @@
     "slug": "doctor-maslianski",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
+    "icon": "./assets/images/patient/app_icon_primary.png",
     "scheme": "doctormaslianski",
     "userInterfaceStyle": "automatic",
     "ios": {
       "bundleIdentifier": "by.maslianski.app",
-      "icon": "./assets/expo.icon",
+      "icon": "./assets/images/patient/app_icon_primary.png",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       }
@@ -18,7 +18,7 @@
       "package": "by.maslianski.app",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/images/android-icon-foreground.png",
+        "foregroundImage": "./assets/images/patient/app_icon_primary.png",
         "backgroundImage": "./assets/images/android-icon-background.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
@@ -34,9 +34,21 @@
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#208AEF",
-          "image": "./assets/images/splash-icon.png",
-          "imageWidth": 76
+          "backgroundColor": "#E8F2FA",
+          "enableFullScreenImage_legacy": true,
+          "resizeMode": "cover",
+          "image": "./assets/images/patient/splash_screen.png",
+          "ios": {
+            "image": "./assets/images/patient/splash_screen.png",
+            "resizeMode": "cover",
+            "enableFullScreenImage_legacy": true
+          },
+          "android": {
+            "backgroundColor": "#E8F2FA",
+            "image": "./assets/images/patient/splash_logo.png",
+            "imageWidth": 220,
+            "resizeMode": "contain"
+          }
         }
       ],
       "expo-secure-store",

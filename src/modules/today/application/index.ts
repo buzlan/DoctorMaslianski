@@ -1,5 +1,9 @@
 export { buildTodayOverview } from './build-today-overview';
-export type { TodayAssignmentItem, TodayOverview } from './build-today-overview';
+export type {
+  TodayAssignmentItem,
+  TodayOverview,
+  TodayPeriodProgress,
+} from './build-today-overview';
 export {
   completeTodayAssignment,
   uncompleteTodayAssignment,

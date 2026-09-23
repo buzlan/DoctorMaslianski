@@ -13,7 +13,7 @@ import { copy } from "@/shared/copy";
 import { theme } from "@/shared/theme";
 import {
   AppText,
-  Button,
+  BackIconButton,
   Card,
   Screen,
   ScreenHeader,
@@ -120,9 +120,8 @@ export function MilestoneDetailScreen({ milestoneId }: MilestoneDetailScreenProp
   return (
     <Screen edges={["top", "left", "right"]} style={styles.content}>
       <Stack gap="md" style={styles.body}>
-        <Button
-          variant="tertiary"
-          label={copy.treatment.back}
+        <BackIconButton
+          accessibilityLabel={copy.treatment.back}
           onPress={() => {
             goBack(router);
           }}

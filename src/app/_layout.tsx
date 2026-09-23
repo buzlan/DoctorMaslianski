@@ -1,6 +1,8 @@
 import { Redirect, Stack, useSegments } from "expo-router";
+import * as SplashScreen from "expo-splash-screen";
 import { useCallback, useEffect, useState } from "react";
-import { AppState } from "react-native";
+import { AppState, Platform, StyleSheet } from "react-native";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 
 import { resolveAuthGate, signOut, useAuthSession } from "@/core/auth";
 import { getSharedRemotePatientContextResolver } from "@/core/auth/shared-remote-patient-context";
@@ -19,6 +21,10 @@ import {
 } from "@/modules/feedback";
 import { sharedTreatmentRepository } from "@/modules/treatment/infrastructure";
 import { copy } from "@/shared/copy";
+import {
+  AndroidBrandedSplashOverlay,
+  shouldShowAndroidBrandedSplash,
+} from "@/shared/launch/android-branded-splash";
 import { theme } from "@/shared/theme";
 import { Screen, ScreenState } from "@/shared/ui";
 import { Inter_400Regular } from "@expo-google-fonts/inter/400Regular";
@@ -26,8 +32,10 @@ import { Inter_500Medium } from "@expo-google-fonts/inter/500Medium";
 import { Inter_600SemiBold } from "@expo-google-fonts/inter/600SemiBold";
 import { Inter_700Bold } from "@expo-google-fonts/inter/700Bold";
 import { useFonts } from "expo-font";
-import * as SplashScreen from "expo-splash-screen";
 
+void SplashScreen.preventAutoHideAsync();
+
+// Keep native splash until RootLayout hides it (required before first render).
 void SplashScreen.preventAutoHideAsync();
 
 function LoadingScreen({ message }: { message: string }) {
@@ -74,8 +82,22 @@ function ClinicalStack() {
     <Stack screenOptions={{ headerShown: false }}>
       <Stack.Protected guard={!treatmentCompleted}>
         <Stack.Screen name="(tabs)" />
-        <Stack.Screen name="treatment/[milestoneId]" />
-        <Stack.Screen name="photo-capture" />
+        <Stack.Screen
+          name="treatment/[milestoneId]"
+          options={{
+            gestureEnabled: false,
+            fullScreenGestureEnabled: false,
+            animation: "fade",
+          }}
+        />
+        <Stack.Screen
+          name="photo-capture"
+          options={{
+            gestureEnabled: false,
+            fullScreenGestureEnabled: false,
+            animation: "fade",
+          }}
+        />
       </Stack.Protected>
       <Stack.Protected guard={treatmentCompleted}>
         <Stack.Screen name="completed" />
@@ -178,28 +200,56 @@ export default function RootLayout() {
 
   const auth = useAuthSession();
   const gate = resolveAuthGate(auth, __DEV__);
+  const [androidBrandedSplashVisible, setAndroidBrandedSplashVisible] =
+    useState(shouldShowAndroidBrandedSplash);
+
+  const dismissAndroidBrandedSplash = useCallback(() => {
+    setAndroidBrandedSplashVisible(false);
+  }, []);
 
   useEffect(() => {
-    if (fontsLoaded || fontError) {
-      void SplashScreen.hideAsync();
+    let cancelled = false;
+
+    async function hideNativeSplash() {
+      // DEV-only: hold native splash ~2s to preview design (existing behavior).
+      if (__DEV__) {
+        await new Promise((resolve) => {
+          setTimeout(resolve, 2000);
+        });
+      }
+      if (!cancelled) {
+        await SplashScreen.hideAsync();
+      }
     }
-  }, [fontsLoaded, fontError]);
 
-  if (fontError) {
-    throw fontError;
-  }
+    void hideNativeSplash();
 
-  if (!fontsLoaded) {
-    return null;
-  }
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
+  let content;
   if (gate.screen === "loading") {
-    return <LoadingScreen message={copy.access.loading} />;
+    content = <LoadingScreen message={copy.access.loading} />;
+  } else if (gate.screen === "access") {
+    content = <AccessGate />;
+  } else {
+    content = <LinkedClinicalShell />;
   }
 
-  if (gate.screen === "access") {
-    return <AccessGate />;
-  }
-
-  return <LinkedClinicalShell />;
+  return (
+    <GestureHandlerRootView style={styles.root}>
+      {content}
+      {Platform.OS === "android" && androidBrandedSplashVisible ? (
+        <AndroidBrandedSplashOverlay onFinished={dismissAndroidBrandedSplash} />
+      ) : null}
+    </GestureHandlerRootView>
+  );
 }
+
+const styles = StyleSheet.create({
+  root: {
+    flex: 1,
+  },
+});
