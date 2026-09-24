@@ -1,3 +1,4 @@
+import { type ReactNode } from "react";
 import { Pressable, StyleSheet, useColorScheme, View } from "react-native";
 
 import { getColors, theme } from "@/shared/theme";
@@ -6,6 +7,7 @@ import { AppText } from "./app-text";
 
 type CheckboxRowProps = {
   label: string;
+  labelContent?: ReactNode;
   checked: boolean;
   onPress: () => void;
   disabled?: boolean;
@@ -13,6 +15,7 @@ type CheckboxRowProps = {
 
 export function CheckboxRow({
   label,
+  labelContent,
   checked,
   onPress,
   disabled = false,
@@ -20,34 +23,43 @@ export function CheckboxRow({
   const colors = getColors(useColorScheme());
 
   return (
-    <Pressable
-      accessibilityRole="checkbox"
-      accessibilityLabel={label}
-      accessibilityState={{ checked, disabled }}
-      disabled={disabled}
-      onPress={onPress}
-      style={styles.row}
-    >
-      <View
-        style={[
-          styles.box,
-          {
-            borderColor: checked ? colors.accent : colors.borderStrong,
-            backgroundColor: checked ? colors.accent : colors.surface,
-          },
-        ]}
+    <View style={styles.row}>
+      <Pressable
+        accessibilityRole="checkbox"
+        accessibilityLabel={label}
+        accessibilityState={{ checked, disabled }}
+        disabled={disabled}
+        hitSlop={8}
+        onPress={onPress}
       >
-        {checked ? (
-          <AppText
-            variant="label"
-            style={[styles.check, { color: colors.accentOnAccent }]}
-          >
-            ✓
-          </AppText>
-        ) : null}
-      </View>
-      <AppText style={styles.label}>{label}</AppText>
-    </Pressable>
+        <View
+          style={[
+            styles.box,
+            {
+              borderColor: checked ? colors.accent : colors.borderStrong,
+              backgroundColor: checked ? colors.accent : colors.surface,
+            },
+          ]}
+        >
+          {checked ? (
+            <AppText
+              variant="label"
+              style={[styles.check, { color: colors.accentOnAccent }]}
+            >
+              ✓
+            </AppText>
+          ) : null}
+        </View>
+      </Pressable>
+      {labelContent ?? (
+        <AppText
+          style={styles.label}
+          onPress={disabled ? undefined : onPress}
+        >
+          {label}
+        </AppText>
+      )}
+    </View>
   );
 }
 

@@ -128,8 +128,14 @@ export type AppCopy = {
     continueWithInvite: string;
     consentTitle: string;
     consentBody: string;
+    beforeStartTitle: string;
+    beforeStartParagraphs: readonly string[];
+    privacyAcceptLead: string;
+    privacyPolicyLink: string;
+    privacyAcceptTail: string;
     privacyAccept: string;
     pilotConsentAccept: string;
+    withdrawalNote: string;
     activate: string;
     activating: string;
     errors: {

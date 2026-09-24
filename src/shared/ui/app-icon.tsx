@@ -15,6 +15,7 @@ export const APP_ICON_NAMES = [
   "mail-outline",
   "open-outline",
   "shield-checkmark-outline",
+  "information-outline",
   "chevron-left",
   "chevron-right",
   "checkmark",
@@ -301,6 +302,43 @@ export function AppIcon({ name, color, size = 22 }: AppIconProps) {
             },
           ]}
         />
+      </View>
+    );
+  }
+
+  if (name === "information-outline") {
+    return (
+      <View style={[styles.box, { width: size, height: size }]}>
+        <View
+          style={[
+            stroke(color),
+            {
+              width: size * 0.72,
+              height: size * 0.72,
+              borderRadius: size,
+              alignItems: "center",
+              justifyContent: "center",
+            },
+          ]}
+        >
+          <View
+            style={{
+              width: Math.max(2, size * 0.1),
+              height: Math.max(2, size * 0.1),
+              borderRadius: size,
+              backgroundColor: color,
+              marginBottom: size * 0.08,
+            }}
+          />
+          <View
+            style={{
+              width: Math.max(1.5, size * 0.08),
+              height: size * 0.24,
+              borderRadius: 1,
+              backgroundColor: color,
+            }}
+          />
+        </View>
       </View>
     );
   }
