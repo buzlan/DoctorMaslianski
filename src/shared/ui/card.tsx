@@ -53,7 +53,7 @@ export function Card({ children, variant = "elevated", style }: CardProps) {
 
 const styles = StyleSheet.create({
   base: {
-    borderRadius: theme.radii.xxl,
+    borderRadius: theme.radii.lg,
     borderWidth: StyleSheet.hairlineWidth,
     padding: theme.spacing.md,
   },

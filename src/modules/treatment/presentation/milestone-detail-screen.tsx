@@ -14,7 +14,6 @@ import { theme } from "@/shared/theme";
 import {
   AppText,
   BackIconButton,
-  Card,
   Screen,
   ScreenHeader,
   ScreenState,
@@ -32,7 +31,13 @@ type MilestoneDetailViewState =
   | { status: "not_found" }
   | { status: "ready"; detail: ReadyDetail };
 
-function toViewState(result: MilestoneDetailLoadResult): MilestoneDetailViewState {
+type MilestoneDetailScreenProps = {
+  milestoneId: string | string[] | undefined;
+};
+
+function toViewState(
+  result: MilestoneDetailLoadResult,
+): MilestoneDetailViewState {
   if (result.status === "ready") {
     return { status: "ready", detail: result.detail };
   }
@@ -41,15 +46,11 @@ function toViewState(result: MilestoneDetailLoadResult): MilestoneDetailViewStat
 }
 
 function firstParam(value: string | string[] | undefined): string {
-  if (typeof value === "string") {
-    return value;
-  }
-
-  return value?.[0] ?? "";
+  return typeof value === "string" ? value : (value?.[0] ?? "");
 }
 
 function headingFor(detail: ReadyDetail): string {
-  if (detail.milestone.title !== undefined && detail.milestone.title.length > 0) {
+  if (detail.milestone.title?.trim()) {
     return detail.milestone.title;
   }
 
@@ -65,46 +66,51 @@ function goBack(router: ReturnType<typeof useRouter>) {
   router.replace("/treatment");
 }
 
-function requestLoad(id: string) {
-  return loadSharedMilestoneDetail(id);
-}
-
-function DoctorPhotosSection({ doctorPhotos }: { doctorPhotos: MilestoneDoctorPhotos }) {
+function DoctorPhotosSection({
+  doctorPhotos,
+}: {
+  doctorPhotos: MilestoneDoctorPhotos;
+}) {
   return (
-    <Card variant="elevated">
-      <Stack gap="sm">
-        <AppText variant="title">{copy.treatment.doctorPhotosLabel}</AppText>
-        {doctorPhotos.status === "unavailable" ? (
-          <AppText tone="secondary">{copy.treatment.doctorPhotosUnavailable}</AppText>
-        ) : null}
-        {doctorPhotos.status === "ready" && doctorPhotos.items.length === 0 ? (
-          <AppText tone="secondary">{copy.treatment.doctorPhotosEmpty}</AppText>
-        ) : null}
-        {doctorPhotos.status === "ready" && doctorPhotos.items.length > 0 ? (
-          <DoctorPhotoPager items={doctorPhotos.items} />
-        ) : null}
-      </Stack>
-    </Card>
+    <Stack gap="md">
+      <AppText variant="title">{copy.treatment.doctorPhotosLabel}</AppText>
+
+      {doctorPhotos.status === "unavailable" ? (
+        <AppText tone="secondary">
+          {copy.treatment.doctorPhotosUnavailable}
+        </AppText>
+      ) : null}
+
+      {doctorPhotos.status === "ready" && doctorPhotos.items.length === 0 ? (
+        <AppText tone="secondary">{copy.treatment.doctorPhotosEmpty}</AppText>
+      ) : null}
+
+      {doctorPhotos.status === "ready" && doctorPhotos.items.length > 0 ? (
+        <DoctorPhotoPager
+          key={JSON.stringify(doctorPhotos.items.map((photo) => photo.id))}
+          items={doctorPhotos.items}
+        />
+      ) : null}
+    </Stack>
   );
 }
 
-type MilestoneDetailScreenProps = {
-  milestoneId: string | string[] | undefined;
-};
-
-export function MilestoneDetailScreen({ milestoneId }: MilestoneDetailScreenProps) {
+export function MilestoneDetailScreen({
+  milestoneId,
+}: MilestoneDetailScreenProps) {
   const router = useRouter();
   const resolvedId = firstParam(milestoneId);
+
   const [viewState, setViewState] = useState<MilestoneDetailViewState>({
     status: "loading",
   });
+
   const loadGenerationRef = useRef(0);
 
   const refresh = useCallback(() => {
-    const generation = loadGenerationRef.current + 1;
-    loadGenerationRef.current = generation;
+    const generation = ++loadGenerationRef.current;
 
-    return requestLoad(resolvedId).then((result) => {
+    return loadSharedMilestoneDetail(resolvedId).then((result) => {
       if (loadGenerationRef.current === generation) {
         setViewState(toViewState(result));
       }
@@ -112,7 +118,12 @@ export function MilestoneDetailScreen({ milestoneId }: MilestoneDetailScreenProp
   }, [resolvedId]);
 
   useEffect(() => {
+    setViewState({ status: "loading" });
     void refresh();
+
+    return () => {
+      loadGenerationRef.current += 1;
+    };
   }, [refresh]);
 
   useCanonicalInvalidation("milestone-detail", refresh);
@@ -122,39 +133,35 @@ export function MilestoneDetailScreen({ milestoneId }: MilestoneDetailScreenProp
       <Stack gap="md" style={styles.body}>
         <BackIconButton
           accessibilityLabel={copy.treatment.back}
-          onPress={() => {
-            goBack(router);
-          }}
+          onPress={() => goBack(router)}
         />
+
         {viewState.status === "loading" ? (
           <ScreenState message={copy.treatment.loading} />
         ) : null}
+
         {viewState.status === "not_found" ? (
           <ScreenState message={copy.treatment.milestoneNotFound} />
         ) : null}
+
         {viewState.status === "error" ? (
           <ScreenState
             message={copy.treatment.loadError}
             actionLabel={copy.treatment.retry}
             onAction={() => {
-              const generation = loadGenerationRef.current + 1;
-              loadGenerationRef.current = generation;
               setViewState({ status: "loading" });
-              void requestLoad(resolvedId).then((result) => {
-                if (loadGenerationRef.current === generation) {
-                  setViewState(toViewState(result));
-                }
-              });
+              void refresh();
             }}
           />
         ) : null}
+
         {viewState.status === "ready" ? (
           <ScrollView
             style={styles.scroll}
             contentContainerStyle={styles.scrollContent}
             showsVerticalScrollIndicator={false}
           >
-            <Stack gap="md">
+            <Stack gap="lg">
               <ScreenHeader
                 title={headingFor(viewState.detail)}
                 subtitle={
@@ -163,7 +170,11 @@ export function MilestoneDetailScreen({ milestoneId }: MilestoneDetailScreenProp
                     : undefined
                 }
               />
-              <DoctorPhotosSection doctorPhotos={viewState.detail.doctorPhotos} />
+
+              <DoctorPhotosSection
+                key={resolvedId}
+                doctorPhotos={viewState.detail.doctorPhotos}
+              />
             </Stack>
           </ScrollView>
         ) : null}
