@@ -28,7 +28,7 @@ import {
   AppText,
   Card,
   Screen,
-  ScreenHeader,
+  TabScreenHeader,
   ScreenState,
   Stack,
   TimelineNode,
@@ -366,7 +366,7 @@ export function TreatmentScreen() {
   return (
     <Screen edges={["top", "left", "right"]} style={styles.content}>
       <Stack gap="md" style={styles.body}>
-        <ScreenHeader
+        <TabScreenHeader
           title={copy.treatment.title}
           subtitle={copy.treatment.subtitle}
         />

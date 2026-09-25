@@ -1,4 +1,5 @@
 export type AppCopy = {
+  brand: { name: string; notifications: string };
   tabs: {
     today: string;
     treatment: string;

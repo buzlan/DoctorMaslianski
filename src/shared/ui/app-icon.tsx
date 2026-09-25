@@ -3,6 +3,7 @@ import type { ComponentProps } from "react";
 import { StyleSheet, View, type ColorValue } from "react-native";
 
 export const APP_ICON_NAMES = [
+  "notifications-outline",
   "home",
   "home-outline",
   "clipboard",
@@ -50,6 +51,10 @@ function stroke(color: ColorValue, width = 1.8) {
 }
 
 export function AppIcon({ name, color, size = 22 }: AppIconProps) {
+  if (name === "notifications-outline") {
+    return <Ionicons name={name} size={size} color={color} />;
+  }
+
   if (isTabIcon(name)) {
     return <Ionicons name={TAB_ICONS[name]} size={size} color={color} />;
   }

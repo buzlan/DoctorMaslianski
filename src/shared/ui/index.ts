@@ -19,3 +19,4 @@ export { Stack } from "./stack";
 export { TextField } from "./text-field";
 export { TimelineNode } from "./timeline-node";
 export type { TimelineNodeState } from "./timeline-node";
+export { TabScreenHeader } from "./tab-screen-header";

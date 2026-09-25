@@ -33,8 +33,6 @@ import { Inter_600SemiBold } from "@expo-google-fonts/inter/600SemiBold";
 import { Inter_700Bold } from "@expo-google-fonts/inter/700Bold";
 import { useFonts } from "expo-font";
 
-void SplashScreen.preventAutoHideAsync();
-
 // Keep native splash until RootLayout hides it (required before first render).
 void SplashScreen.preventAutoHideAsync();
 
@@ -228,6 +226,10 @@ export default function RootLayout() {
       cancelled = true;
     };
   }, []);
+
+  if (!fontsLoaded && !fontError) {
+    return null;
+  }
 
   let content;
   if (gate.screen === "loading") {

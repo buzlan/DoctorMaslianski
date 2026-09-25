@@ -17,6 +17,7 @@ const palette = {
   inkMutedOnDark: "#9AA3AE",
   borderDark: "#2A3340",
   borderStrongDark: "#3A5570",
+  brandText: "#082854",
 } as const;
 
 const lightColors = {
@@ -30,6 +31,7 @@ const lightColors = {
   accentOnAccent: palette.accentOnAccent,
   border: palette.border,
   borderStrong: palette.borderStrong,
+  brandText: palette.brandText,
   overlay: "rgba(27, 36, 48, 0.06)",
 } as const;
 
@@ -44,6 +46,7 @@ const darkColors = {
   accentOnAccent: palette.accentOnAccent,
   border: palette.borderDark,
   borderStrong: palette.borderStrongDark,
+  brandText: palette.inkOnDark,
   overlay: "rgba(0, 0, 0, 0.28)",
 } as const;
 
@@ -54,6 +57,11 @@ export const theme = {
   },
   spacing: { xs: 4, sm: 8, md: 16, lg: 24, xl: 32, xxl: 40 },
   typography: {
+    brand: {
+      fontFamily: "Inter_600SemiBold",
+      fontSize: 16,
+      lineHeight: 20,
+    },
     display: {
       fontFamily: "Inter_700Bold",
       fontSize: 28,
