@@ -1,6 +1,10 @@
 import type { AppCopy } from "./types";
 
 export const copy: AppCopy = {
+  brand: {
+    name: "Доктор\nМаслянский",
+    notifications: "Уведомления",
+  },
   tabs: {
     today: "Сегодня",
     treatment: "Этапы",

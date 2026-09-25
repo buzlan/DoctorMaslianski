@@ -125,7 +125,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   title: {
-    fontWeight: "600",
+    fontFamily: "Inter_600SemiBold",
   },
   detailHit: {
     flex: 1,

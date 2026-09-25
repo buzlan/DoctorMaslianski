@@ -24,9 +24,9 @@ import {
   Card,
   IconWell,
   Screen,
-  ScreenHeader,
   ScreenState,
   Stack,
+  TabScreenHeader,
 } from "@/shared/ui";
 import {
   STICKY_CONTACT_SCROLL_PADDING,
@@ -284,7 +284,10 @@ export function TodayScreen() {
   return (
     <Screen edges={["top", "left", "right"]} style={styles.content}>
       <View style={styles.body}>
-        <ScreenHeader title={copy.today.title} subtitle={copy.today.subtitle} />
+        <TabScreenHeader
+          title={copy.today.title}
+          subtitle={copy.today.subtitle}
+        />
 
         <View style={styles.main}>
           {viewState.status === "loading" ? (

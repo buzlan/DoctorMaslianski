@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useState } from "react";
 import { Redirect, Stack, useSegments } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
+import { useCallback, useEffect, useState } from "react";
 import { AppState, Platform, StyleSheet } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 
@@ -27,6 +27,11 @@ import {
 } from "@/shared/launch/android-branded-splash";
 import { theme } from "@/shared/theme";
 import { Screen, ScreenState } from "@/shared/ui";
+import { Inter_400Regular } from "@expo-google-fonts/inter/400Regular";
+import { Inter_500Medium } from "@expo-google-fonts/inter/500Medium";
+import { Inter_600SemiBold } from "@expo-google-fonts/inter/600SemiBold";
+import { Inter_700Bold } from "@expo-google-fonts/inter/700Bold";
+import { useFonts } from "expo-font";
 
 // Keep native splash until RootLayout hides it (required before first render).
 void SplashScreen.preventAutoHideAsync();
@@ -161,7 +166,8 @@ function RemoteRealtimeBridge() {
 
   useEffect(() => {
     const subscriber = createRealtimeSubscriber({
-      client: getSharedSupabaseClient() as unknown as RealtimeSubscriberClient | null,
+      client:
+        getSharedSupabaseClient() as unknown as RealtimeSubscriberClient | null,
       shouldSubscribe: () => shouldUseRemoteRepositories(),
       resolveTreatmentId: async () => {
         const treatment = await sharedTreatmentRepository.getActiveTreatment();
@@ -183,6 +189,13 @@ function RemoteRealtimeBridge() {
 }
 
 export default function RootLayout() {
+  const [fontsLoaded, fontError] = useFonts({
+    Inter_400Regular,
+    Inter_500Medium,
+    Inter_600SemiBold,
+    Inter_700Bold,
+  });
+
   const auth = useAuthSession();
   const gate = resolveAuthGate(auth, __DEV__);
   const [androidBrandedSplashVisible, setAndroidBrandedSplashVisible] =
@@ -213,6 +226,10 @@ export default function RootLayout() {
       cancelled = true;
     };
   }, []);
+
+  if (!fontsLoaded && !fontError) {
+    return null;
+  }
 
   let content;
   if (gate.screen === "loading") {

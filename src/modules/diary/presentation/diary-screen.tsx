@@ -13,7 +13,7 @@ import type { VasScore, Wellbeing } from "@/modules/diary/domain";
 import { copy } from "@/shared/copy";
 import { loadCivilTodayDate } from "@/shared/date/load-civil-today-date";
 import { theme } from "@/shared/theme";
-import { AppText, Card, Screen, ScreenHeader, ScreenState, Stack } from "@/shared/ui";
+import { AppText, Card, Screen, TabScreenHeader, ScreenState, Stack } from "@/shared/ui";
 
 import { DailyDiaryForm } from "./daily-diary-form";
 import { DiaryHistoryList } from "./diary-history-list";
@@ -89,7 +89,7 @@ export function DiaryScreen() {
   return (
     <Screen edges={["top", "left", "right"]} style={styles.content}>
       <Stack gap="md" style={styles.body}>
-        <ScreenHeader title={copy.diary.title} subtitle={copy.diary.subtitle} />
+        <TabScreenHeader title={copy.diary.title} subtitle={copy.diary.subtitle} />
         {viewState.status === "loading" ? (
           <ScreenState message={copy.diary.loading} />
         ) : null}
