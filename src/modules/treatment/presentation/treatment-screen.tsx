@@ -10,10 +10,6 @@ import {
 
 import { useCanonicalInvalidation } from "@/core/sync";
 import {
-  loadSharedClinicContact,
-  type ClinicContact,
-} from "@/modules/clinic-contact";
-import {
   loadSharedTreatmentTimeline,
   type TimelineMilestone,
   type TimelinePeriod,
@@ -28,14 +24,14 @@ import {
   AppText,
   Card,
   Screen,
-  TabScreenHeader,
   ScreenState,
   Stack,
+  TabScreenHeader,
   TimelineNode,
   type TimelineNodeState,
 } from "@/shared/ui";
 
-import { AppointmentContactSection } from "./appointment-contact-section";
+import { AppointmentContactModal } from "./appointment-contact-modal";
 import { CurrentAppointmentBlock } from "./current-appointment-block";
 import { formatCalendarDate } from "./format-calendar-date";
 import { milestoneVisualState } from "./milestone-visual-state";
@@ -56,16 +52,18 @@ type TreatmentViewState =
       status: "ready";
       timeline: ReadyTimeline;
       onDate: CalendarDate;
-      contact: ClinicContact;
     };
 
 function toViewState(
   result: TreatmentTimelineLoadResult,
   onDate: CalendarDate,
-  contact: ClinicContact,
 ): TreatmentViewState {
   if (result.status === "ready") {
-    return { status: "ready", timeline: result.timeline, onDate, contact };
+    return {
+      status: "ready",
+      timeline: result.timeline,
+      onDate,
+    };
   }
 
   return result;
@@ -73,11 +71,9 @@ function toViewState(
 
 async function requestTimelineLoad() {
   const onDate = await loadCivilTodayDate();
-  const [result, contact] = await Promise.all([
-    loadSharedTreatmentTimeline(onDate),
-    loadSharedClinicContact(),
-  ]);
-  return { result, onDate, contact };
+  const result = await loadSharedTreatmentTimeline(onDate);
+
+  return { result, onDate };
 }
 
 function formatPeriodRange(period: TimelinePeriod): string {
@@ -125,33 +121,59 @@ function MilestoneRow({
   milestone,
   onDate,
   nextState,
+  previousState,
 }: {
   milestone: TimelineMilestone;
   onDate: CalendarDate;
   nextState?: TimelineNodeState;
+  previousState?: TimelineNodeState;
 }) {
   const colors = getColors(useColorScheme());
   const router = useRouter();
   const state = milestoneVisualState(milestone.occurredOn, onDate);
-  const connector = timelineConnectorKind(state, nextState);
+
   const isCurrent = state === "current";
-  const isPast = state === "past";
   const isUndated = state === "undated";
+
+  const isAboveSolid =
+    previousState !== undefined &&
+    timelineConnectorKind(previousState, state) === "solid";
+
+  const isBelowSolid = timelineConnectorKind(state, nextState) === "solid";
+
+  const aboveColor = isCurrent ? colors.accent : colors.border;
+  const belowColor = nextState === "current" ? colors.accent : colors.border;
 
   return (
     <View style={styles.timelineRow}>
       <View style={styles.nodeColumn}>
+        {previousState !== undefined ? (
+          <View
+            style={[
+              styles.connectorAbove,
+              isAboveSolid ? styles.connector : styles.connectorDashed,
+              isAboveSolid
+                ? { backgroundColor: aboveColor }
+                : { borderColor: colors.border },
+            ]}
+          />
+        ) : null}
+
         <TimelineNode state={state} />
-        {nextState === undefined ? null : connector === "solid" ? (
+
+        {nextState !== undefined ? (
           <View
-            style={[styles.connector, { backgroundColor: colors.accent }]}
+            style={[
+              styles.connectorBelow,
+              isBelowSolid ? styles.connector : styles.connectorDashed,
+              isBelowSolid
+                ? { backgroundColor: belowColor }
+                : { borderColor: colors.border },
+            ]}
           />
-        ) : (
-          <View
-            style={[styles.connectorDashed, { borderColor: colors.border }]}
-          />
-        )}
+        ) : null}
       </View>
+
       <Pressable
         accessibilityRole="button"
         accessibilityLabel={milestoneAccessibilityLabel(milestone)}
@@ -168,26 +190,24 @@ function MilestoneRow({
       >
         <Card
           variant={isCurrent ? "tinted" : isUndated ? "outlined" : "elevated"}
-          style={
-            isCurrent
-              ? { borderColor: colors.accent, borderWidth: 2 }
-              : undefined
-          }
+          style={[
+            styles.visitCard,
+            isCurrent ? { borderColor: colors.accent } : undefined,
+          ]}
         >
           <Stack gap="xs">
-            <AppText
-              variant="title"
-              tone={isPast || isUndated ? "secondary" : "primary"}
-            >
+            <AppText variant="title" tone="primary">
               {milestone.title !== undefined
                 ? milestone.title
                 : copy.treatment.milestoneDetailTitle}
             </AppText>
+
             {milestone.occurredOn !== undefined ? (
               <AppText variant="caption" tone="secondary">
                 {formatCalendarDate(milestone.occurredOn)}
               </AppText>
             ) : null}
+
             {milestone.doctorPhotoCount !== undefined &&
             milestone.doctorPhotoCount > 0 ? (
               <AppText variant="label" style={{ color: colors.accent }}>
@@ -215,16 +235,24 @@ function PeriodBlock({
   return (
     <Stack gap="sm">
       {header}
+
       {milestones.map((milestone) => {
         const index = visibleSequence.findIndex(
           (item) => item.id === milestone.id,
         );
         const next = index >= 0 ? visibleSequence[index + 1] : undefined;
+        const previous = index > 0 ? visibleSequence[index - 1] : undefined;
+
         return (
           <MilestoneRow
             key={milestone.id}
             milestone={milestone}
             onDate={onDate}
+            previousState={
+              previous === undefined
+                ? undefined
+                : milestoneVisualState(previous.occurredOn, onDate)
+            }
             nextState={
               next === undefined
                 ? undefined
@@ -240,31 +268,34 @@ function PeriodBlock({
 function ReadyContent({
   timeline,
   onDate,
-  contact,
 }: {
   timeline: ReadyTimeline;
   onDate: CalendarDate;
-  contact: ClinicContact;
 }) {
-  const colors = getColors(useColorScheme());
   const currentPeriod = currentTimelinePeriod(timeline.periods);
+
   const previousPeriods = previousPeriodsChronological(timeline.periods).map(
     (period) => ({
       ...period,
       milestones: sortMilestonesChronologically(period.milestones),
     }),
   );
+
   const currentPeriodMilestones =
     currentPeriod === undefined
       ? []
       : sortMilestonesChronologically(currentPeriod.milestones);
+
   const ungrouped = sortMilestonesChronologically(timeline.ungroupedMilestones);
+
   const ungroupedDated = ungrouped.filter(
     (milestone) => milestone.occurredOn !== undefined,
   );
+
   const ungroupedUndated = ungrouped.filter(
     (milestone) => milestone.occurredOn === undefined,
   );
+
   const visibleSequence = flattenVisibleMilestones(
     previousPeriods,
     currentPeriod === undefined
@@ -273,6 +304,7 @@ function ReadyContent({
     ungroupedDated,
     ungroupedUndated,
   );
+
   const showEmpty = !hasMilestoneRows(timeline);
 
   return (
@@ -290,27 +322,15 @@ function ReadyContent({
           }
         />
       ))}
+
       {currentPeriod !== undefined ? (
         <PeriodBlock
           onDate={onDate}
           milestones={currentPeriodMilestones}
           visibleSequence={visibleSequence}
-          header={
-            <Card variant="tinted">
-              <Stack gap="xs">
-                <AppText variant="label" style={{ color: colors.accent }}>
-                  {copy.treatment.currentPeriodLabel}
-                </AppText>
-                {timeline.periodDayNumber !== null ? (
-                  <AppText variant="display">
-                    {copy.treatment.periodDayLabel} {timeline.periodDayNumber}
-                  </AppText>
-                ) : null}
-              </Stack>
-            </Card>
-          }
         />
       ) : null}
+
       {ungroupedDated.length > 0 ? (
         <PeriodBlock
           onDate={onDate}
@@ -318,6 +338,7 @@ function ReadyContent({
           visibleSequence={visibleSequence}
         />
       ) : null}
+
       {ungroupedUndated.length > 0 ? (
         <PeriodBlock
           onDate={onDate}
@@ -325,14 +346,11 @@ function ReadyContent({
           visibleSequence={visibleSequence}
         />
       ) : null}
+
       {showEmpty ? (
         <Card variant="elevated">
           <AppText tone="secondary">{copy.treatment.emptyMilestones}</AppText>
         </Card>
-      ) : null}
-      <CurrentAppointmentBlock appointment={timeline.currentAppointment} />
-      {timeline.currentAppointment !== null ? (
-        <AppointmentContactSection contact={contact} />
       ) : null}
     </Stack>
   );
@@ -342,15 +360,17 @@ export function TreatmentScreen() {
   const [viewState, setViewState] = useState<TreatmentViewState>({
     status: "loading",
   });
+
+  const [contactModalVisible, setContactModalVisible] = useState(false);
   const loadGenerationRef = useRef(0);
 
   const refresh = useCallback(() => {
     const generation = loadGenerationRef.current + 1;
     loadGenerationRef.current = generation;
 
-    return requestTimelineLoad().then(({ result, onDate, contact }) => {
+    return requestTimelineLoad().then(({ result, onDate }) => {
       if (loadGenerationRef.current === generation) {
-        setViewState(toViewState(result, onDate, contact));
+        setViewState(toViewState(result, onDate));
       }
     });
   }, []);
@@ -365,17 +385,20 @@ export function TreatmentScreen() {
 
   return (
     <Screen edges={["top", "left", "right"]} style={styles.content}>
-      <Stack gap="md" style={styles.body}>
+      <View style={styles.body}>
         <TabScreenHeader
           title={copy.treatment.title}
           subtitle={copy.treatment.subtitle}
         />
+
         {viewState.status === "loading" ? (
           <ScreenState message={copy.treatment.loading} />
         ) : null}
+
         {viewState.status === "no_active_treatment" ? (
           <ScreenState message={copy.treatment.noActiveTreatment} />
         ) : null}
+
         {viewState.status === "error" ? (
           <ScreenState
             message={copy.treatment.loadError}
@@ -384,28 +407,50 @@ export function TreatmentScreen() {
               const generation = loadGenerationRef.current + 1;
               loadGenerationRef.current = generation;
               setViewState({ status: "loading" });
-              void requestTimelineLoad().then(({ result, onDate, contact }) => {
+
+              void requestTimelineLoad().then(({ result, onDate }) => {
                 if (loadGenerationRef.current === generation) {
-                  setViewState(toViewState(result, onDate, contact));
+                  setViewState(toViewState(result, onDate));
                 }
               });
             }}
           />
         ) : null}
+
         {viewState.status === "ready" ? (
-          <ScrollView
-            style={styles.scroll}
-            contentContainerStyle={styles.scrollContent}
-            showsVerticalScrollIndicator={false}
-          >
-            <ReadyContent
-              timeline={viewState.timeline}
-              onDate={viewState.onDate}
-              contact={viewState.contact}
-            />
-          </ScrollView>
+          <>
+            <ScrollView
+              style={styles.scroll}
+              contentContainerStyle={styles.scrollContent}
+              showsVerticalScrollIndicator={false}
+            >
+              {viewState.timeline.periodDayNumber !== null ? (
+                <AppText variant="display" style={styles.periodHeading}>
+                  {copy.treatment.periodDayLabel}{" "}
+                  {viewState.timeline.periodDayNumber}
+                </AppText>
+              ) : null}
+
+              <ReadyContent
+                timeline={viewState.timeline}
+                onDate={viewState.onDate}
+              />
+            </ScrollView>
+
+            <View style={styles.appointmentFooter}>
+              <CurrentAppointmentBlock
+                appointment={viewState.timeline.currentAppointment}
+                onPressDetails={() => setContactModalVisible(true)}
+              />
+            </View>
+          </>
         ) : null}
-      </Stack>
+      </View>
+
+      <AppointmentContactModal
+        visible={contactModalVisible}
+        onClose={() => setContactModalVisible(false)}
+      />
     </Screen>
   );
 }
@@ -413,43 +458,64 @@ export function TreatmentScreen() {
 const styles = StyleSheet.create({
   content: {
     padding: theme.spacing.md,
+    paddingBottom: theme.spacing.sm,
   },
   body: {
     flex: 1,
+    gap: theme.spacing.md,
   },
   scroll: {
     flex: 1,
+    minHeight: 0,
   },
   scrollContent: {
     flexGrow: 1,
-    paddingBottom: theme.spacing.xl,
+    paddingBottom: theme.spacing.md,
+  },
+  appointmentFooter: {
+    flexShrink: 0,
+  },
+  periodHeading: {
+    marginBottom: theme.spacing.lg,
   },
   timelineRow: {
     flexDirection: "row",
     alignItems: "stretch",
     gap: theme.spacing.md,
+    marginBottom: theme.spacing.sm,
   },
   nodeColumn: {
-    width: 22,
+    width: 32,
+    flexShrink: 0,
     alignItems: "center",
+    justifyContent: "center",
   },
   connector: {
+    position: "absolute",
     width: 2,
-    flex: 1,
-    minHeight: 18,
-    marginTop: 4,
     borderRadius: 1,
   },
   connectorDashed: {
+    position: "absolute",
     width: 0,
-    flex: 1,
-    minHeight: 18,
-    marginTop: 4,
     borderLeftWidth: 1.5,
     borderStyle: "dashed",
   },
+  connectorAbove: {
+    top: -theme.spacing.sm * 2,
+    bottom: "50%",
+    marginBottom: 20,
+  },
+  connectorBelow: {
+    top: "50%",
+    marginTop: 20,
+    bottom: 0,
+  },
   milestoneCard: {
     flex: 1,
-    paddingBottom: theme.spacing.sm,
+  },
+  visitCard: {
+    borderRadius: 12,
+    borderWidth: 1,
   },
 });

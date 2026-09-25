@@ -10,47 +10,40 @@ type TimelineNodeProps = {
 
 export function TimelineNode({ state }: TimelineNodeProps) {
   const colors = getColors(useColorScheme());
-  const isPast = state === "past";
-  const isCurrent = state === "current";
+  const isCompleted = state === "past" || state === "current";
   const isUndated = state === "undated";
 
   return (
     <View
       style={[
         styles.outer,
-        isCurrent ? styles.currentOuter : undefined,
         {
-          borderColor: isPast || isCurrent ? colors.accent : colors.border,
-          backgroundColor: isPast ? colors.accent : colors.surface,
-          borderWidth: isCurrent ? 3 : isUndated ? 1.5 : 2,
+          borderColor: isCompleted ? colors.accent : colors.border,
+          backgroundColor: isCompleted ? colors.accent : colors.surface,
           opacity: isUndated ? 0.72 : 1,
         },
       ]}
     >
-      {isCurrent ? (
-        <View style={[styles.inner, { backgroundColor: colors.accent }]} />
-      ) : null}
+      {isCompleted ? <View style={styles.checkmark} /> : null}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   outer: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     borderWidth: 2,
     alignItems: "center",
     justifyContent: "center",
   },
-  currentOuter: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-  },
-  inner: {
+  checkmark: {
     width: 8,
-    height: 8,
-    borderRadius: 4,
+    height: 13,
+    borderRightWidth: 2,
+    borderBottomWidth: 2,
+    borderColor: "#FFFFFF",
+    transform: [{ translateY: -1 }, { rotate: "45deg" }],
   },
 });

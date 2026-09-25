@@ -32,7 +32,6 @@ import {
   STICKY_CONTACT_SCROLL_PADDING,
   SupportContactCard,
 } from "./support-contact-card";
-import { TodayAppointmentCard } from "./today-appointment-card";
 import { TodayAssignmentRow } from "./today-assignment-row";
 import { TodayPeriodProgressCard } from "./today-period-progress-card";
 
@@ -127,7 +126,7 @@ function PhotoControlCard({
           <AppText variant="title" numberOfLines={1}>
             {copy.today.photoControlTitle}
           </AppText>
-          <AppText tone="secondary" numberOfLines={3}>
+          <AppText variant="caption" tone="secondary" numberOfLines={3}>
             {copy.today.photoControlBody}
           </AppText>
           {statusDetail !== undefined ? (
@@ -198,9 +197,6 @@ function ReadyContent({
           )}
         </Stack>
       </Card>
-      {overview.currentAppointment !== null ? (
-        <TodayAppointmentCard appointment={overview.currentAppointment} />
-      ) : null}
       {overview.diaryOpen ? (
         <ActionCard
           title={copy.today.fillDiary}

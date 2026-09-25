@@ -83,15 +83,38 @@ export type AppCopy = {
     doctorPhotoAccessibilityLabel: string;
     doctorPhotoCount: string;
     photoCounterOf: string;
+    previousPhoto: string;
+    nextPhoto: string;
+    photoLoading: string;
+    photoLoadError: string;
   };
   appointment: {
     label: string;
     empty: string;
+    details: string;
+    detailsAccessibilityLabel: string;
     contactTitle: string;
     contactBody: string;
+    contactsModalTitle: string;
+    close: string;
     phoneLabel: string;
     emailLabel: string;
+    call: string;
+    write: string;
     contactsUnavailable: string;
+    openErrorTitle: string;
+    openErrorBody: string;
+    phonesTitle: string;
+    shortPhoneLabel: string;
+    a1PhoneLabel: string;
+    mtsPhoneLabel: string;
+    landlinePhoneLabel: string;
+    clinicTitle: string;
+    clinicName: string;
+    addressTitle: string;
+    clinicAddress: string;
+    callErrorTitle: string;
+    callErrorBody: string;
   };
   clinicContact: {
     label: string;

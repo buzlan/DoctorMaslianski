@@ -61,33 +61,7 @@ export function AppIcon({ name, color, size = 22 }: AppIconProps) {
   }
 
   if (name === "camera-outline") {
-    return (
-      <View style={[styles.box, { width: size, height: size }]}>
-        <View
-          style={[
-            stroke(color),
-            {
-              width: size * 0.7,
-              height: size * 0.48,
-              borderRadius: 5,
-              alignItems: "center",
-              justifyContent: "center",
-            },
-          ]}
-        >
-          <View
-            style={[
-              stroke(color),
-              {
-                width: size * 0.2,
-                height: size * 0.2,
-                borderRadius: size,
-              },
-            ]}
-          />
-        </View>
-      </View>
-    );
+    return <Ionicons name="camera-outline" size={size} color={color} />;
   }
 
   if (name === "images-outline") {
@@ -150,28 +124,7 @@ export function AppIcon({ name, color, size = 22 }: AppIconProps) {
   }
 
   if (name === "calendar-outline") {
-    return (
-      <View style={[styles.box, { width: size, height: size }]}>
-        <View
-          style={[
-            stroke(color),
-            {
-              width: size * 0.6,
-              height: size * 0.6,
-              borderRadius: 4,
-              overflow: "hidden",
-            },
-          ]}
-        >
-          <View
-            style={{
-              height: size * 0.16,
-              backgroundColor: color,
-            }}
-          />
-        </View>
-      </View>
-    );
+    return <Ionicons name="calendar-outline" size={size} color={color} />;
   }
 
   if (name === "call-outline") {

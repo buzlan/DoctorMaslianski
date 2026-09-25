@@ -14,13 +14,13 @@ import { getColors, theme } from "@/shared/theme";
 import { AppText, Button, Card, Stack } from "@/shared/ui";
 
 import { diaryAssets } from "./diary-assets";
-import { DiaryScaleGuide } from "./diary-scale-guide";
-import { DiaryScaleSlider } from "./diary-scale-slider";
 import {
   DIARY_WELLBEING_VALUES,
   toDiarySubmitAnswers,
   toVasScore,
 } from "./diary-scale";
+import { DiaryScaleGuide } from "./diary-scale-guide";
+import { DiaryScaleSlider } from "./diary-scale-slider";
 
 const WELLBEING_EMOJI: Record<Wellbeing, string> = {
   better: "🙂",
@@ -303,7 +303,7 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   emoji: {
-    fontSize: 16,
-    lineHeight: 20,
+    fontSize: 15,
+    lineHeight: 22,
   },
 });
