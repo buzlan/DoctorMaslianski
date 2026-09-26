@@ -1,11 +1,5 @@
 import { useEffect, useState } from "react";
-import {
-  Animated,
-  Image,
-  Platform,
-  StyleSheet,
-  View,
-} from "react-native";
+import { Animated, Image, Platform, StyleSheet, View } from "react-native";
 
 const SPLASH_SCREEN = require("../../../assets/images/patient/splash_screen.png");
 
@@ -60,7 +54,7 @@ export function AndroidBrandedSplashOverlay({
       <Animated.View style={[styles.fill, { opacity }]}>
         <Image
           source={SPLASH_SCREEN}
-          style={styles.fill}
+          style={{ width: "100%", height: "100%" }}
           resizeMode="cover"
           accessibilityIgnoresInvertColors
         />
