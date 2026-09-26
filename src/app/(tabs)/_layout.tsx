@@ -4,6 +4,8 @@ import { StyleSheet, useColorScheme, type ColorValue } from "react-native";
 import { copy } from "@/shared/copy";
 import { getColors, theme } from "@/shared/theme";
 import { AppIcon, type AppIconName } from "@/shared/ui";
+import { Platform } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 function tabIcon(
   focused: boolean,
@@ -17,6 +19,8 @@ function tabIcon(
 export default function TabsLayout() {
   const scheme = useColorScheme();
   const colors = getColors(scheme);
+  const insets = useSafeAreaInsets();
+  const androidBottomPadding = Math.max(insets.bottom, 8);
 
   return (
     <Tabs
@@ -31,6 +35,12 @@ export default function TabsLayout() {
           borderTopColor: colors.border,
           borderTopWidth: StyleSheet.hairlineWidth,
           paddingBottom: theme.spacing.md,
+          ...(Platform.OS === "android"
+            ? {
+                height: 64 + androidBottomPadding,
+                paddingBottom: androidBottomPadding,
+              }
+            : {}),
         },
         tabBarItemStyle: {
           marginHorizontal: theme.spacing.lg,
