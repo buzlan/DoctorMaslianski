@@ -1,4 +1,4 @@
-import { Redirect, Stack, useSegments } from "expo-router";
+import { Redirect, Stack, usePathname, useSegments } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { useCallback, useEffect, useState } from "react";
 import { AppState, Platform, StyleSheet } from "react-native";
@@ -104,6 +104,10 @@ function ClinicalStack() {
   );
 }
 
+function isInviteOrAccessPath(pathname: string): boolean {
+  return pathname === "/access" || pathname.startsWith("/invite/");
+}
+
 function AccessGate() {
   const segments = useSegments();
   const onInvite = segments[0] === "invite";
@@ -198,6 +202,7 @@ export default function RootLayout() {
 
   const auth = useAuthSession();
   const gate = resolveAuthGate(auth, __DEV__);
+  const pathname = usePathname();
   const [androidBrandedSplashVisible, setAndroidBrandedSplashVisible] =
     useState(shouldShowAndroidBrandedSplash);
 
@@ -234,6 +239,8 @@ export default function RootLayout() {
   let content;
   if (gate.screen === "loading") {
     content = <LoadingScreen message={copy.access.loading} />;
+  } else if (gate.screen === "clinical" && isInviteOrAccessPath(pathname)) {
+    content = <Redirect href="/" />;
   } else if (gate.screen === "access") {
     content = <AccessGate />;
   } else {

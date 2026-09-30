@@ -1,11 +1,15 @@
 import { Tabs } from "expo-router";
-import { StyleSheet, useColorScheme, type ColorValue } from "react-native";
+import {
+  Platform,
+  StyleSheet,
+  useColorScheme,
+  type ColorValue,
+} from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { copy } from "@/shared/copy";
 import { getColors, theme } from "@/shared/theme";
 import { AppIcon, type AppIconName } from "@/shared/ui";
-import { Platform } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 function tabIcon(
   focused: boolean,
@@ -21,6 +25,7 @@ export default function TabsLayout() {
   const colors = getColors(scheme);
   const insets = useSafeAreaInsets();
   const androidBottomPadding = Math.max(insets.bottom, 8);
+  const webBottomPadding = Math.max(insets.bottom, theme.spacing.md);
 
   return (
     <Tabs
@@ -40,7 +45,11 @@ export default function TabsLayout() {
                 height: 64 + androidBottomPadding,
                 paddingBottom: androidBottomPadding,
               }
-            : {}),
+            : Platform.OS === "web"
+              ? {
+                  paddingBottom: webBottomPadding,
+                }
+              : {}),
         },
         tabBarItemStyle: {
           marginHorizontal: theme.spacing.lg,

@@ -2,7 +2,7 @@ import 'react-native-url-polyfill/auto';
 
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 
-import { createChunkedSecureStoreAuthStorage } from '../auth/session-storage';
+import { createAuthSessionStorage } from '../auth/session-storage';
 import {
   readSupabasePublicEnv,
   type SupabasePublicConfig,
@@ -14,8 +14,9 @@ import type { Database } from './database.types';
 export type AppSupabaseClient = SupabaseClient<Database>;
 
 /**
- * Auth sessions persist through the TASK-022 generation-based SecureStore
- * adapter. Do not default to AsyncStorage. Tests may inject memory storage.
+ * Native auth sessions persist through the chunked SecureStore adapter.
+ * Web auth sessions persist through localStorage in session-storage.web.ts.
+ * Do not default native storage to AsyncStorage. Tests may inject memory storage.
  */
 export type SupabaseAuthStorage = {
   getItem: (key: string) => Promise<string | null> | string | null;
@@ -54,7 +55,7 @@ export function createSupabaseClient(
 ): AppSupabaseClient {
   return createClient<Database>(config.url, config.publishableKey, {
     auth: {
-      storage: options.authStorage ?? createChunkedSecureStoreAuthStorage(),
+      storage: options.authStorage ?? createAuthSessionStorage(),
       persistSession: true,
       autoRefreshToken: true,
       detectSessionInUrl: false,

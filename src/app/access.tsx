@@ -1,3 +1,4 @@
+import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import {
   ActivityIndicator,
@@ -100,7 +101,12 @@ function BeforeStartCard() {
   );
 }
 
-export default function AccessScreen() {
+export default function AccessScreen({
+  inviteToken = null,
+}: {
+  inviteToken?: string | null;
+}) {
+  const router = useRouter();
   const auth = useAuthSession();
   const gate = resolveAuthGate(auth, __DEV__);
   const colors = getColors(useColorScheme());
@@ -112,7 +118,9 @@ export default function AccessScreen() {
       : copy.access.authenticationRequired;
 
   const [draft, setDraft] = useState('');
-  const [hasToken, setHasToken] = useState(() => getPendingInviteToken() !== null);
+  const [hasToken, setHasToken] = useState(
+    () => inviteToken !== null || getPendingInviteToken() !== null,
+  );
   const [privacyAccepted, setPrivacyAccepted] = useState(false);
   const [pilotConsentAccepted, setPilotConsentAccepted] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -128,6 +136,10 @@ export default function AccessScreen() {
     setDraft('');
     setInviteError(null);
     setHasToken(true);
+    router.replace({
+      pathname: '/invite/[token]',
+      params: { token },
+    });
   }
 
   async function onActivate() {

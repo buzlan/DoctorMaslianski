@@ -2,6 +2,7 @@ import { Image } from "expo-image";
 import { useRouter } from "expo-router";
 import { useRef, useState } from "react";
 import {
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -112,7 +113,14 @@ export function PatientPhotoCaptureScreen() {
   }
 
   return (
-    <Screen edges={["top", "left", "right"]} style={styles.content}>
+    <Screen
+      edges={
+        Platform.OS === "web"
+          ? ["top", "left", "right", "bottom"]
+          : ["top", "left", "right"]
+      }
+      style={styles.content}
+    >
       <Stack gap="md" style={styles.body}>
         <BackIconButton
           accessibilityLabel={copy.photos.back}

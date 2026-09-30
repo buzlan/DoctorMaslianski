@@ -62,18 +62,11 @@ npm run start:pilot-device
 npx eas-cli build --profile development --platform ios
 ```
 
-## Custom-scheme invite (TASK-036)
+## Invite URL
 
-Primary, deterministic verification — **do not** treat iOS Camera QR as the only path:
+Clinic QR is `https://app.maslianski.by/invite/{token}`. The phone camera opens it in Safari or Chrome.
 
-1. In hosted clinic-review, issue an invite with cohort `internal_dry_run`.
-2. Copy `doctormaslianski://invite/{token}`.
-3. Get that URL onto the iPhone (Messages, Notes, AirDrop, or email to yourself) and tap/open it.
-4. The development build must come to the foreground, land on invite/access, and activate the synthetic patient against **hosted** Supabase.
-
-Optional: also scan the QR with Camera. Camera failing to recognize a non-HTTPS custom-scheme QR is **not** a TASK-036 blocker.
-
-HTTPS Universal Links (`https://app.maslianski.by/invite/{token}`) are TASK-037.
+A development build still accepts a manually opened `doctormaslianski://invite/{token}`. That scheme is not what the QR contains.
 
 ## Synthetic data only
 

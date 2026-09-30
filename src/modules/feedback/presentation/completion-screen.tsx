@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ScrollView, StyleSheet, View } from "react-native";
+import { Platform, ScrollView, StyleSheet, View } from "react-native";
 
 import { DevResetLocalSessionControl } from "@/core/auth/dev-reset-local-session-control";
 import { ClinicContactSection, type ClinicContact } from "@/modules/clinic-contact";
@@ -89,7 +89,14 @@ export function CompletionScreen() {
   }
 
   return (
-    <Screen edges={["top", "left", "right"]} style={styles.content}>
+    <Screen
+      edges={
+        Platform.OS === "web"
+          ? ["top", "left", "right", "bottom"]
+          : ["top", "left", "right"]
+      }
+      style={styles.content}
+    >
       <Stack gap="md" style={styles.body}>
         {viewState.status === "loading" ? (
           <ScreenState message={copy.completion.loading} />

@@ -1,27 +1,22 @@
-import { useEffect } from 'react';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLayoutEffect } from 'react';
+import { Redirect, useLocalSearchParams } from 'expo-router';
 
 import { parseInviteToken, setPendingInviteToken } from '@/modules/invite';
-import { copy } from '@/shared/copy';
-import { theme } from '@/shared/theme';
-import { Screen, ScreenState } from '@/shared/ui';
+
+import AccessScreen from '../access';
 
 export default function InviteDeepLinkScreen() {
-  const router = useRouter();
   const { token } = useLocalSearchParams<{ token?: string | string[] }>();
+  const raw = Array.isArray(token) ? token[0] : token;
+  const parsed = typeof raw === 'string' ? parseInviteToken(raw) : null;
 
-  useEffect(() => {
-    const raw = Array.isArray(token) ? token[0] : token;
-    const parsed = typeof raw === 'string' ? parseInviteToken(raw) : null;
-    if (parsed !== null) {
-      setPendingInviteToken(parsed);
-    }
-    router.replace('/access');
-  }, [router, token]);
+  useLayoutEffect(() => {
+    setPendingInviteToken(parsed);
+  }, [parsed]);
 
-  return (
-    <Screen style={{ padding: theme.spacing.md }}>
-      <ScreenState message={copy.access.loading} />
-    </Screen>
-  );
+  if (parsed === null) {
+    return <Redirect href="/access" />;
+  }
+
+  return <AccessScreen inviteToken={parsed} />;
 }

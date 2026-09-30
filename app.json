@@ -25,7 +25,8 @@
       "predictiveBackGestureEnabled": false
     },
     "web": {
-      "output": "static",
+      "output": "single",
+      "lang": "ru",
       "favicon": "./assets/images/favicon.png"
     },
     "plugins": [

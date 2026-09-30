@@ -1,6 +1,6 @@
 import { useRouter } from "expo-router";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ScrollView, StyleSheet } from "react-native";
+import { Platform, ScrollView, StyleSheet } from "react-native";
 
 import { useCanonicalInvalidation } from "@/core/sync";
 import {
@@ -129,7 +129,14 @@ export function MilestoneDetailScreen({
   useCanonicalInvalidation("milestone-detail", refresh);
 
   return (
-    <Screen edges={["top", "left", "right"]} style={styles.content}>
+    <Screen
+      edges={
+        Platform.OS === "web"
+          ? ["top", "left", "right", "bottom"]
+          : ["top", "left", "right"]
+      }
+      style={styles.content}
+    >
       <Stack gap="md" style={styles.body}>
         <BackIconButton
           accessibilityLabel={copy.treatment.back}

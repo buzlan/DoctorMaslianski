@@ -1,5 +1,4 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import * as SecureStore from 'expo-secure-store';
 
 import {
   getAuthSessionSnapshot,
@@ -10,7 +9,7 @@ import {
   clearRegisteredRemoteOutboxFlushers,
   registerRemoteOutboxFlusher,
 } from '../sync/remote-outbox-flush';
-import { createSecureStoreWriteOutboxStore } from '../sync/secure-store-write-outbox-store';
+import { clearDiaryOutbox, createDiaryOutboxStore } from '../sync/diary-outbox-store';
 import { getSharedSupabaseClient } from '../supabase/client';
 import type { ClinicContactRepository } from '@/modules/clinic-contact/infrastructure/clinic-contact-repository';
 import { createRemoteClinicContactRepository } from '@/modules/clinic-contact/infrastructure/remote-clinic-contact-repository';
@@ -91,7 +90,7 @@ export function getRemoteAdapters(): RemoteAdapters | null {
   const diary = createRemoteDiaryRepository({
     gateway: createSupabaseDiaryGateway(client),
     resolveContext,
-    outboxStore: createSecureStoreWriteOutboxStore(REMOTE_OUTBOX_STORAGE_KEYS.diary),
+    outboxStore: createDiaryOutboxStore(REMOTE_OUTBOX_STORAGE_KEYS.diary),
     readAuthUserId,
   });
 
@@ -155,7 +154,7 @@ export async function clearRemoteUserScopedCaches(): Promise<void> {
     AsyncStorage.removeItem(REMOTE_OUTBOX_STORAGE_KEYS.feedback),
     AsyncStorage.removeItem(REMOTE_OUTBOX_STORAGE_KEYS.productEvents),
     AsyncStorage.removeItem(REMOTE_OUTBOX_STORAGE_KEYS.patientPhotos),
-    SecureStore.deleteItemAsync(REMOTE_OUTBOX_STORAGE_KEYS.diary),
+    clearDiaryOutbox(REMOTE_OUTBOX_STORAGE_KEYS.diary),
   ]);
 }
 
