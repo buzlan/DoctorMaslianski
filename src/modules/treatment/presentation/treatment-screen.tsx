@@ -2,7 +2,6 @@ import { useFocusEffect, useRouter } from "expo-router";
 import { useCallback, useRef, useState, type ReactNode } from "react";
 import {
   Pressable,
-  ScrollView,
   StyleSheet,
   useColorScheme,
   View,
@@ -17,6 +16,8 @@ import {
   type TreatmentTimelineLoadResult,
 } from "@/modules/treatment/application";
 import { type CalendarDate } from "@/modules/treatment/domain";
+import { PageScroll } from "@/shared/ui/page-scroll";
+import { PinnedFooter } from "@/shared/ui/pinned-footer";
 import { copy } from "@/shared/copy";
 import { loadCivilTodayDate } from "@/shared/date/load-civil-today-date";
 import { getColors, theme } from "@/shared/theme";
@@ -419,10 +420,9 @@ export function TreatmentScreen() {
 
         {viewState.status === "ready" ? (
           <>
-            <ScrollView
+            <PageScroll
               style={styles.scroll}
               contentContainerStyle={styles.scrollContent}
-              showsVerticalScrollIndicator={false}
             >
               {viewState.timeline.periodDayNumber !== null ? (
                 <AppText variant="display" style={styles.periodHeading}>
@@ -435,14 +435,16 @@ export function TreatmentScreen() {
                 timeline={viewState.timeline}
                 onDate={viewState.onDate}
               />
-            </ScrollView>
+            </PageScroll>
 
-            <View style={styles.appointmentFooter}>
-              <CurrentAppointmentBlock
-                appointment={viewState.timeline.currentAppointment}
-                onPressDetails={() => setContactModalVisible(true)}
-              />
-            </View>
+            <PinnedFooter>
+              <View style={styles.appointmentFooter}>
+                <CurrentAppointmentBlock
+                  appointment={viewState.timeline.currentAppointment}
+                  onPressDetails={() => setContactModalVisible(true)}
+                />
+              </View>
+            </PinnedFooter>
           </>
         ) : null}
       </View>

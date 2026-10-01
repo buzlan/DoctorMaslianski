@@ -1,6 +1,6 @@
 import { useFocusEffect, useRouter } from "expo-router";
 import { type ReactNode, useCallback } from "react";
-import { Platform, StyleSheet } from "react-native";
+import { Platform, StyleSheet, View } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import Animated, {
   Easing,
@@ -102,9 +102,7 @@ export function TabSwipeRoot({ tab, children }: TabSwipeRootProps) {
   }));
 
   if (Platform.OS === "web") {
-    return (
-      <Animated.View style={[styles.fill, animatedStyle]}>{children}</Animated.View>
-    );
+    return <View>{children}</View>;
   }
 
   return (

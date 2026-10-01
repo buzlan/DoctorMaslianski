@@ -1,7 +1,7 @@
 import { useFocusEffect } from "expo-router";
 import { useCallback, useRef, useState } from "react";
-import { StyleSheet } from "react-native";
-import { ScrollView } from "react-native-gesture-handler";
+import { Platform, StyleSheet } from "react-native";
+import { ScrollView as GestureScrollView } from "react-native-gesture-handler";
 
 import { useCanonicalInvalidation } from "@/core/sync";
 import {
@@ -13,10 +13,13 @@ import type { VasScore, Wellbeing } from "@/modules/diary/domain";
 import { copy } from "@/shared/copy";
 import { loadCivilTodayDate } from "@/shared/date/load-civil-today-date";
 import { theme } from "@/shared/theme";
+import { PageScroll } from "@/shared/ui/page-scroll";
 import { AppText, Card, Screen, TabScreenHeader, ScreenState, Stack } from "@/shared/ui";
 
 import { DailyDiaryForm } from "./daily-diary-form";
 import { DiaryHistoryList } from "./diary-history-list";
+
+const DiaryScroll = Platform.OS === "web" ? PageScroll : GestureScrollView;
 
 type DiaryViewState =
   | { status: "loading" }
@@ -120,7 +123,7 @@ export function DiaryScreen() {
           </Card>
         ) : null}
         {showHistory ? (
-          <ScrollView
+          <DiaryScroll
             style={styles.scroll}
             contentContainerStyle={styles.scrollContent}
             showsVerticalScrollIndicator={false}
@@ -131,7 +134,7 @@ export function DiaryScreen() {
               ) : null}
               <DiaryHistoryList items={viewState.history} />
             </Stack>
-          </ScrollView>
+          </DiaryScroll>
         ) : null}
       </Stack>
     </Screen>

@@ -21,10 +21,32 @@
         height: 100%;
         flex: 1;
       }
+      html[data-page-scroll="document"],
+      html[data-page-scroll="document"] body {
+        height: auto;
+        min-height: 100%;
+        overflow: visible;
+        background: #f5f8fb;
+      }
+      html[data-page-scroll="document"] #root {
+        height: 0;
+        min-height: 0;
+        overflow: hidden;
+        flex: none;
+      }
     </style>
+    <script>
+      (function () {
+        var path = location.pathname.replace(/\/$/, "") || "/";
+        if (path === "/" || path === "/treatment" || path === "/diary") {
+          document.documentElement.dataset.pageScroll = "document";
+        }
+      })();
+    </script>
   </head>
   <body>
     <noscript>You need to enable JavaScript to run this app.</noscript>
+    <div id="document-scroll"></div>
     <div id="root"></div>
   </body>
 </html>

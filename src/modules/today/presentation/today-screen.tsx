@@ -2,7 +2,6 @@ import { useFocusEffect, useRouter } from "expo-router";
 import { useCallback, useRef, useState } from "react";
 import {
   Pressable,
-  ScrollView,
   StyleSheet,
   useColorScheme,
   View,
@@ -19,6 +18,8 @@ import {
 import { copy } from "@/shared/copy";
 import { loadCivilTodayDate } from "@/shared/date/load-civil-today-date";
 import { getColors, theme } from "@/shared/theme";
+import { PageScroll } from "@/shared/ui/page-scroll";
+import { PinnedFooter } from "@/shared/ui/pinned-footer";
 import {
   AppText,
   Card,
@@ -310,10 +311,9 @@ export function TodayScreen() {
             />
           ) : null}
           {viewState.status === "ready" ? (
-            <ScrollView
+            <PageScroll
               style={styles.scroll}
               contentContainerStyle={styles.scrollContent}
-              showsVerticalScrollIndicator={false}
             >
               <Stack gap="md">
                 <ReadyContent
@@ -329,15 +329,16 @@ export function TodayScreen() {
                 />
                 <DevResetLocalSessionControl />
               </Stack>
-            </ScrollView>
+            </PageScroll>
           ) : null}
           {viewState.status !== "ready" ? (
             <DevResetLocalSessionControl />
           ) : null}
         </View>
 
-        {/* Outside ScrollView — pinned above the tab bar (scene already ends above tabs). */}
-        <SupportContactCard />
+        <PinnedFooter>
+          <SupportContactCard />
+        </PinnedFooter>
       </View>
     </Screen>
   );

@@ -25,6 +25,7 @@ import {
   AndroidBrandedSplashOverlay,
   shouldShowAndroidBrandedSplash,
 } from "@/shared/launch/android-branded-splash";
+import { isDocumentScrollPath } from "@/shared/navigation/document-scroll-path";
 import { theme } from "@/shared/theme";
 import { Screen, ScreenState } from "@/shared/ui";
 import { Inter_400Regular } from "@expo-google-fonts/inter/400Regular";
@@ -203,6 +204,15 @@ export default function RootLayout() {
   const auth = useAuthSession();
   const gate = resolveAuthGate(auth, __DEV__);
   const pathname = usePathname();
+
+  useEffect(() => {
+    if (Platform.OS !== "web") {
+      return;
+    }
+    document.documentElement.dataset.pageScroll = isDocumentScrollPath(pathname)
+      ? "document"
+      : "app";
+  }, [pathname]);
   const [androidBrandedSplashVisible, setAndroidBrandedSplashVisible] =
     useState(shouldShowAndroidBrandedSplash);
 
