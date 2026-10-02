@@ -1,17 +1,24 @@
 import { APP_ICON_NAMES } from "./app-icon-names";
-import { warnUnknownWebIcon, webIconCodepoint } from "./app-icon-web-map";
+import { resolveWebIcon, warnUnknownWebIcon } from "./app-icon-web-map";
 
 describe("web AppIcon mapping", () => {
-  it("maps every AppIcon name to an Ionicons code point", () => {
+  it("maps every AppIcon name to an SVG glyph", () => {
     for (const name of APP_ICON_NAMES) {
-      const codepoint = webIconCodepoint(name);
-      expect(codepoint).toEqual(expect.any(Number));
-      expect(codepoint).toBeGreaterThan(0);
+      const resolved = resolveWebIcon(name);
+      expect(resolved.known).toBe(true);
+      expect(resolved.glyph.paths.length).toBeGreaterThan(0);
+      for (const path of resolved.glyph.paths) {
+        expect(path.length).toBeGreaterThan(0);
+        expect(path).not.toContain("□");
+      }
     }
   });
 
-  it("does not invent a glyph for an unknown name", () => {
-    expect(webIconCodepoint("not-an-icon")).toBeNull();
+  it("uses a neutral SVG fallback for an unknown name", () => {
+    const resolved = resolveWebIcon("not-an-icon");
+    expect(resolved.known).toBe(false);
+    expect(resolved.glyph.paths.length).toBeGreaterThan(0);
+    expect(resolved.glyph.paths.join("")).not.toContain("□");
   });
 
   it("warns in development for an unknown name", () => {

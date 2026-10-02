@@ -1,7 +1,8 @@
 import { Redirect, Stack, usePathname, useSegments } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
+import { StatusBar } from "expo-status-bar";
 import { useCallback, useEffect, useState } from "react";
-import { AppState, Platform, StyleSheet } from "react-native";
+import { Appearance, AppState, Platform, StyleSheet } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 
 import { resolveAuthGate, signOut, useAuthSession } from "@/core/auth";
@@ -20,6 +21,11 @@ import {
   type TreatmentShell,
 } from "@/modules/feedback";
 import { sharedTreatmentRepository } from "@/modules/treatment/infrastructure";
+import {
+  captureBeforeInstallPrompt,
+  InstalledWebSessionGate,
+  registerPushFoundationWorker,
+} from "@/modules/pwa";
 import { copy } from "@/shared/copy";
 import {
   AndroidBrandedSplashOverlay,
@@ -36,6 +42,10 @@ import { useFonts } from "expo-font";
 
 // Keep native splash until RootLayout hides it (required before first render).
 void SplashScreen.preventAutoHideAsync();
+
+if (Platform.OS !== "web" && typeof Appearance.setColorScheme === "function") {
+  Appearance.setColorScheme("light");
+}
 
 function LoadingScreen({ message }: { message: string }) {
   return (
@@ -212,7 +222,18 @@ export default function RootLayout() {
     document.documentElement.dataset.pageScroll = isDocumentScrollPath(pathname)
       ? "document"
       : "app";
+    document.documentElement.style.colorScheme = "light";
+    document.documentElement.style.backgroundColor = theme.colors.light.background;
+    document.body.style.backgroundColor = theme.colors.light.background;
   }, [pathname]);
+
+  useEffect(() => {
+    if (Platform.OS !== "web") {
+      return;
+    }
+    captureBeforeInstallPrompt(window);
+    registerPushFoundationWorker(navigator);
+  }, []);
   const [androidBrandedSplashVisible, setAndroidBrandedSplashVisible] =
     useState(shouldShowAndroidBrandedSplash);
 
@@ -259,7 +280,8 @@ export default function RootLayout() {
 
   return (
     <GestureHandlerRootView style={styles.root}>
-      {content}
+      <StatusBar style="dark" />
+      <InstalledWebSessionGate>{content}</InstalledWebSessionGate>
       {Platform.OS === "android" && androidBrandedSplashVisible ? (
         <AndroidBrandedSplashOverlay onFinished={dismissAndroidBrandedSplash} />
       ) : null}
@@ -270,5 +292,6 @@ export default function RootLayout() {
 const styles = StyleSheet.create({
   root: {
     flex: 1,
+    backgroundColor: theme.colors.light.background,
   },
 });

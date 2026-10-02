@@ -6,7 +6,7 @@
     "orientation": "portrait",
     "icon": "./assets/images/patient/app_icon_primary.png",
     "scheme": "doctormaslianski",
-    "userInterfaceStyle": "automatic",
+    "userInterfaceStyle": "light",
     "ios": {
       "bundleIdentifier": "by.maslianski.app",
       "icon": "./assets/images/patient/app_icon_primary.png",

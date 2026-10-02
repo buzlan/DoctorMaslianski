@@ -71,3 +71,15 @@ A development build still accepts a manually opened `doctormaslianski://invite/{
 ## Synthetic data only
 
 Use cohort `internal_dry_run`. Do not enter real patient names, phones, photos, or clinical notes during this verification.
+
+## Reset mobile web test state
+
+To test a new patient from scratch on a phone:
+
+1. Delete the installed Home Screen app (iPhone) or the installed PWA (Android).
+2. Delete website data for `app.maslianski.by` in Safari (Settings → Apps → Safari → Advanced → Website Data).
+3. If the flow was tested in Chrome, clear that browser's site data for `app.maslianski.by` as well.
+4. Create a new synthetic patient and a new invite in the clinic dashboard.
+5. Scan the new QR code.
+
+A consumed invite cannot be reused. Do not add a production control that deletes the patient on the server.

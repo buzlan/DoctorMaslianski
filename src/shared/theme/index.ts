@@ -107,10 +107,15 @@ export const theme = {
 export type Theme = typeof theme;
 export type SemanticColors = Theme["colors"][keyof Theme["colors"]];
 
+/**
+ * Patient UI is always light.
+ * The scheme argument is ignored so iOS/Android dark mode and
+ * `prefers-color-scheme` cannot restyle screens that call `getColors`.
+ */
 export function getColors(
-  scheme: "light" | "dark" | "unspecified" | null | undefined,
+  _scheme: "light" | "dark" | "unspecified" | null | undefined,
 ) {
-  return scheme === "dark" ? theme.colors.dark : theme.colors.light;
+  return theme.colors.light;
 }
 
 export function getCardShadow(

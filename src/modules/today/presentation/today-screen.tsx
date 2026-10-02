@@ -8,6 +8,7 @@ import {
 } from "react-native";
 
 import { DevResetLocalSessionControl } from "@/core/auth/dev-reset-local-session-control";
+import { HomeScreenInstallOffer } from "@/modules/pwa";
 import { useCanonicalInvalidation } from "@/core/sync";
 import {
   sharedTodayLoader,
@@ -340,6 +341,9 @@ export function TodayScreen() {
           <SupportContactCard />
         </PinnedFooter>
       </View>
+      {viewState.status === "ready" || viewState.status === "no_active_treatment" ? (
+        <HomeScreenInstallOffer />
+      ) : null}
     </Screen>
   );
 }

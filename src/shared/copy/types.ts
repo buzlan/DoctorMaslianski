@@ -202,4 +202,18 @@ export type AppCopy = {
     accessibilityHint: string;
     openError: string;
   };
+  pwa: {
+    installTitle: string;
+    installBody: string;
+    add: string;
+    later: string;
+    close: string;
+    prepareError: string;
+    iosSteps: readonly string[];
+    iosOtherBrowser: string;
+    androidManual: string;
+    handoffFailedTitle: string;
+    handoffFailedBody: string;
+    handoffFailedAction: string;
+  };
 };

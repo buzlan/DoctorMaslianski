@@ -1,8 +1,10 @@
-import { useFonts } from "expo-font";
-import { Text, View, type ColorValue } from "react-native";
+import { createElement } from "react";
+import type { ColorValue } from "react-native";
+
+import { theme } from "@/shared/theme";
 
 import { APP_ICON_NAMES, type AppIconName } from "./app-icon-names";
-import { warnUnknownWebIcon, webIconCodepoint } from "./app-icon-web-map";
+import { resolveWebIcon, warnUnknownWebIcon } from "./app-icon-web-map";
 
 export { APP_ICON_NAMES };
 export type { AppIconName };
@@ -13,35 +15,36 @@ type AppIconProps = {
   size?: number;
 };
 
+function paintColor(color: ColorValue): string {
+  return typeof color === "string" ? color : theme.colors.light.textPrimary;
+}
+
 export function AppIcon({ name, color, size = 22 }: AppIconProps) {
-  const [fontLoaded] = useFonts({
-    Ionicons: require("@react-native-vector-icons/ionicons/fonts/Ionicons.ttf"),
-  });
-  const codepoint = webIconCodepoint(name);
-
-  if (codepoint === null) {
+  const resolved = resolveWebIcon(name);
+  if (!resolved.known) {
     warnUnknownWebIcon(name);
-    return <View style={{ width: size, height: size }} />;
   }
 
-  if (!fontLoaded) {
-    return <View style={{ width: size, height: size }} />;
-  }
+  const ink = paintColor(color);
+  const filled = resolved.glyph.paint === "fill";
 
-  return (
-    <Text
-      selectable={false}
-      style={{
-        fontFamily: "Ionicons",
-        fontSize: size,
-        lineHeight: size,
-        width: size,
-        height: size,
-        color,
-        textAlign: "center",
-      }}
-    >
-      {String.fromCodePoint(codepoint)}
-    </Text>
+  return createElement(
+    "svg",
+    {
+      width: size,
+      height: size,
+      viewBox: "0 0 24 24",
+      fill: filled ? ink : "none",
+      stroke: filled ? "none" : ink,
+      strokeWidth: filled ? 0 : 1.8,
+      strokeLinecap: "round",
+      strokeLinejoin: "round",
+      "aria-hidden": true,
+      focusable: "false",
+      style: { display: "block" },
+    },
+    ...resolved.glyph.paths.map((d, index) =>
+      createElement("path", { key: `${name}-${index}`, d }),
+    ),
   );
 }
