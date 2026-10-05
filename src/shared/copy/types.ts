@@ -207,6 +207,7 @@ export type AppCopy = {
     installBody: string;
     add: string;
     later: string;
+    alreadyAdded: string;
     close: string;
     prepareError: string;
     iosSteps: readonly string[];
