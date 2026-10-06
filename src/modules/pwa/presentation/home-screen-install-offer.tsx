@@ -14,6 +14,7 @@ import {
   isIosSafari,
   readInstallDismissed,
   shouldShowHomeScreenInstallOffer,
+  snoozeInstallOffer,
   writeInstallDismissed,
   type InstallDismissStorage,
 } from "../install-offer";
@@ -109,6 +110,11 @@ export function HomeScreenInstallOffer() {
   }
 
   function onLater() {
+    snoozeInstallOffer(storage);
+    setSessionHidden(true);
+  }
+
+  function onAlreadyInstalled() {
     writeInstallDismissed(storage);
     setDismissed(true);
   }
@@ -159,6 +165,12 @@ export function HomeScreenInstallOffer() {
               <Button label={copy.pwa.later} variant="secondary" onPress={onLater} />
             </Stack>
           )}
+          <Button
+            label={copy.pwa.alreadyAdded}
+            variant="secondary"
+            disabled={step === "preparing"}
+            onPress={onAlreadyInstalled}
+          />
         </Stack>
       </Card>
     </View>

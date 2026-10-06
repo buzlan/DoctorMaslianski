@@ -1,19 +1,17 @@
 import { Slot, usePathname, useRouter } from "expo-router";
-import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { Pressable, StyleSheet, useColorScheme, View, type ViewStyle } from "react-native";
+import {
+  Pressable,
+  StyleSheet,
+  useColorScheme,
+  View,
+  type ViewStyle,
+} from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { copy } from "@/shared/copy";
 import { isDocumentScrollPath } from "@/shared/navigation/document-scroll-path";
-import {
-  initialTabBarScrollState,
-  reduceTabBarScroll,
-  TAB_BAR_ANIMATION_MS,
-  TAB_BAR_IDLE_MS,
-  webTabBarReserve,
-  type TabBarScrollState,
-} from "@/shared/navigation/tab-bar-scroll-visibility";
+import { webTabBarReserve } from "@/shared/navigation/tab-bar-scroll-visibility";
 import { getColors, theme } from "@/shared/theme";
 import { AppIcon, AppText, type AppIconName } from "@/shared/ui";
 import { WebTabBarInsetContext } from "@/shared/ui/web-tab-bar-inset";
@@ -44,57 +42,12 @@ const TABS: {
   },
 ];
 
-function useTabBarHidden(): boolean {
-  const [hidden, setHidden] = useState(false);
-  const stateRef = useRef<TabBarScrollState>(initialTabBarScrollState());
-
-  useEffect(() => {
-    let timer: ReturnType<typeof setTimeout> | undefined;
-
-    const apply = (next: TabBarScrollState) => {
-      const previous = stateRef.current;
-      stateRef.current = next;
-      if (previous.visibility !== next.visibility) {
-        setHidden(next.visibility === "hidden");
-      }
-    };
-
-    const onScroll = () => {
-      const now = Date.now();
-      apply(reduceTabBarScroll(stateRef.current, { type: "scroll", now }, TAB_BAR_IDLE_MS));
-      if (timer !== undefined) {
-        clearTimeout(timer);
-      }
-      const due = stateRef.current.idleDueAt;
-      if (due === null) {
-        return;
-      }
-      timer = setTimeout(() => {
-        apply(
-          reduceTabBarScroll(stateRef.current, { type: "tick", now: Date.now() }, TAB_BAR_IDLE_MS),
-        );
-      }, Math.max(0, due - Date.now()));
-    };
-
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => {
-      window.removeEventListener("scroll", onScroll);
-      if (timer !== undefined) {
-        clearTimeout(timer);
-      }
-    };
-  }, []);
-
-  return hidden;
-}
-
 export default function WebTabsLayout() {
   const pathname = usePathname();
   const router = useRouter();
   const scheme = useColorScheme();
   const colors = getColors(scheme);
   const insets = useSafeAreaInsets();
-  const hidden = useTabBarHidden();
   const documentScroll = isDocumentScrollPath(pathname);
   const reserve = webTabBarReserve(insets.bottom, theme.spacing.md);
   const host = document.getElementById("document-scroll");
@@ -107,22 +60,21 @@ export default function WebTabsLayout() {
           {
             backgroundColor: colors.background,
             paddingBottom: documentScroll ? reserve : 0,
-            ...(documentScroll ? ({ minHeight: "100dvh" } as unknown as ViewStyle) : null),
+            ...(documentScroll
+              ? ({ minHeight: "100dvh" } as unknown as ViewStyle)
+              : null),
           },
         ]}
       >
         <Slot />
       </View>
       <View
-        pointerEvents={hidden ? "none" : "auto"}
         style={[
           styles.bar,
           {
             backgroundColor: colors.surface,
             borderTopColor: colors.border,
             paddingBottom: Math.max(insets.bottom, theme.spacing.md),
-            transform: [{ translateY: hidden ? reserve : 0 }],
-            opacity: hidden ? 0 : 1,
           },
         ]}
       >
@@ -141,12 +93,17 @@ export default function WebTabsLayout() {
                 styles.item,
                 selected
                   ? {
-                      backgroundColor: scheme === "dark" ? colors.accentSoft : "#E8F2FF",
+                      backgroundColor:
+                        scheme === "dark" ? colors.accentSoft : "#E8F2FF",
                     }
                   : null,
               ]}
             >
-              <AppIcon name={selected ? tab.filled : tab.outline} color={tint} size={24} />
+              <AppIcon
+                name={selected ? tab.filled : tab.outline}
+                color={tint}
+                size={24}
+              />
               <AppText
                 style={{
                   color: tint,
@@ -184,8 +141,6 @@ const styles = StyleSheet.create({
     zIndex: 20,
     flexDirection: "row",
     borderTopWidth: 1,
-    transitionDuration: `${TAB_BAR_ANIMATION_MS}ms`,
-    transitionProperty: "transform, opacity",
   } as ViewStyle,
   item: {
     flex: 1,
