@@ -1,10 +1,11 @@
+import type { AppSupabaseClient } from "@/core/supabase/client";
 import {
   classifyPostgrestWriteError,
   RetryableRemoteError,
   type RemoteWriteResult,
-} from '@/core/sync/remote-error';
-import type { AppSupabaseClient } from '@/core/supabase/client';
+} from "@/core/sync/remote-error";
 
+import { loadAssignmentIconPaths } from "./assignment-icon-gateway";
 import type {
   RemoteAppointmentRow,
   RemoteAssignmentRow,
@@ -12,7 +13,7 @@ import type {
   RemoteMilestoneRow,
   RemotePeriodRow,
   RemoteTreatmentRow,
-} from './map-remote-treatment';
+} from "./map-remote-treatment";
 
 export type InsertCompletionInput = {
   assignmentId: string;
@@ -30,7 +31,10 @@ export type TreatmentRemoteGateway = {
   listCompletions(treatmentId: string): Promise<RemoteCompletionRow[]>;
   listAppointments(treatmentId: string): Promise<RemoteAppointmentRow[]>;
   insertCompletion(input: InsertCompletionInput): Promise<RemoteWriteResult>;
-  deleteCompletion(assignmentId: string, completedOn: string): Promise<RemoteWriteResult>;
+  deleteCompletion(
+    assignmentId: string,
+    completedOn: string,
+  ): Promise<RemoteWriteResult>;
 };
 
 function throwIfError(error: { message: string } | null): void {
@@ -45,60 +49,67 @@ export function createSupabaseTreatmentGateway(
   return {
     async listTreatments(patientId) {
       const { data, error } = await client
-        .from('treatments')
-        .select('id, patient_id, treatment_context, status, created_at')
-        .eq('patient_id', patientId);
+        .from("treatments")
+        .select("id, patient_id, treatment_context, status, created_at")
+        .eq("patient_id", patientId);
 
       throwIfError(error);
       return (data ?? []) as RemoteTreatmentRow[];
     },
     async listPeriods(treatmentId) {
       const { data, error } = await client
-        .from('treatment_periods')
-        .select('id, started_on, ended_on')
-        .eq('treatment_id', treatmentId);
+        .from("treatment_periods")
+        .select("id, started_on, ended_on")
+        .eq("treatment_id", treatmentId);
 
       throwIfError(error);
       return (data ?? []) as RemotePeriodRow[];
     },
     async listMilestones(treatmentId) {
       const { data, error } = await client
-        .from('treatment_milestones')
-        .select('id, title, kind, occurred_on')
-        .eq('treatment_id', treatmentId);
+        .from("treatment_milestones")
+        .select("id, title, kind, occurred_on")
+        .eq("treatment_id", treatmentId);
 
       throwIfError(error);
       return (data ?? []) as RemoteMilestoneRow[];
     },
     async listAssignments(treatmentId) {
-      const { data, error } = await client
-        .from('action_assignments')
-        .select('id, catalog_item_id, title, instruction, start_date, end_date, status')
-        .eq('treatment_id', treatmentId);
-
-      throwIfError(error);
-      return (data ?? []) as RemoteAssignmentRow[];
+      const [assignments, icons] = await Promise.all([
+        client
+          .from("action_assignments")
+          .select(
+            "id, catalog_item_id, title, instruction, start_date, end_date, status",
+          )
+          .eq("treatment_id", treatmentId),
+        loadAssignmentIconPaths(client, treatmentId),
+      ]);
+      throwIfError(assignments.error);
+      return (assignments.data ?? []).map((row) => ({
+        ...row,
+        icon_storage_path: icons.get(row.id) ?? null,
+      })) as RemoteAssignmentRow[];
     },
     async listCompletions(treatmentId) {
       const { data, error } = await client
-        .from('action_completions')
-        .select('id, assignment_id, completed_on')
-        .eq('treatment_id', treatmentId);
+        .from("action_completions")
+        .select("id, assignment_id, completed_on")
+        .eq("treatment_id", treatmentId);
 
       throwIfError(error);
       return (data ?? []) as RemoteCompletionRow[];
     },
     async listAppointments(treatmentId) {
       const { data, error } = await client
-        .from('appointments')
-        .select('id, wall_clock, status')
-        .eq('treatment_id', treatmentId);
+        .from("appointments")
+        .select("id, wall_clock, status")
+        .eq("treatment_id", treatmentId);
 
       throwIfError(error);
       return (data ?? []) as RemoteAppointmentRow[];
     },
     async insertCompletion(input) {
-      const { error } = await client.from('action_completions').insert({
+      const { error } = await client.from("action_completions").insert({
         assignment_id: input.assignmentId,
         treatment_id: input.treatmentId,
         patient_id: input.patientId,
@@ -110,10 +121,10 @@ export function createSupabaseTreatmentGateway(
     },
     async deleteCompletion(assignmentId, completedOn) {
       const { error } = await client
-        .from('action_completions')
+        .from("action_completions")
         .delete()
-        .eq('assignment_id', assignmentId)
-        .eq('completed_on', completedOn);
+        .eq("assignment_id", assignmentId)
+        .eq("completed_on", completedOn);
 
       return classifyPostgrestWriteError(error);
     },

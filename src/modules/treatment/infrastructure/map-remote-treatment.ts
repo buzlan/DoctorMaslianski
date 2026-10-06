@@ -10,16 +10,16 @@ import {
   type Treatment,
   type TreatmentMilestone,
   type TreatmentPeriod,
-} from '@/modules/treatment/domain';
-import { formatCivilDate, parseCivilDate } from '@/shared/date/civil-date';
+} from "@/modules/treatment/domain";
+import { formatCivilDate, parseCivilDate } from "@/shared/date/civil-date";
 
-import type { WriteOutboxItem } from '@/core/sync/write-outbox';
+import type { WriteOutboxItem } from "@/core/sync/write-outbox";
 
 export type RemoteTreatmentRow = {
   id: string;
   patient_id: string;
   treatment_context: string;
-  status: 'active' | 'completed' | 'cancelled';
+  status: "active" | "completed" | "cancelled";
   created_at: string;
 };
 
@@ -39,11 +39,12 @@ export type RemoteMilestoneRow = {
 export type RemoteAssignmentRow = {
   id: string;
   catalog_item_id: string;
+  icon_storage_path?: string | null;
   title: string;
   instruction: string | null;
   start_date: string;
   end_date: string;
-  status: 'active' | 'disabled';
+  status: "active" | "disabled";
 };
 
 export type RemoteCompletionRow = {
@@ -55,17 +56,17 @@ export type RemoteCompletionRow = {
 export type RemoteAppointmentRow = {
   id: string;
   wall_clock: string;
-  status: 'current' | 'superseded';
+  status: "current" | "superseded";
 };
 
 export type CompletionOutboxPayload =
-  | { op: 'insert'; assignmentId: string; completedOn: string }
-  | { op: 'delete'; assignmentId: string; completedOn: string };
+  | { op: "insert"; assignmentId: string; completedOn: string }
+  | { op: "delete"; assignmentId: string; completedOn: string };
 
 export function selectCurrentTreatment<
   T extends { status: string; created_at: string; id: string },
 >(rows: readonly T[]): T | null {
-  const active = rows.filter((row) => row.status === 'active');
+  const active = rows.filter((row) => row.status === "active");
   const pool = active.length > 0 ? active : [...rows];
   if (pool.length === 0) {
     return null;
@@ -85,13 +86,15 @@ function compareCreatedAtDesc(
   return left.id < right.id ? 1 : -1;
 }
 
-export function wallClockToAppointmentAt(wallClock: string): string | undefined {
+export function wallClockToAppointmentAt(
+  wallClock: string,
+): string | undefined {
   const trimmed = wallClock.trim();
   if (trimmed.length === 0) {
     return undefined;
   }
 
-  return trimmed.replace(' ', 'T').replace(/Z$/i, '');
+  return trimmed.replace(" ", "T").replace(/Z$/i, "");
 }
 
 export function mapRemoteTreatment(input: {
@@ -154,6 +157,10 @@ function mapAssignment(row: RemoteAssignmentRow): ActionAssignment {
     status: row.status,
   };
 
+  if (row.icon_storage_path) {
+    assignment.iconStoragePath = row.icon_storage_path;
+  }
+
   if (row.instruction !== null && row.instruction.length > 0) {
     assignment.instruction = row.instruction;
   }
@@ -202,7 +209,7 @@ export function applyCompletionOutbox(
       continue;
     }
 
-    if (item.payload.op === 'insert') {
+    if (item.payload.op === "insert") {
       const exists = next.some(
         (completion) =>
           completion.assignmentId === item.payload.assignmentId &&
