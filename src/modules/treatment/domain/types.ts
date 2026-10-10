@@ -1,14 +1,14 @@
-import type { CalendarDate } from './calendar-date';
+import type { CalendarDate } from "./calendar-date";
 
-export type TreatmentContext = 'sclerotherapy';
+export type TreatmentContext = "sclerotherapy";
 
-export type PilotCohort = 'internal_dry_run' | 'closed_beta' | 'clinic_pilot';
+export type PilotCohort = "internal_dry_run" | "closed_beta" | "clinic_pilot";
 
-export type TreatmentStatus = 'active' | 'completed' | 'cancelled';
+export type TreatmentStatus = "active" | "completed" | "cancelled";
 
-export type ActionAssignmentStatus = 'active' | 'disabled';
+export type ActionAssignmentStatus = "active" | "disabled";
 
-export type AppointmentRecordStatus = 'current' | 'superseded';
+export type AppointmentRecordStatus = "current" | "superseded";
 
 export type Patient = {
   id: string;
@@ -34,6 +34,7 @@ export type TreatmentMilestone = {
 export type ActionAssignment = {
   id: string;
   catalogItemId: string;
+  iconStoragePath?: string;
   title?: string;
   instruction?: string;
   startDate: CalendarDate;

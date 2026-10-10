@@ -1,4 +1,4 @@
-import type { CalendarDate } from './calendar-date';
+import type { CalendarDate } from "./calendar-date";
 import type {
   ActionAssignment,
   ActionCompletion,
@@ -7,7 +7,7 @@ import type {
   TreatmentMilestone,
   TreatmentPeriod,
   TreatmentStatus,
-} from './types';
+} from "./types";
 
 export type CreateTreatmentInput = {
   id: string;
@@ -64,6 +64,9 @@ function copyAssignment(assignment: ActionAssignment): ActionAssignment {
     status: assignment.status,
   };
 
+  if (assignment.iconStoragePath !== undefined) {
+    copied.iconStoragePath = assignment.iconStoragePath;
+  }
   if (assignment.title !== undefined) {
     copied.title = assignment.title;
   }
@@ -99,8 +102,8 @@ export function createTreatment(input: CreateTreatmentInput): Treatment {
   return {
     id: input.id,
     patientId: input.patientId,
-    treatmentContext: 'sclerotherapy',
-    status: input.status ?? 'active',
+    treatmentContext: "sclerotherapy",
+    status: input.status ?? "active",
     periods: (input.periods ?? []).map(copyPeriod),
     milestones: (input.milestones ?? []).map(copyMilestone),
     assignments: (input.assignments ?? []).map(copyAssignment),

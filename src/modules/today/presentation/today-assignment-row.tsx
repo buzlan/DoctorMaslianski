@@ -1,27 +1,15 @@
-import {
-  Pressable,
-  StyleSheet,
-  useColorScheme,
-  View,
-} from "react-native";
+import { Pressable, StyleSheet, useColorScheme, View } from "react-native";
 
 import type { TodayAssignmentItem } from "@/modules/today/application";
 import { copy } from "@/shared/copy";
 import { getColors, theme } from "@/shared/theme";
-import {
-  AppIcon,
-  AppText,
-  CompletionMark,
-  IconWell,
-  Stack,
-} from "@/shared/ui";
+import { AppIcon, AppText, CompletionMark, Stack } from "@/shared/ui";
 
-import { resolveAssignmentIcon } from "./resolve-assignment-icon";
+import { CatalogAssignmentIcon } from "./catalog-assignment-icon";
+
 
 export type TodayAssignmentRowProps = {
   assignment: TodayAssignmentItem;
-  /** Optional backend/web icon key; mocked from id when omitted. */
-  iconKey?: string;
   pending: boolean;
   onToggle: (assignment: TodayAssignmentItem) => void;
   /** When set, shows a chevron and opens detail. Omit until detail exists. */
@@ -38,17 +26,12 @@ function assignmentLabel(assignment: TodayAssignmentItem): string {
 
 export function TodayAssignmentRow({
   assignment,
-  iconKey,
   pending,
   onToggle,
   onOpenDetail,
   showDivider,
 }: TodayAssignmentRowProps) {
   const colors = getColors(useColorScheme());
-  const iconName = resolveAssignmentIcon({
-    assignmentId: assignment.id,
-    iconKey,
-  });
   const showChevron = onOpenDetail !== undefined;
 
   const textColumn = (
@@ -85,7 +68,10 @@ export function TodayAssignmentRow({
           }
           onPress={() => onToggle(assignment)}
         />
-        <IconWell name={iconName} size={44} />
+        <CatalogAssignmentIcon
+          path={assignment.iconStoragePath}
+
+        />
         {showChevron ? (
           <Pressable
             accessibilityRole="button"

@@ -9,13 +9,14 @@ import {
   type CalendarDate,
   type CurrentAppointmentView,
   type Treatment,
-} from '@/modules/treatment/domain';
+} from "@/modules/treatment/domain";
 
 export type TodayAssignmentItem = {
   id: string;
   completed: boolean;
   title?: string;
   instruction?: string;
+  iconStoragePath?: string;
 };
 
 /**
@@ -32,9 +33,9 @@ export type TodayPeriodProgress = {
 };
 
 export type TodayOverview =
-  | { kind: 'no_active_treatment' }
+  | { kind: "no_active_treatment" }
   | {
-      kind: 'ready';
+      kind: "ready";
       patientId: string;
       treatmentId: string;
       periodDayNumber: number | null;
@@ -51,6 +52,7 @@ function mapAssignment(
     id: string;
     title?: string;
     instruction?: string;
+    iconStoragePath?: string;
   },
   completed: boolean,
 ): TodayAssignmentItem {
@@ -62,6 +64,10 @@ function mapAssignment(
 
   if (assignment.instruction !== undefined) {
     item.instruction = assignment.instruction;
+  }
+
+  if (assignment.iconStoragePath !== undefined) {
+    item.iconStoragePath = assignment.iconStoragePath;
   }
 
   return item;
@@ -125,30 +131,37 @@ export function buildTodayOverview(
   photosRecordedToday = 0,
 ): TodayOverview {
   if (treatment === null || !isActiveTreatment(treatment)) {
-    return { kind: 'no_active_treatment' };
+    return { kind: "no_active_treatment" };
   }
 
   const currentPeriod = getCurrentPeriod(treatment);
   const periodDayNumber =
     currentPeriod === null ? null : getPeriodDayNumber(currentPeriod, onDate);
   const recorded = clampPhotoCount(photosRecordedToday);
-  const assignments = getAssignmentsForDate(treatment, onDate).map((assignment) =>
-    mapAssignment(
-      assignment,
-      isAssignmentCompletedOnDate(treatment, assignment.id, onDate),
-    ),
+  const assignments = getAssignmentsForDate(treatment, onDate).map(
+    (assignment) =>
+      mapAssignment(
+        assignment,
+        isAssignmentCompletedOnDate(treatment, assignment.id, onDate),
+      ),
   );
 
   return {
-    kind: 'ready',
+    kind: "ready",
     patientId: treatment.patientId,
     treatmentId: treatment.id,
     periodDayNumber,
-    periodProgress: buildPeriodProgress(currentPeriod, periodDayNumber, assignments),
+    periodProgress: buildPeriodProgress(
+      currentPeriod,
+      periodDayNumber,
+      assignments,
+    ),
     assignments,
     diaryOpen: !todayDiaryEntryExists,
     photosRecordedToday: recorded,
     photoAddOpen: recorded < 3,
-    currentAppointment: toCurrentAppointmentView(getCurrentAppointment(treatment)),
+    currentAppointment: toCurrentAppointmentView(
+      getCurrentAppointment(treatment),
+    ),
   };
 }
