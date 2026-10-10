@@ -2,7 +2,12 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Platform, ScrollView, StyleSheet, View } from "react-native";
 
 import { DevResetLocalSessionControl } from "@/core/auth/dev-reset-local-session-control";
-import { ClinicContactSection, type ClinicContact } from "@/modules/clinic-contact";
+import {
+  ClinicContactSection,
+  hasClinicContactChannel,
+  PublicClinicContact,
+  type ClinicContact,
+} from "@/modules/clinic-contact";
 import { copy } from "@/shared/copy";
 import { theme } from "@/shared/theme";
 import {
@@ -128,7 +133,10 @@ export function CompletionScreen() {
                 title={copy.completion.title}
                 subtitle={copy.completion.body}
               />
-              <ClinicContactSection contact={viewState.clinicContact} />
+              {hasClinicContactChannel(viewState.clinicContact) ? (
+                <ClinicContactSection contact={viewState.clinicContact} />
+              ) : null}
+              <PublicClinicContact />
               {viewState.survey !== null ? (
                 <Card variant="elevated">
                   <AppText tone="secondary">{copy.completion.submitted}</AppText>

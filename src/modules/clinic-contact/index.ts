@@ -11,4 +11,5 @@ export {
   sharedClinicContactRepository,
 } from './infrastructure';
 export type { ClinicContactRepository } from './infrastructure';
-export { ClinicContactSection } from './presentation';
+export { CLINIC_WEBSITE_URL, PUBLIC_CLINIC_PHONES } from './public-clinic';
+export { ClinicContactSection, PublicClinicContact } from './presentation';

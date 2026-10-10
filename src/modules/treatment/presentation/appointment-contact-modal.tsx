@@ -10,36 +10,10 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import { PUBLIC_CLINIC_PHONES } from "@/modules/clinic-contact";
 import { copy } from "@/shared/copy";
 import { getColors, theme } from "@/shared/theme";
 import { AppText } from "@/shared/ui";
-
-const CLINIC_PHONES = [
-  {
-    id: "short",
-    labelKey: "shortPhoneLabel",
-    display: "7095",
-    dial: "7095",
-  },
-  {
-    id: "a1",
-    labelKey: "a1PhoneLabel",
-    display: "+375 (44) 538-70-95",
-    dial: "+375445387095",
-  },
-  {
-    id: "mts",
-    labelKey: "mtsPhoneLabel",
-    display: "+375 (29) 508-70-95",
-    dial: "+375295087095",
-  },
-  {
-    id: "landline",
-    labelKey: "landlinePhoneLabel",
-    display: "+375 (17) 370-00-05",
-    dial: "+375173700005",
-  },
-] as const;
 
 type AppointmentContactModalProps = {
   visible: boolean;
@@ -161,7 +135,7 @@ export function AppointmentContactModal({
               </AppText>
 
               <View style={styles.phoneList}>
-                {CLINIC_PHONES.map((phone) => (
+                {PUBLIC_CLINIC_PHONES.map((phone) => (
                   <Pressable
                     key={phone.id}
                     accessibilityRole="button"

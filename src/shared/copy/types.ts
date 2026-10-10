@@ -122,6 +122,8 @@ export type AppCopy = {
     call: string;
     email: string;
     book: string;
+    siteBody: string;
+    siteAction: string;
     openError: string;
   };
   completion: {

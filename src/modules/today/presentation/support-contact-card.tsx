@@ -7,15 +7,12 @@ import {
   View,
 } from "react-native";
 
+import { CLINIC_WEBSITE_URL } from "@/modules/clinic-contact";
 import { copy } from "@/shared/copy";
 import { getColors, theme } from "@/shared/theme";
 import { AppText, Card } from "@/shared/ui";
 
-/** Real section id on maslianski.by for "Контакты и запись" / feedback form. */
-export const CLINIC_CONTACTS_SECTION_ID = "contacts";
-
-export const CLINIC_CONTACTS_URL =
-  `https://maslianski.by/#${CLINIC_CONTACTS_SECTION_ID}` as const;
+export const CLINIC_CONTACTS_URL = CLINIC_WEBSITE_URL;
 
 /** Compact sticky slot height used for ScrollView bottom padding. */
 export const STICKY_CONTACT_CARD_HEIGHT = 80;
