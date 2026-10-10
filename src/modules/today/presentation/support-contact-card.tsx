@@ -72,14 +72,13 @@ export function SupportContactCard() {
             </View>
 
             <View style={styles.copy}>
-              <AppText variant="title" style={styles.title} numberOfLines={1}>
+              <AppText variant="title" style={styles.title}>
                 {copy.supportContact.title}
               </AppText>
               <AppText
                 variant="caption"
                 tone="secondary"
                 style={styles.subtitle}
-                numberOfLines={2}
               >
                 {copy.supportContact.subtitle}
               </AppText>

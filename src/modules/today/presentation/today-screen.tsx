@@ -125,10 +125,10 @@ function PhotoControlCard({
       <View style={styles.ctaRow}>
         <IconWell name="camera-outline" />
         <Stack gap="xs" style={styles.ctaCopy}>
-          <AppText variant="title" numberOfLines={1}>
+          <AppText variant="title">
             {copy.today.photoControlTitle}
           </AppText>
-          <AppText variant="caption" tone="secondary" numberOfLines={3}>
+          <AppText variant="caption" tone="secondary">
             {copy.today.photoControlBody}
           </AppText>
           {statusDetail !== undefined ? (
