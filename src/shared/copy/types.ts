@@ -226,6 +226,8 @@ export type AppCopy = {
     safariBody: string;
     copyLink: string;
     copied: string;
+    portraitTitle: string;
+    portraitBody: string;
   };
   notifications: {
     title: string;

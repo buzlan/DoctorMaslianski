@@ -3,3 +3,4 @@ export { captureBeforeInstallPrompt, registerPushFoundationWorker } from './inst
 export { ActivationHomeScreenHost } from './presentation/activation-home-screen';
 export { HomeScreenInstallOffer } from './presentation/home-screen-install-offer';
 export { InstalledWebSessionGate } from './presentation/installed-web-session-gate';
+export { PortraitLock } from './presentation/portrait-lock';

@@ -26,6 +26,7 @@ import {
   ActivationHomeScreenHost,
   captureBeforeInstallPrompt,
   InstalledWebSessionGate,
+  PortraitLock,
   registerPushFoundationWorker,
 } from "@/modules/pwa";
 import { copy } from "@/shared/copy";
@@ -316,6 +317,7 @@ export default function RootLayout() {
     <GestureHandlerRootView style={styles.root}>
       <StatusBar style="dark" />
       <InstalledWebSessionGate>{content}</InstalledWebSessionGate>
+      <PortraitLock />
       {gate.screen === "clinical" ? <ActivationHomeScreenHost /> : null}
       {gate.screen === "clinical" ? <NotificationOnboarding /> : null}
       <NotificationClickBridge />
