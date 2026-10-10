@@ -7,12 +7,12 @@ import {
   View,
 } from "react-native";
 
-import { CLINIC_WEBSITE_URL } from "@/modules/clinic-contact";
+import { CLINIC_FEEDBACK_URL } from "@/modules/clinic-contact";
 import { copy } from "@/shared/copy";
 import { getColors, theme } from "@/shared/theme";
 import { AppText, Card } from "@/shared/ui";
 
-export const CLINIC_CONTACTS_URL = CLINIC_WEBSITE_URL;
+export const CLINIC_CONTACTS_URL = CLINIC_FEEDBACK_URL;
 
 /** Compact sticky slot height used for ScrollView bottom padding. */
 export const STICKY_CONTACT_CARD_HEIGHT = 80;

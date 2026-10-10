@@ -1,5 +1,8 @@
-/** Contacts page on the doctor's public site. */
+/** Contacts block on the doctor's public site. */
 export const CLINIC_WEBSITE_URL = 'https://maslianski.by/#contacts';
+
+/** Feedback form inside that contacts block. */
+export const CLINIC_FEEDBACK_URL = 'https://maslianski.by/#feedback';
 
 export const PUBLIC_CLINIC_PHONES = [
   {
