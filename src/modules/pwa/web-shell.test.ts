@@ -57,8 +57,9 @@ describe('patient web shell', () => {
     expect(worker).not.toMatch(/addEventListener\(\s*['"]fetch['"]/);
     expect(worker).not.toMatch(/supabase/i);
     expect(worker).not.toMatch(/invite/i);
-    expect(worker).toContain("importScripts('/push-route.js?v=4')");
+    expect(worker).toContain("importScripts('/push-route.js?v=5')");
     expect(worker).toContain('setAppBadge');
+    expect(worker).toContain("icon: '/pwa/icon-192.png'");
     expect(worker).toContain("addEventListener('push'");
     expect(worker).toContain("addEventListener('notificationclick'");
     expect(routeSource).toContain('У вас есть действие на сегодня.');

@@ -2,7 +2,7 @@
  * Web Push delivery only.
  * This worker does not intercept fetches and does not store responses.
  */
-importScripts('/push-route.js?v=4');
+importScripts('/push-route.js?v=5');
 
 self.addEventListener('install', (event) => {
   event.waitUntil(self.skipWaiting());
@@ -24,10 +24,21 @@ self.addEventListener('push', (event) => {
   var route = routeForPush(kind, payload && payload.route);
   var tag = payload && typeof payload.eventId === 'string' ? payload.eventId : 'doctor-maslianski';
   var badge = payload && typeof payload.badge === 'number' ? payload.badge : 1;
+  var android = /Android/i.test(self.navigator.userAgent || '');
+  var title = copy.title;
+  var body = copy.body;
+  if (android && body === '') {
+    body = title;
+    title = 'Напоминание';
+  }
   event.waitUntil(Promise.all([
-    self.registration.showNotification(copy.title, {
-      body: copy.body,
+    self.registration.showNotification(title, {
+      body: body,
+      icon: '/pwa/icon-192.png',
+      badge: '/pwa/icon-192.png',
       tag: tag,
+      renotify: true,
+      vibrate: [200, 100, 200],
       data: { kind: kind, route: route },
     }),
     applyAppBadge(badge),
