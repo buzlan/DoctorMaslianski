@@ -44,22 +44,21 @@ describe('branded splash boot', () => {
     resetAppSplashForTests();
   });
 
-  it('uses the existing splash asset, contain, and the light app background', () => {
+  it('uses the existing splash asset, full-height cover, and the light app background', () => {
     const source = fs.readFileSync(
       path.join(root, 'src/modules/pwa/presentation/app-splash.tsx'),
       'utf8',
     );
     const html = fs.readFileSync(path.join(root, 'public/index.html'), 'utf8');
     expect(source).toContain('assets/images/patient/splash_screen.png');
-    expect(source).toContain('resizeMode="contain"');
-    expect(source).not.toContain('resizeMode="cover"');
+    expect(source).toContain('resizeMode="cover"');
     expect(source).not.toContain('background-size');
     expect(source).not.toContain('scale');
     expect(source).not.toContain('prefers-color-scheme');
     expect(source).toContain('theme.colors.light.background');
     expect(html).toContain('id="boot-splash"');
     expect(html).toContain('src="/splash-screen.png"');
-    expect(html).toContain('object-fit: contain');
+    expect(html).toContain('object-fit: cover');
     expect(html).not.toContain('background-size');
     expect(html).not.toContain('prefers-color-scheme');
     expect(fs.readlinkSync(path.join(root, 'public/splash-screen.png'))).toBe(

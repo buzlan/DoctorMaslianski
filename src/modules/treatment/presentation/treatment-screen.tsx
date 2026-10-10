@@ -70,6 +70,15 @@ function toViewState(
   return result;
 }
 
+let rememberedTreatmentView: TreatmentViewState = { status: "loading" };
+
+function rememberTreatmentView(next: TreatmentViewState): TreatmentViewState {
+  if (next.status !== "loading") {
+    rememberedTreatmentView = next;
+  }
+  return next;
+}
+
 async function requestTimelineLoad() {
   const onDate = await loadCivilTodayDate();
   const result = await loadSharedTreatmentTimeline(onDate);
@@ -358,9 +367,12 @@ function ReadyContent({
 }
 
 export function TreatmentScreen() {
-  const [viewState, setViewState] = useState<TreatmentViewState>({
-    status: "loading",
-  });
+  const [viewState, setViewState] = useState<TreatmentViewState>(
+    rememberedTreatmentView,
+  );
+  const showView = useCallback((next: TreatmentViewState) => {
+    setViewState(rememberTreatmentView(next));
+  }, []);
 
   const [contactModalVisible, setContactModalVisible] = useState(false);
   const loadGenerationRef = useRef(0);
@@ -371,10 +383,10 @@ export function TreatmentScreen() {
 
     return requestTimelineLoad().then(({ result, onDate }) => {
       if (loadGenerationRef.current === generation) {
-        setViewState(toViewState(result, onDate));
+        showView(toViewState(result, onDate));
       }
     });
-  }, []);
+  }, [showView]);
 
   useFocusEffect(
     useCallback(() => {
@@ -407,11 +419,11 @@ export function TreatmentScreen() {
             onAction={() => {
               const generation = loadGenerationRef.current + 1;
               loadGenerationRef.current = generation;
-              setViewState({ status: "loading" });
+              showView({ status: "loading" });
 
               void requestTimelineLoad().then(({ result, onDate }) => {
                 if (loadGenerationRef.current === generation) {
-                  setViewState(toViewState(result, onDate));
+                  showView(toViewState(result, onDate));
                 }
               });
             }}

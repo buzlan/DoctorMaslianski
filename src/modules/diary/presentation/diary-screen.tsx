@@ -35,10 +35,20 @@ function toViewState(result: DiaryTodayResult): DiaryViewState {
   return result;
 }
 
+let rememberedDiaryView: DiaryViewState = { status: "loading" };
+
+function rememberDiaryView(next: DiaryViewState): DiaryViewState {
+  if (next.status !== "loading") {
+    rememberedDiaryView = next;
+  }
+  return next;
+}
+
 export function DiaryScreen() {
-  const [viewState, setViewState] = useState<DiaryViewState>({
-    status: "loading",
-  });
+  const [viewState, setViewState] = useState<DiaryViewState>(rememberedDiaryView);
+  const showView = useCallback((next: DiaryViewState) => {
+    setViewState(rememberDiaryView(next));
+  }, []);
   const [submitting, setSubmitting] = useState(false);
   const loadGenerationRef = useRef(0);
 
@@ -49,11 +59,11 @@ export function DiaryScreen() {
     return loadCivilTodayDate().then((onDate) =>
       sharedDiaryLoader.load(onDate).then((result) => {
         if (loadGenerationRef.current === generation) {
-          setViewState(toViewState(result));
+          showView(toViewState(result));
         }
       }),
     );
-  }, []);
+  }, [showView]);
 
   useFocusEffect(
     useCallback(() => {
@@ -76,7 +86,7 @@ export function DiaryScreen() {
       .then((onDate) => sharedDiaryLoader.submit(onDate, answers))
       .then((result) => {
         if (loadGenerationRef.current === generation) {
-          setViewState(toViewState(result));
+          showView(toViewState(result));
         }
       })
       .finally(() => {
@@ -106,11 +116,11 @@ export function DiaryScreen() {
             onAction={() => {
               const generation = loadGenerationRef.current + 1;
               loadGenerationRef.current = generation;
-              setViewState({ status: "loading" });
+              showView({ status: "loading" });
               void loadCivilTodayDate().then((onDate) =>
                 sharedDiaryLoader.load(onDate).then((result) => {
                   if (loadGenerationRef.current === generation) {
-                    setViewState(toViewState(result));
+                    showView(toViewState(result));
                   }
                 }),
               );

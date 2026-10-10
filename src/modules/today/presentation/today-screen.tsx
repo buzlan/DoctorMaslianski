@@ -53,6 +53,15 @@ function toViewState(result: TodayLoadResult): TodayViewState {
   return result;
 }
 
+let rememberedTodayView: TodayViewState = { status: "loading" };
+
+function rememberTodayView(next: TodayViewState): TodayViewState {
+  if (next.status !== "loading") {
+    rememberedTodayView = next;
+  }
+  return next;
+}
+
 async function requestTodayLoad() {
   const onDate = await loadCivilTodayDate();
   return sharedTodayLoader.load(onDate);
@@ -228,9 +237,10 @@ function ReadyContent({
 
 export function TodayScreen() {
   const router = useRouter();
-  const [viewState, setViewState] = useState<TodayViewState>({
-    status: "loading",
-  });
+  const [viewState, setViewState] = useState<TodayViewState>(rememberedTodayView);
+  const showView = useCallback((next: TodayViewState) => {
+    setViewState(rememberTodayView(next));
+  }, []);
   const [pendingAssignmentId, setPendingAssignmentId] = useState<string | null>(
     null,
   );
@@ -242,10 +252,10 @@ export function TodayScreen() {
 
     return requestTodayLoad().then((result) => {
       if (loadGenerationRef.current === generation) {
-        setViewState(toViewState(result));
+        showView(toViewState(result));
       }
     });
-  }, []);
+  }, [showView]);
 
   useFocusEffect(
     useCallback(() => {
@@ -268,7 +278,7 @@ export function TodayScreen() {
       void request
         .then((result) => {
           if (loadGenerationRef.current === generation) {
-            setViewState(toViewState(result));
+            showView(toViewState(result));
           }
         })
         .finally(() => {
@@ -301,11 +311,11 @@ export function TodayScreen() {
               onAction={() => {
                 const generation = loadGenerationRef.current + 1;
                 loadGenerationRef.current = generation;
-                setViewState({ status: "loading" });
+                showView({ status: "loading" });
 
                 void requestTodayLoad().then((result) => {
                   if (loadGenerationRef.current === generation) {
-                    setViewState(toViewState(result));
+                    showView(toViewState(result));
                   }
                 });
               }}

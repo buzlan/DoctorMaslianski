@@ -37,7 +37,7 @@ describe('patient web shell', () => {
     expect(html).toContain('overflow: visible');
     expect(html).toContain('id="boot-splash"');
     expect(html).toContain('src="/splash-screen.png"');
-    expect(html).toContain('object-fit: contain');
+    expect(html).toContain('object-fit: cover');
     expect(html).not.toContain('background-size');
     expect(html.toLowerCase()).not.toContain('prefers-color-scheme');
   });

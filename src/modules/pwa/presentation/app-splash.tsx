@@ -100,7 +100,7 @@ export function AppSplash({ holding, onFinished }: AppSplashProps) {
       pointerEvents="auto"
       accessibilityRole="image"
       accessibilityLabel={copy.access.loading}
-      style={styles.host}
+      style={[styles.host, styles.webHost]}
     >
       <Animated.View
         pointerEvents="none"
@@ -112,7 +112,7 @@ export function AppSplash({ holding, onFinished }: AppSplashProps) {
       >
         <Image
           source={SPLASH_SCREEN}
-          resizeMode="contain"
+          resizeMode="cover"
           accessibilityIgnoresInvertColors
           onLoad={() => {
             setPainted(true);
@@ -138,8 +138,14 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     zIndex: 2001,
+    width: '100%',
+    height: '100%',
     backgroundColor: 'transparent',
   } as ViewStyle,
+  webHost: {
+    width: '100vw',
+    height: '100dvh',
+  } as unknown as ViewStyle,
   fill: {
     position: 'absolute',
     top: 0,
