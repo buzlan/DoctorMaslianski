@@ -55,6 +55,28 @@
         min-height: 100%;
         background-color: #f5f8fb;
       }
+      #boot-splash {
+        position: fixed;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        z-index: 2000;
+        margin: 0;
+        background-color: #f5f8fb;
+        pointer-events: auto;
+      }
+      #boot-splash img {
+        position: absolute;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        object-position: center;
+      }
     </style>
     <script>
       (function () {
@@ -66,6 +88,9 @@
     </script>
   </head>
   <body>
+    <div id="boot-splash" aria-hidden="true">
+      <img src="/splash-screen.png" alt="" decoding="async" fetchpriority="high" />
+    </div>
     <noscript>You need to enable JavaScript to run this app.</noscript>
     <div id="document-scroll"></div>
     <div id="root"></div>

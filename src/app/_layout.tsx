@@ -23,7 +23,13 @@ import {
 import { sharedTreatmentRepository } from "@/modules/treatment/infrastructure";
 import { NotificationOnboarding, routeFromNotificationMessage } from "@/modules/notifications";
 import {
+  consumeAppSplash,
+  isAppSplashConsumed,
+  isInitialSplashBootstrapPending,
+} from "@/modules/pwa/app-splash-boot";
+import {
   ActivationHomeScreenHost,
+  AppSplash,
   captureBeforeInstallPrompt,
   InstalledWebSessionGate,
   PortraitLock,
@@ -58,7 +64,7 @@ function LoadingScreen({ message }: { message: string }) {
   );
 }
 
-function ClinicalStack() {
+function ClinicalStack({ onRouteReady }: { onRouteReady: () => void }) {
   const [shell, setShell] = useState<TreatmentShell | { status: "loading" }>({
     status: "loading",
   });
@@ -83,6 +89,12 @@ function ClinicalStack() {
   }, []);
 
   useCanonicalInvalidation("treatment-shell", refreshShell);
+
+  useEffect(() => {
+    if (shell.status !== "loading") {
+      onRouteReady();
+    }
+  }, [onRouteReady, shell]);
 
   if (shell.status === "loading") {
     return <LoadingScreen message={copy.completion.loading} />;
@@ -170,7 +182,7 @@ function AccessGate() {
   );
 }
 
-function LinkedClinicalShell() {
+function LinkedClinicalShell({ onRouteReady }: { onRouteReady: () => void }) {
   const auth = useAuthSession();
   const resolver = getSharedRemotePatientContextResolver();
   const [link, setLink] = useState<"loading" | "ready">(
@@ -206,7 +218,7 @@ function LinkedClinicalShell() {
   return (
     <>
       <RemoteRealtimeBridge />
-      <ClinicalStack />
+      <ClinicalStack onRouteReady={onRouteReady} />
     </>
   );
 }
@@ -271,9 +283,21 @@ export default function RootLayout() {
   }, []);
   const [androidBrandedSplashVisible, setAndroidBrandedSplashVisible] =
     useState(shouldShowAndroidBrandedSplash);
+  const [gatePhase, setGatePhase] = useState<"checking" | "ready" | "failed">("checking");
+  const [clinicalRouteReady, setClinicalRouteReady] = useState(false);
+  const [webSplashVisible, setWebSplashVisible] = useState(
+    () => Platform.OS === "web" && !isAppSplashConsumed(),
+  );
 
   const dismissAndroidBrandedSplash = useCallback(() => {
     setAndroidBrandedSplashVisible(false);
+  }, []);
+  const markClinicalRouteReady = useCallback(() => {
+    setClinicalRouteReady(true);
+  }, []);
+  const dismissWebSplash = useCallback(() => {
+    consumeAppSplash();
+    setWebSplashVisible(false);
   }, []);
 
   useEffect(() => {
@@ -298,31 +322,47 @@ export default function RootLayout() {
     };
   }, []);
 
-  if (!fontsLoaded && !fontError) {
+  const fontsReady = fontsLoaded || Boolean(fontError);
+  const clinicalRoutePending =
+    gate.screen === "clinical" && gatePhase !== "failed" && !clinicalRouteReady;
+  const webSplashHolding = isInitialSplashBootstrapPending({
+    web: Platform.OS === "web",
+    fontsReady,
+    authStatus: auth.status,
+    gatePhase,
+    clinicalRoutePending,
+  });
+
+  if (!fontsReady && Platform.OS !== "web") {
     return null;
   }
 
-  let content;
-  if (gate.screen === "loading") {
-    content = <LoadingScreen message={copy.access.loading} />;
-  } else if (gate.screen === "clinical" && isInviteOrAccessPath(pathname)) {
-    content = <Redirect href="/" />;
-  } else if (gate.screen === "access") {
-    content = <AccessGate />;
-  } else {
-    content = <LinkedClinicalShell />;
+  let content = null;
+  if (fontsReady) {
+    if (gate.screen === "loading") {
+      content = <LoadingScreen message={copy.access.loading} />;
+    } else if (gate.screen === "clinical" && isInviteOrAccessPath(pathname)) {
+      content = <Redirect href="/" />;
+    } else if (gate.screen === "access") {
+      content = <AccessGate />;
+    } else {
+      content = <LinkedClinicalShell onRouteReady={markClinicalRouteReady} />;
+    }
   }
 
   return (
     <GestureHandlerRootView style={styles.root}>
       <StatusBar style="dark" />
-      <InstalledWebSessionGate>{content}</InstalledWebSessionGate>
+      <InstalledWebSessionGate onPhaseChange={setGatePhase}>{content}</InstalledWebSessionGate>
       <PortraitLock />
-      {gate.screen === "clinical" ? <ActivationHomeScreenHost /> : null}
-      {gate.screen === "clinical" ? <NotificationOnboarding /> : null}
+      {fontsReady && gate.screen === "clinical" ? <ActivationHomeScreenHost /> : null}
+      {fontsReady && gate.screen === "clinical" ? <NotificationOnboarding /> : null}
       <NotificationClickBridge />
       {Platform.OS === "android" && androidBrandedSplashVisible ? (
         <AndroidBrandedSplashOverlay onFinished={dismissAndroidBrandedSplash} />
+      ) : null}
+      {webSplashVisible ? (
+        <AppSplash holding={webSplashHolding} onFinished={dismissWebSplash} />
       ) : null}
     </GestureHandlerRootView>
   );

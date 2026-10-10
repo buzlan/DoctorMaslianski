@@ -29,3 +29,18 @@ export function planInstalledSessionRestore(input: {
   }
   return { type: 'consume', token: input.handoffToken };
 }
+
+export type InstalledGatePhase = 'checking' | 'ready' | 'failed';
+
+export function resolveInstalledGatePhase(
+  plan: InstalledRestorePlan,
+  consumePhase: 'pending' | 'ready' | 'failed',
+): InstalledGatePhase {
+  if (plan.type === 'wait' || (plan.type === 'consume' && consumePhase === 'pending')) {
+    return 'checking';
+  }
+  if (plan.type === 'missing' || (plan.type === 'consume' && consumePhase === 'failed')) {
+    return 'failed';
+  }
+  return 'ready';
+}

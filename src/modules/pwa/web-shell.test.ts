@@ -35,6 +35,11 @@ describe('patient web shell', () => {
     expect(html.toLowerCase()).toContain(`background-color: ${background.toLowerCase()}`);
     expect(html).toContain('apple-mobile-web-app-status-bar-style" content="default"');
     expect(html).toContain('overflow: visible');
+    expect(html).toContain('id="boot-splash"');
+    expect(html).toContain('src="/splash-screen.png"');
+    expect(html).toContain('object-fit: contain');
+    expect(html).not.toContain('background-size');
+    expect(html.toLowerCase()).not.toContain('prefers-color-scheme');
   });
 
   it('publishes a standalone manifest in the light shell color', () => {

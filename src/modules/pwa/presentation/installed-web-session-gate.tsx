@@ -11,10 +11,12 @@ import { AppText, Button, Screen, Stack } from "@/shared/ui";
 import { clearBrowserHandoffCookie, readBrowserHandoffCookie } from "../handoff-cookie";
 import { consumeWebSessionHandoff } from "../handoff-api";
 import { isRunningAsInstalledWebApp } from "../installed-web-app";
-import { planInstalledSessionRestore } from "../restore-plan";
+import {
+  planInstalledSessionRestore,
+  resolveInstalledGatePhase,
+  type InstalledGatePhase,
+} from "../restore-plan";
 import { restoreInstalledSession } from "../restore-installed-session";
-
-type GatePhase = "checking" | "ready" | "failed";
 
 function HandoffFallback({ onOpenInvite }: { onOpenInvite: () => void }) {
   return (
@@ -30,7 +32,13 @@ function HandoffFallback({ onOpenInvite }: { onOpenInvite: () => void }) {
   );
 }
 
-export function InstalledWebSessionGate({ children }: { children: ReactNode }) {
+export function InstalledWebSessionGate({
+  children,
+  onPhaseChange,
+}: {
+  children: ReactNode;
+  onPhaseChange?: (phase: InstalledGatePhase) => void;
+}) {
   const auth = useAuthSession();
   const router = useRouter();
   const started = useRef(false);
@@ -75,15 +83,11 @@ export function InstalledWebSessionGate({ children }: { children: ReactNode }) {
     });
   }, [consumeToken, router]);
 
-  let phase: GatePhase = "ready";
-  if (plan.type === "wait" || (plan.type === "consume" && consumePhase === "pending")) {
-    phase = "checking";
-  } else if (
-    plan.type === "missing" ||
-    (plan.type === "consume" && consumePhase === "failed")
-  ) {
-    phase = "failed";
-  }
+  const phase = resolveInstalledGatePhase(plan, consumePhase);
+
+  useEffect(() => {
+    onPhaseChange?.(phase);
+  }, [onPhaseChange, phase]);
 
   if (phase === "checking") {
     return (
