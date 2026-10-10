@@ -236,9 +236,6 @@ function WellbeingPill({
       <AppText style={styles.emoji}>{WELLBEING_EMOJI[value]}</AppText>
       <AppText
         variant="label"
-        numberOfLines={1}
-        adjustsFontSizeToFit
-        minimumFontScale={0.75}
         style={{
           color: selected ? tone.text : colors.textPrimary,
           fontSize: 12,

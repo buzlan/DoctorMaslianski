@@ -42,7 +42,7 @@ export function TodayPeriodProgressCard({
         />
         <Stack gap="xs" style={styles.copy}>
           {hasTitle ? (
-            <AppText variant="title" style={styles.title} numberOfLines={2}>
+            <AppText variant="title" style={styles.title}>
               {progress.periodTitle}
             </AppText>
           ) : null}
@@ -50,7 +50,6 @@ export function TodayPeriodProgressCard({
             variant="body"
             tone="secondary"
             style={styles.support}
-            numberOfLines={3}
           >
             {copy.today.progressSupportText}
           </AppText>

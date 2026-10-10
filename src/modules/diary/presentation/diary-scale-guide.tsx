@@ -95,9 +95,6 @@ export function DiaryScaleGuide() {
                 {step.range}
               </AppText>
               <AppText
-                numberOfLines={2}
-                adjustsFontSizeToFit
-                minimumFontScale={0.72}
                 style={[styles.caption, { color: colors.textSecondary }]}
               >
                 {step.label}
