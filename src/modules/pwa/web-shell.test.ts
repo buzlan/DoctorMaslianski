@@ -52,9 +52,33 @@ describe('patient web shell', () => {
   });
 
   it('registers a service worker that does not cache responses', () => {
+    const routeSource = fs.readFileSync(path.join(root, 'public/push-route.js'), 'utf8');
     expect(worker).not.toMatch(/caches\.(open|match|put)/);
     expect(worker).not.toMatch(/addEventListener\(\s*['"]fetch['"]/);
     expect(worker).not.toMatch(/supabase/i);
     expect(worker).not.toMatch(/invite/i);
+    expect(worker).toContain("importScripts('/push-route.js?v=4')");
+    expect(worker).toContain('setAppBadge');
+    expect(worker).toContain("addEventListener('push'");
+    expect(worker).toContain("addEventListener('notificationclick'");
+    expect(routeSource).toContain('У вас есть действие на сегодня.');
+    expect(routeSource).toContain('Тестовое уведомление. Уведомления работают.');
+    expect(routeSource).not.toMatch(/access_token|refresh_token|p256dh|invite/i);
+
+    const loaded = new Function(`${routeSource}; return { routeForPush, copyForPush };`)() as {
+      routeForPush(kind: string, route: string): string;
+      copyForPush(kind: string): { title: string; body: string };
+    };
+    expect(loaded.routeForPush('daily_morning', '/?pain=1')).toBe('/');
+    expect(loaded.routeForPush('daily_afternoon', '/diary')).toBe('/diary');
+    expect(loaded.routeForPush('treatment_updated', '/treatment')).toBe('/treatment');
+    expect(loaded.routeForPush('treatment_completed', '/')).toBe('/');
+    expect(loaded.copyForPush('manual_test')).toEqual({
+      title: 'Тестовое уведомление. Уведомления работают.',
+      body: '',
+    });
+    expect(loaded.copyForPush('daily_morning').title).toBe('У вас есть действие на сегодня.');
+    expect(loaded.copyForPush('unknown').title).toBe('Информация в приложении обновлена.');
+    expect(loaded.copyForPush('manual_test').title).not.toBe('Доктор Маслянский');
   });
 });

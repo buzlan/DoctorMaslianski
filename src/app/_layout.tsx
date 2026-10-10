@@ -1,4 +1,4 @@
-import { Redirect, Stack, usePathname, useSegments } from "expo-router";
+import { Redirect, Stack, usePathname, useRouter, useSegments } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
 import { useCallback, useEffect, useState } from "react";
@@ -21,7 +21,9 @@ import {
   type TreatmentShell,
 } from "@/modules/feedback";
 import { sharedTreatmentRepository } from "@/modules/treatment/infrastructure";
+import { NotificationOnboarding, routeFromNotificationMessage } from "@/modules/notifications";
 import {
+  ActivationHomeScreenHost,
   captureBeforeInstallPrompt,
   InstalledWebSessionGate,
   registerPushFoundationWorker,
@@ -113,6 +115,38 @@ function ClinicalStack() {
       </Stack.Protected>
     </Stack>
   );
+}
+
+function NotificationClickBridge() {
+  const router = useRouter();
+
+  useEffect(() => {
+    if (
+      Platform.OS !== "web" ||
+      typeof navigator === "undefined" ||
+      navigator.serviceWorker === undefined
+    ) {
+      return;
+    }
+    const onMessage = (event: MessageEvent) => {
+      const route = routeFromNotificationMessage(event.data);
+      if (route === "/") {
+        router.replace("/");
+      } else if (route === "/diary") {
+        router.replace("/diary");
+      } else if (route === "/treatment") {
+        router.replace("/treatment");
+      } else if (route === "/completed") {
+        router.replace("/completed");
+      }
+    };
+    navigator.serviceWorker.addEventListener("message", onMessage);
+    return () => {
+      navigator.serviceWorker.removeEventListener("message", onMessage);
+    };
+  }, [router]);
+
+  return null;
 }
 
 function isInviteOrAccessPath(pathname: string): boolean {
@@ -282,6 +316,9 @@ export default function RootLayout() {
     <GestureHandlerRootView style={styles.root}>
       <StatusBar style="dark" />
       <InstalledWebSessionGate>{content}</InstalledWebSessionGate>
+      {gate.screen === "clinical" ? <ActivationHomeScreenHost /> : null}
+      {gate.screen === "clinical" ? <NotificationOnboarding /> : null}
+      <NotificationClickBridge />
       {Platform.OS === "android" && androidBrandedSplashVisible ? (
         <AndroidBrandedSplashOverlay onFinished={dismissAndroidBrandedSplash} />
       ) : null}

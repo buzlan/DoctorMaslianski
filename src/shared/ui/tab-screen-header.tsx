@@ -1,9 +1,9 @@
 import { Image } from "expo-image";
-import { StyleSheet, useColorScheme, View } from "react-native";
+import { StyleSheet, View } from "react-native";
 
+import { NotificationBell } from "@/modules/notifications/presentation/notification-bell";
 import { copy } from "@/shared/copy";
-import { getColors, theme } from "@/shared/theme";
-import { AppIcon } from "./app-icon";
+import { theme } from "@/shared/theme";
 import { AppText } from "./app-text";
 import { Stack } from "./stack";
 
@@ -13,8 +13,6 @@ type TabScreenHeaderProps = {
 };
 
 export function TabScreenHeader({ title, subtitle }: TabScreenHeaderProps) {
-  const colors = getColors(useColorScheme());
-
   return (
     <Stack gap="lg">
       <View style={styles.brandRow}>
@@ -29,18 +27,7 @@ export function TabScreenHeader({ title, subtitle }: TabScreenHeaderProps) {
             {copy.brand.name}
           </AppText>
         </View>
-        <View
-          accessible
-          accessibilityRole="image"
-          accessibilityLabel={copy.brand.notifications}
-          style={[styles.bell, { backgroundColor: colors.surface }]}
-        >
-          <AppIcon
-            name="notifications-outline"
-            size={24}
-            color={colors.textSecondary}
-          />
-        </View>
+        <NotificationBell />
       </View>
       <Stack gap="xs">
         <AppText variant="display" accessibilityRole="header">
@@ -69,12 +56,5 @@ const styles = StyleSheet.create({
   logo: { width: 44, height: 44 },
   brandName: {
     flexShrink: 1,
-  },
-  bell: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    alignItems: "center",
-    justifyContent: "center",
   },
 });

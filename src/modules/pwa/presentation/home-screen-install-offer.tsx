@@ -7,11 +7,11 @@ import { copy } from "@/shared/copy";
 import { theme } from "@/shared/theme";
 import { AppText, Button, Card, Stack } from "@/shared/ui";
 
+import { homeScreenInstallSteps, iosHomeScreenGuide } from "../activation-flow";
 import { writeBrowserHandoffCookie } from "../handoff-cookie";
 import { createWebSessionHandoff } from "../handoff-api";
 import {
   isIosBrowser,
-  isIosSafari,
   readInstallDismissed,
   shouldShowHomeScreenInstallOffer,
   snoozeInstallOffer,
@@ -77,9 +77,14 @@ export function HomeScreenInstallOffer() {
   const userAgent = typeof navigator === "undefined" ? "" : navigator.userAgent;
   const touchPoints = typeof navigator === "undefined" ? 0 : navigator.maxTouchPoints;
   const ios = isIosBrowser(userAgent, touchPoints);
-  const safari = isIosSafari(userAgent, touchPoints);
+  const guide = iosHomeScreenGuide(userAgent, touchPoints);
+  const steps = guide !== null && guide !== "fallback" ? homeScreenInstallSteps(guide) : [];
 
   async function onAdd() {
+    if (guide === "fallback") {
+      setStep("ios");
+      return;
+    }
     if (ios) {
       setStep("preparing");
       const prepared = await prepareIosHandoff({
@@ -127,9 +132,12 @@ export function HomeScreenInstallOffer() {
             {copy.pwa.installTitle}
           </AppText>
           <AppText tone="secondary">{copy.pwa.installBody}</AppText>
-          {step === "ios" ? (
+          {step === "ios" && guide === "fallback" ? (
+            <AppText tone="secondary">{copy.pwa.safariTitle}</AppText>
+          ) : null}
+          {step === "ios" && guide !== "fallback" ? (
             <Stack gap="sm">
-              {copy.pwa.iosSteps.map((line, index) => (
+              {steps.map((line, index) => (
                 <View key={line} style={styles.stepRow}>
                   {index === 0 ? <ShareMark /> : (
                     <AppText variant="label" style={styles.stepIndex}>
@@ -139,7 +147,6 @@ export function HomeScreenInstallOffer() {
                   <AppText style={styles.stepText}>{line}</AppText>
                 </View>
               ))}
-              {safari ? null : <AppText tone="secondary">{copy.pwa.iosOtherBrowser}</AppText>}
             </Stack>
           ) : null}
           {step === "manual" ? <AppText tone="secondary">{copy.pwa.androidManual}</AppText> : null}

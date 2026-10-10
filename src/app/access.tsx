@@ -3,6 +3,7 @@ import { useState } from 'react';
 import {
   ActivityIndicator,
   Linking,
+  Platform,
   ScrollView,
   StyleSheet,
   useColorScheme,
@@ -10,6 +11,16 @@ import {
 } from 'react-native';
 
 import { resolveAuthGate, useAuthSession } from '@/core/auth';
+import {
+  browserSessionStorage,
+  clearActivationHomeFlag,
+  inviteLinkForCopy,
+  iosHomeScreenGuide,
+  shouldDeferInviteToSafari,
+  shouldOfferActivationHomeScreen,
+  writeActivationHomeFlag,
+} from '@/modules/pwa/activation-flow';
+import { isRunningAsInstalledWebApp } from '@/modules/pwa/installed-web-app';
 import {
   activatePendingInvite,
   getPendingInviteToken,
@@ -125,6 +136,11 @@ export default function AccessScreen({
   const [pilotConsentAccepted, setPilotConsentAccepted] = useState(false);
   const [busy, setBusy] = useState(false);
   const [inviteError, setInviteError] = useState<InviteConsumeError | null>(null);
+  const [linkCopied, setLinkCopied] = useState(false);
+  const needsSafariFallback =
+    Platform.OS === 'web' &&
+    typeof navigator !== 'undefined' &&
+    shouldDeferInviteToSafari(navigator.userAgent, navigator.maxTouchPoints);
 
   async function onContinueWithPaste() {
     const token = parseInviteToken(draft);
@@ -142,7 +158,41 @@ export default function AccessScreen({
     });
   }
 
+  async function onCopyInviteLink() {
+    if (typeof window === 'undefined' || navigator.clipboard === undefined) {
+      return;
+    }
+    const link = inviteLinkForCopy(window.location.href);
+    if (link === null) {
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(link);
+      setLinkCopied(true);
+    } catch {
+      setLinkCopied(false);
+    }
+  }
+
   async function onActivate() {
+    if (
+      Platform.OS === 'web' &&
+      typeof navigator !== 'undefined' &&
+      shouldDeferInviteToSafari(navigator.userAgent, navigator.maxTouchPoints)
+    ) {
+      return;
+    }
+    const offerHome =
+      Platform.OS === 'web' &&
+      typeof navigator !== 'undefined' &&
+      shouldOfferActivationHomeScreen({
+        web: true,
+        guide: iosHomeScreenGuide(navigator.userAgent, navigator.maxTouchPoints),
+        installed: isRunningAsInstalledWebApp(),
+      });
+    if (offerHome) {
+      writeActivationHomeFlag(browserSessionStorage());
+    }
     setBusy(true);
     setInviteError(null);
     const result = await activatePendingInvite({
@@ -151,6 +201,7 @@ export default function AccessScreen({
     });
     setBusy(false);
     if (result.status === 'error') {
+      clearActivationHomeFlag(browserSessionStorage());
       setInviteError(result.error);
     }
   }
@@ -177,8 +228,20 @@ export default function AccessScreen({
             <IconWell name="shield-checkmark-outline" shape="circle" size={64} />
             <View style={styles.heroCopy}>
               <ScreenHeader
-                title={hasToken ? copy.access.consentTitle : intro.title}
-                subtitle={hasToken ? copy.access.consentBody : intro.body}
+                title={
+                  needsSafariFallback
+                    ? copy.pwa.safariTitle
+                    : hasToken
+                      ? copy.access.consentTitle
+                      : intro.title
+                }
+                subtitle={
+                  needsSafariFallback
+                    ? copy.pwa.safariBody
+                    : hasToken
+                      ? copy.access.consentBody
+                      : intro.body
+                }
               />
             </View>
           </Stack>
@@ -202,6 +265,19 @@ export default function AccessScreen({
                     void onContinueWithPaste();
                   }}
                 />
+              </Stack>
+            </Card>
+          ) : needsSafariFallback ? (
+            <Card variant="elevated">
+              <Stack gap="md">
+                <Button
+                  variant="primary"
+                  label={copy.pwa.copyLink}
+                  onPress={() => {
+                    void onCopyInviteLink();
+                  }}
+                />
+                {linkCopied ? <AppText tone="secondary">{copy.pwa.copied}</AppText> : null}
               </Stack>
             </Card>
           ) : (
