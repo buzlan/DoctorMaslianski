@@ -1,5 +1,4 @@
-import { Image } from "expo-image";
-import { StyleSheet, View } from "react-native";
+import { Image, StyleSheet, View } from "react-native";
 
 import type { TodayPeriodProgress } from "@/modules/today/application";
 import { patientImages } from "@/shared/assets/patient-images";
@@ -57,8 +56,9 @@ export function TodayPeriodProgressCard({
         <Image
           source={patientImages.plantProgress}
           style={styles.plant}
-          contentFit="contain"
+          resizeMode="contain"
           accessibilityIgnoresInvertColors
+          fadeDuration={0}
         />
       </View>
     </Card>

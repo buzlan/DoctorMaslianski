@@ -1,9 +1,28 @@
-import { Image } from "expo-image";
 import { useEffect, useState } from "react";
-import { AppState, StyleSheet, useColorScheme, View } from "react-native";
+import { AppState, Image, StyleSheet, useColorScheme, View } from "react-native";
 
-import { resolveAssignmentIconUrl } from "@/modules/treatment/infrastructure/assignment-icon-gateway";
+import { ASSIGNMENT_ICON_URL_TTL_SECONDS, resolveAssignmentIconUrl } from "@/modules/treatment/infrastructure/assignment-icon-gateway";
 import { getColors, theme } from "@/shared/theme";
+
+const URL_TTL_MS = ASSIGNMENT_ICON_URL_TTL_SECONDS * 1000;
+const REFRESH_EARLY_MS = 20_000;
+
+const rememberedIcons = new Map<string, { url: string; expiresAt: number }>();
+
+function rememberedIcon(path: string | undefined): { path: string; url: string } | null {
+  if (!path) {
+    return null;
+  }
+  const hit = rememberedIcons.get(path);
+  if (!hit || hit.expiresAt - REFRESH_EARLY_MS <= Date.now()) {
+    return null;
+  }
+  return { path, url: hit.url };
+}
+
+function rememberIcon(path: string, url: string) {
+  rememberedIcons.set(path, { url, expiresAt: Date.now() + URL_TTL_MS });
+}
 
 export function CatalogAssignmentIcon({
   path,
@@ -11,28 +30,66 @@ export function CatalogAssignmentIcon({
   path?: string;
 }) {
   const colors = getColors(useColorScheme());
-  const [image, setImage] = useState<{ path: string; url: string } | null>(
-    null,
+  const [image, setImage] = useState<{ path: string; url: string } | null>(() =>
+    rememberedIcon(path),
   );
 
   useEffect(() => {
-    let cancelled = false;
-    let generation = 0;
-    async function resolve() {
-      if (!path) return;
-      const current = ++generation;
-      const url = await resolveAssignmentIconUrl(path);
-      if (!cancelled && current === generation)
-        setImage(url ? { path, url } : null);
+    if (!path) {
+      return;
     }
-    void resolve();
-    const timer = setInterval(() => void resolve(), 240000);
+    let cancelled = false;
+    let timer: ReturnType<typeof setTimeout> | null = null;
+
+    async function resolve() {
+      const url = await resolveAssignmentIconUrl(path!);
+      if (cancelled) {
+        return;
+      }
+      if (url) {
+        rememberIcon(path!, url);
+        setImage({ path: path!, url });
+      } else {
+        rememberedIcons.delete(path!);
+        setImage(null);
+      }
+    }
+
+    function schedule(delay: number) {
+      timer = setTimeout(() => {
+        void resolve().finally(() => {
+          if (!cancelled) {
+            schedule(URL_TTL_MS - REFRESH_EARLY_MS);
+          }
+        });
+      }, delay);
+    }
+
+    const cached = rememberedIcon(path);
+    if (cached) {
+      setImage(cached);
+      const hit = rememberedIcons.get(path);
+      const delay = hit ? Math.max(0, hit.expiresAt - Date.now() - REFRESH_EARLY_MS) : 0;
+      schedule(delay);
+    } else {
+      void resolve().finally(() => {
+        if (!cancelled) {
+          schedule(URL_TTL_MS - REFRESH_EARLY_MS);
+        }
+      });
+    }
+
     const subscription = AppState.addEventListener("change", (state) => {
-      if (state === "active") void resolve();
+      if (state === "active" && rememberedIcon(path) === null) {
+        void resolve();
+      }
     });
+
     return () => {
       cancelled = true;
-      clearInterval(timer);
+      if (timer !== null) {
+        clearTimeout(timer);
+      }
       subscription.remove();
     };
   }, [path]);
@@ -45,15 +102,22 @@ export function CatalogAssignmentIcon({
   return (
     <View style={[styles.well, { backgroundColor: colors.accentSoft }]}>
       <Image
-        source={{ uri: source.url, cacheKey: source.path }}
+        source={{ uri: source.url }}
         style={styles.image}
-        contentFit="contain"
-        cachePolicy="memory"
-        recyclingKey={source.path}
+        resizeMode="contain"
+        fadeDuration={0}
         accessible={false}
-        onError={() =>
-          setImage((current) => (current?.url === source.url ? null : current))
-        }
+        onError={() => {
+          rememberedIcons.delete(source.path);
+          setImage((current) => (current?.url === source.url ? null : current));
+          void resolveAssignmentIconUrl(source.path).then((url) => {
+            if (!url) {
+              return;
+            }
+            rememberIcon(source.path, url);
+            setImage({ path: source.path, url });
+          });
+        }}
       />
     </View>
   );

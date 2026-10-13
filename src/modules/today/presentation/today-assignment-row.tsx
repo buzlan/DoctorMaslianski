@@ -10,7 +10,6 @@ import { CatalogAssignmentIcon } from "./catalog-assignment-icon";
 
 export type TodayAssignmentRowProps = {
   assignment: TodayAssignmentItem;
-  pending: boolean;
   onToggle: (assignment: TodayAssignmentItem) => void;
   /** When set, shows a chevron and opens detail. Omit until detail exists. */
   onOpenDetail?: (assignment: TodayAssignmentItem) => void;
@@ -26,13 +25,12 @@ function assignmentLabel(assignment: TodayAssignmentItem): string {
 
 export function TodayAssignmentRow({
   assignment,
-  pending,
   onToggle,
   onOpenDetail,
   showDivider,
 }: TodayAssignmentRowProps) {
   const colors = getColors(useColorScheme());
-  const showChevron = onOpenDetail !== undefined;
+  const openDetail = onOpenDetail;
 
   const textColumn = (
     <Stack gap="xs" style={styles.copy}>
@@ -56,27 +54,28 @@ export function TodayAssignmentRow({
 
   return (
     <View>
-      <View style={styles.row}>
-        <CompletionMark
-          completed={assignment.completed}
-          disabled={pending}
-          accessibilityLabel={assignmentLabel(assignment)}
-          accessibilityHint={
-            assignment.completed
-              ? copy.today.markIncomplete
-              : copy.today.markComplete
-          }
-          onPress={() => onToggle(assignment)}
-        />
-        <CatalogAssignmentIcon
-          path={assignment.iconStoragePath}
-
-        />
-        {showChevron ? (
+      <Pressable
+        accessibilityRole="checkbox"
+        accessibilityLabel={assignmentLabel(assignment)}
+        accessibilityHint={
+          assignment.completed
+            ? copy.today.markIncomplete
+            : copy.today.markComplete
+        }
+        accessibilityState={{ checked: assignment.completed }}
+        onPress={() => onToggle(assignment)}
+        style={({ pressed }) => [
+          styles.row,
+          pressed ? { backgroundColor: colors.accentSoft } : null,
+        ]}
+      >
+        <CompletionMark completed={assignment.completed} />
+        <CatalogAssignmentIcon path={assignment.iconStoragePath} />
+        {openDetail !== undefined ? (
           <Pressable
             accessibilityRole="button"
             accessibilityLabel={assignmentLabel(assignment)}
-            onPress={() => onOpenDetail(assignment)}
+            onPress={() => openDetail(assignment)}
             style={({ pressed }) => [
               styles.detailHit,
               { opacity: pressed ? 0.84 : 1 },
@@ -92,7 +91,7 @@ export function TodayAssignmentRow({
         ) : (
           textColumn
         )}
-      </View>
+      </Pressable>
       {showDivider ? (
         <View style={[styles.divider, { backgroundColor: colors.border }]} />
       ) : null}
@@ -106,6 +105,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: theme.spacing.sm,
     paddingVertical: theme.spacing.sm,
+    marginHorizontal: -theme.spacing.sm,
+    paddingHorizontal: theme.spacing.sm,
+    borderRadius: theme.radii.md,
   },
   copy: {
     flex: 1,

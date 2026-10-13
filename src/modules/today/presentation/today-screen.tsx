@@ -67,6 +67,26 @@ async function requestTodayLoad() {
   return sharedTodayLoader.load(onDate);
 }
 
+function applyAssignmentCompletion(
+  overview: ReadyOverview,
+  assignmentId: string,
+  completed: boolean,
+): ReadyOverview {
+  const assignments = overview.assignments.map((item) =>
+    item.id === assignmentId ? { ...item, completed } : item,
+  );
+  const completedAssignments = assignments.filter((item) => item.completed).length;
+
+  return {
+    ...overview,
+    assignments,
+    periodProgress:
+      overview.periodProgress === null
+        ? null
+        : { ...overview.periodProgress, completedAssignments },
+  };
+}
+
 function photoStatusCopy(count: 1 | 2 | 3): string {
   if (count === 1) {
     return copy.today.photoAdded1;
@@ -172,13 +192,11 @@ function PhotoControlCard({
 
 function ReadyContent({
   overview,
-  pendingAssignmentId,
   onToggle,
   onFillDiary,
   onAddPhoto,
 }: {
   overview: ReadyOverview;
-  pendingAssignmentId: string | null;
   onToggle: (assignment: TodayAssignmentItem) => void;
   onFillDiary: () => void;
   onAddPhoto: () => void;
@@ -200,7 +218,6 @@ function ReadyContent({
               <TodayAssignmentRow
                 key={assignment.id}
                 assignment={assignment}
-                pending={pendingAssignmentId !== null}
                 onToggle={onToggle}
                 showDivider={index < overview.assignments.length - 1}
               />
@@ -238,12 +255,11 @@ function ReadyContent({
 export function TodayScreen() {
   const router = useRouter();
   const [viewState, setViewState] = useState<TodayViewState>(rememberedTodayView);
+  const viewStateRef = useRef(viewState);
   const showView = useCallback((next: TodayViewState) => {
+    viewStateRef.current = next;
     setViewState(rememberTodayView(next));
   }, []);
-  const [pendingAssignmentId, setPendingAssignmentId] = useState<string | null>(
-    null,
-  );
   const loadGenerationRef = useRef(0);
 
   const refresh = useCallback(() => {
@@ -266,14 +282,26 @@ export function TodayScreen() {
   useCanonicalInvalidation("today", refresh);
 
   function toggleAssignment(assignment: TodayAssignmentItem) {
+    const current = viewStateRef.current;
+    if (current.status !== "ready") {
+      return;
+    }
+
+    const completed = !assignment.completed;
+    const optimistic: TodayViewState = {
+      status: "ready",
+      overview: applyAssignmentCompletion(current.overview, assignment.id, completed),
+    };
+    viewStateRef.current = optimistic;
+    showView(optimistic);
+
     const generation = loadGenerationRef.current + 1;
     loadGenerationRef.current = generation;
-    setPendingAssignmentId(assignment.id);
 
     void loadCivilTodayDate().then((onDate) => {
-      const request = assignment.completed
-        ? sharedTodayLoader.uncompleteAssignment(assignment.id, onDate)
-        : sharedTodayLoader.completeAssignment(assignment.id, onDate);
+      const request = completed
+        ? sharedTodayLoader.completeAssignment(assignment.id, onDate)
+        : sharedTodayLoader.uncompleteAssignment(assignment.id, onDate);
 
       void request
         .then((result) => {
@@ -281,9 +309,9 @@ export function TodayScreen() {
             showView(toViewState(result));
           }
         })
-        .finally(() => {
+        .catch(() => {
           if (loadGenerationRef.current === generation) {
-            setPendingAssignmentId(null);
+            void refresh();
           }
         });
     });
@@ -329,7 +357,6 @@ export function TodayScreen() {
               <Stack gap="md">
                 <ReadyContent
                   overview={viewState.overview}
-                  pendingAssignmentId={pendingAssignmentId}
                   onToggle={toggleAssignment}
                   onFillDiary={() => {
                     router.navigate("/diary");

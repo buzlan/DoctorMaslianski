@@ -20,6 +20,16 @@
       html {
         color-scheme: light;
         background-color: #f5f8fb;
+        scrollbar-width: none;
+        overscroll-behavior-x: none;
+      }
+      * {
+        scrollbar-width: none;
+      }
+      *::-webkit-scrollbar {
+        display: none;
+        width: 0;
+        height: 0;
       }
       html,
       body {
@@ -32,6 +42,20 @@
       }
       body {
         overflow: hidden;
+        overscroll-behavior-x: none;
+        touch-action: pan-y;
+      }
+      #root,
+      #root *,
+      #document-scroll,
+      #document-scroll * {
+        touch-action: pan-y;
+      }
+      #root [data-allow-pan-x],
+      #root [data-allow-pan-x] *,
+      #document-scroll [data-allow-pan-x],
+      #document-scroll [data-allow-pan-x] * {
+        touch-action: pan-x pan-y;
       }
       #root {
         display: flex;
@@ -102,6 +126,56 @@
         if (path === "/" || path === "/treatment" || path === "/diary") {
           document.documentElement.dataset.pageScroll = "document";
         }
+
+        var startX = 0;
+        var startY = 0;
+        var blockSwipe = false;
+        function allowsHorizontalPan(node) {
+          var current = node;
+          while (current && current !== document.documentElement) {
+            if (current.hasAttribute && current.hasAttribute("data-allow-pan-x")) {
+              return true;
+            }
+            var action = current.style && current.style.touchAction;
+            if (action && action.indexOf("pan-x") !== -1) {
+              return true;
+            }
+            current = current.parentElement;
+          }
+          return false;
+        }
+        document.addEventListener(
+          "touchstart",
+          function (event) {
+            if (event.touches.length !== 1) {
+              blockSwipe = false;
+              return;
+            }
+            var target = event.target;
+            if (allowsHorizontalPan(target)) {
+              blockSwipe = false;
+              return;
+            }
+            startX = event.touches[0].clientX;
+            startY = event.touches[0].clientY;
+            blockSwipe = true;
+          },
+          { passive: true },
+        );
+        document.addEventListener(
+          "touchmove",
+          function (event) {
+            if (!blockSwipe || event.touches.length !== 1) {
+              return;
+            }
+            var dx = event.touches[0].clientX - startX;
+            var dy = event.touches[0].clientY - startY;
+            if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 8) {
+              event.preventDefault();
+            }
+          },
+          { passive: false },
+        );
       })();
     </script>
   </head>

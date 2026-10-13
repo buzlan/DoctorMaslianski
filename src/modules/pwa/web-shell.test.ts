@@ -35,6 +35,12 @@ describe('patient web shell', () => {
     expect(html.toLowerCase()).toContain(`background-color: ${background.toLowerCase()}`);
     expect(html).toContain('apple-mobile-web-app-status-bar-style" content="default"');
     expect(html).toContain('overflow: visible');
+    expect(html).toContain('scrollbar-width: none');
+    expect(html).toContain('overscroll-behavior-x: none');
+    expect(html).toContain('touch-action: pan-y');
+    expect(html).toContain('data-allow-pan-x');
+    expect(html).toContain('event.preventDefault()');
+    expect(html).toContain('*::-webkit-scrollbar');
     expect(html).toContain('id="boot-splash"');
     expect(html).toContain('id="status-bar-fill"');
     expect(html).toMatch(

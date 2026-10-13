@@ -178,6 +178,7 @@ export function DoctorPhotoPager({ items }: DoctorPhotoPagerProps) {
   return (
     <Stack gap="md">
       <View
+        dataSet={{ allowPanX: "true" }}
         onLayout={(event) => {
           setWidth(event.nativeEvent.layout.width);
         }}
@@ -191,7 +192,7 @@ export function DoctorPhotoPager({ items }: DoctorPhotoPagerProps) {
           showsHorizontalScrollIndicator={false}
           onScroll={onScroll}
           scrollEventThrottle={16}
-          style={{ height: photoHeight }}
+          style={{ height: photoHeight, touchAction: "pan-x" }}
         >
           {width > 0
             ? items.map((photo, photoIndex) => (

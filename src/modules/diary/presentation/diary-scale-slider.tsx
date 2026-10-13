@@ -139,7 +139,7 @@ export function DiaryScaleSlider({
   const span = max - min;
 
   return (
-    <View style={styles.root}>
+    <View style={styles.root} dataSet={{ allowPanX: "true" }}>
       <View style={styles.ticks}>
         <Tick label={String(min)} ratio={0} color={colors.textSecondary} />
         <Tick label={String(max)} ratio={1} color={colors.textSecondary} />

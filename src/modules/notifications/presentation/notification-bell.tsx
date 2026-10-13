@@ -15,14 +15,21 @@ import { syncAppBadge } from '../app-badge';
 import { formatInboxTime, textForNotification, unreadCount, unreadItems, type InboxItem } from '../inbox';
 import { loadNotificationInbox, markNotificationsViewed } from '../inbox-api';
 
+let shownInbox: InboxItem[] = [];
+
+function showInbox(next: InboxItem[]): InboxItem[] {
+  shownInbox = next;
+  return next;
+}
+
 export function NotificationBell() {
   const colors = getColors(null);
-  const [items, setItems] = useState<InboxItem[]>([]);
+  const [items, setItems] = useState<InboxItem[]>(shownInbox);
   const [open, setOpen] = useState(false);
   const unread = unreadCount(items);
 
   const refresh = useCallback(async () => {
-    const next = unreadItems(await loadNotificationInbox());
+    const next = showInbox(unreadItems(await loadNotificationInbox()));
     setItems(next);
     syncAppBadge(unreadCount(next));
   }, []);
@@ -68,7 +75,7 @@ export function NotificationBell() {
     if (unreadIds.length === 0) {
       return;
     }
-    const next = unreadItems(items, unreadIds);
+    const next = showInbox(unreadItems(items, unreadIds));
     setItems(next);
     syncAppBadge(unreadCount(next));
     await markNotificationsViewed(unreadIds);

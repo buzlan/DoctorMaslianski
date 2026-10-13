@@ -1,10 +1,10 @@
-import { Image } from "expo-image";
 import { StyleSheet, View } from "react-native";
 
 import { NotificationBell } from "@/modules/notifications/presentation/notification-bell";
 import { copy } from "@/shared/copy";
 import { theme } from "@/shared/theme";
 import { AppText } from "./app-text";
+import { BrandLogo } from "./brand-logo";
 import { Stack } from "./stack";
 
 type TabScreenHeaderProps = {
@@ -17,12 +17,7 @@ export function TabScreenHeader({ title, subtitle }: TabScreenHeaderProps) {
     <Stack gap="lg">
       <View style={styles.brandRow}>
         <View style={styles.brand}>
-          <Image
-            source={require("../../../assets/images/patient/medical-logo.svg")}
-            style={styles.logo}
-            resizeMode="contain"
-            accessible={false}
-          />
+          <BrandLogo />
           <AppText variant="brand" style={styles.brandName}>
             {copy.brand.name}
           </AppText>
@@ -53,7 +48,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: theme.spacing.sm,
   },
-  logo: { width: 44, height: 44 },
   brandName: {
     flexShrink: 1,
   },
