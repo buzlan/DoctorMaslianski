@@ -12,10 +12,8 @@ import { Card } from '@/shared/ui/card';
 import { Stack } from '@/shared/ui/stack';
 
 import { syncAppBadge } from '../app-badge';
-import { unreadCount, unreadItems, type InboxItem } from '../inbox';
+import { formatInboxTime, textForNotification, unreadCount, unreadItems, type InboxItem } from '../inbox';
 import { loadNotificationInbox, markNotificationsViewed } from '../inbox-api';
-
-import { NotificationInboxRow } from './notification-inbox-row';
 
 export function NotificationBell() {
   const colors = getColors(null);
@@ -89,13 +87,19 @@ export function NotificationBell() {
                 {copy.notifications.inboxTitle}
               </AppText>
               {items.length === 0 ? <AppText tone="secondary">{copy.notifications.inboxEmpty}</AppText> : null}
-              <ScrollView style={styles.list}>
+              <ScrollView style={styles.list} contentContainerStyle={styles.listContent}>
                 {items.map((item) => (
-                  <NotificationInboxRow
-                    key={item.id}
-                    item={item}
-                    onDismissed={(dismissed) => void onDismissItem(dismissed)}
-                  />
+                  <Pressable key={item.id} onPress={() => void onDismissItem(item)}>
+                    <View style={styles.row}>
+                      <View style={[styles.dot, { backgroundColor: colors.accent }]} />
+                      <Stack gap="xs" style={styles.rowCopy}>
+                        <AppText>{textForNotification(item.kind)}</AppText>
+                        <AppText variant="caption" tone="secondary">
+                          {formatInboxTime(item.createdAt)}
+                        </AppText>
+                      </Stack>
+                    </View>
+                  </Pressable>
                 ))}
               </ScrollView>
               {unread > 0 ? (
@@ -184,5 +188,22 @@ const styles = StyleSheet.create({
   list: {
     maxHeight: 360,
     overflow: 'scroll',
+  },
+  listContent: {
+    gap: theme.spacing.md,
+  },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: theme.spacing.sm,
+  },
+  rowCopy: {
+    flex: 1,
+  },
+  dot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    marginTop: 8,
   },
 });
