@@ -52,7 +52,7 @@ function PhotoSlide({ photo, photoIndex, width, height }: PhotoSlideProps) {
             key={attempt}
             source={{ uri: photo.displayUri }}
             style={styles.photo}
-            contentFit="contain"
+            contentFit="cover"
             accessibilityLabel={
               `${copy.treatment.doctorPhotoAccessibilityLabel} ` +
               `${photoIndex + 1}`
