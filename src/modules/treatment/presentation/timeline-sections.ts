@@ -1,6 +1,7 @@
 import type {
   TimelineMilestone,
   TimelinePeriod,
+  TreatmentTimeline,
 } from "@/modules/treatment/application";
 import { dayIndex } from "@/modules/treatment/domain";
 
@@ -24,6 +25,15 @@ export function sortMilestonesChronologically(
   );
 
   return [...dated, ...undated];
+}
+
+export function chronologicalTimelineMilestones(
+  timeline: Extract<TreatmentTimeline, { kind: "ready" }>,
+): readonly TimelineMilestone[] {
+  return sortMilestonesChronologically([
+    ...timeline.periods.flatMap((period) => period.milestones),
+    ...timeline.ungroupedMilestones,
+  ]);
 }
 
 export function previousPeriodsChronological(
