@@ -36,6 +36,10 @@ describe('patient web shell', () => {
     expect(html).toContain('apple-mobile-web-app-status-bar-style" content="default"');
     expect(html).toContain('overflow: visible');
     expect(html).toContain('id="boot-splash"');
+    expect(html).toContain('id="status-bar-fill"');
+    expect(html).toMatch(
+      /#status-bar-fill\s*\{[^}]*position:\s*fixed[^}]*top:\s*0[^}]*width:\s*100%[^}]*height:\s*8px[^}]*background-color:\s*#f5f8fb/i,
+    );
     expect(html).toContain('src="/splash-screen.png"');
     expect(html).toContain('object-fit: cover');
     expect(html).not.toContain('background-size');

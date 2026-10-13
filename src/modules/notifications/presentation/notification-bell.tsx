@@ -1,9 +1,8 @@
-import { useFocusEffect, useRouter } from 'expo-router';
+import { useFocusEffect } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Pressable, ScrollView, StyleSheet, View, type ViewStyle } from 'react-native';
 
-import { routeForNotification } from '@/modules/notifications/routes';
 import { copy } from '@/shared/copy';
 import { getColors, theme } from '@/shared/theme';
 import { AppIcon } from '@/shared/ui/app-icon';
@@ -13,11 +12,12 @@ import { Card } from '@/shared/ui/card';
 import { Stack } from '@/shared/ui/stack';
 
 import { syncAppBadge } from '../app-badge';
-import { formatInboxTime, textForNotification, unreadCount, unreadItems, type InboxItem } from '../inbox';
+import { unreadCount, unreadItems, type InboxItem } from '../inbox';
 import { loadNotificationInbox, markNotificationsViewed } from '../inbox-api';
 
+import { NotificationInboxRow } from './notification-inbox-row';
+
 export function NotificationBell() {
-  const router = useRouter();
   const colors = getColors(null);
   const [items, setItems] = useState<InboxItem[]>([]);
   const [open, setOpen] = useState(false);
@@ -76,10 +76,8 @@ export function NotificationBell() {
     await markNotificationsViewed(unreadIds);
   }
 
-  async function onOpenItem(item: InboxItem) {
+  async function onDismissItem(item: InboxItem) {
     await markIds([item.id]);
-    setOpen(false);
-    router.navigate(routeForNotification(item.kind, item.route));
   }
 
   const list = open && typeof document !== 'undefined'
@@ -91,19 +89,13 @@ export function NotificationBell() {
                 {copy.notifications.inboxTitle}
               </AppText>
               {items.length === 0 ? <AppText tone="secondary">{copy.notifications.inboxEmpty}</AppText> : null}
-              <ScrollView style={styles.list} contentContainerStyle={styles.listContent}>
+              <ScrollView style={styles.list}>
                 {items.map((item) => (
-                  <Pressable key={item.id} onPress={() => void onOpenItem(item)}>
-                    <View style={styles.row}>
-                      <View style={[styles.dot, { backgroundColor: colors.accent }]} />
-                      <Stack gap="xs" style={styles.rowCopy}>
-                        <AppText>{textForNotification(item.kind)}</AppText>
-                        <AppText variant="caption" tone="secondary">
-                          {formatInboxTime(item.createdAt)}
-                        </AppText>
-                      </Stack>
-                    </View>
-                  </Pressable>
+                  <NotificationInboxRow
+                    key={item.id}
+                    item={item}
+                    onDismissed={(dismissed) => void onDismissItem(dismissed)}
+                  />
                 ))}
               </ScrollView>
               {unread > 0 ? (
@@ -192,22 +184,5 @@ const styles = StyleSheet.create({
   list: {
     maxHeight: 360,
     overflow: 'scroll',
-  },
-  listContent: {
-    gap: theme.spacing.md,
-  },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: theme.spacing.sm,
-  },
-  rowCopy: {
-    flex: 1,
-  },
-  dot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    marginTop: 8,
   },
 });
