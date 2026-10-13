@@ -1,5 +1,5 @@
 import { useFocusEffect, useRouter } from "expo-router";
-import { useCallback, useRef, useState, type ReactNode } from "react";
+import { useCallback, useRef, useState } from "react";
 import {
   Pressable,
   StyleSheet,
@@ -11,7 +11,6 @@ import { useCanonicalInvalidation } from "@/core/sync";
 import {
   loadSharedTreatmentTimeline,
   type TimelineMilestone,
-  type TimelinePeriod,
   type TreatmentTimeline,
   type TreatmentTimelineLoadResult,
 } from "@/modules/treatment/application";
@@ -37,9 +36,7 @@ import { CurrentAppointmentBlock } from "./current-appointment-block";
 import { formatCalendarDate } from "./format-calendar-date";
 import { milestoneVisualState } from "./milestone-visual-state";
 import {
-  currentTimelinePeriod,
-  previousPeriodsChronological,
-  sortMilestonesChronologically,
+  chronologicalTimelineMilestones,
   timelineConnectorKind,
 } from "./timeline-sections";
 
@@ -86,21 +83,6 @@ async function requestTimelineLoad() {
   return { result, onDate };
 }
 
-function formatPeriodRange(period: TimelinePeriod): string {
-  if (period.endedOn === undefined) {
-    return formatCalendarDate(period.startedOn);
-  }
-
-  return `${formatCalendarDate(period.startedOn)} – ${formatCalendarDate(period.endedOn)}`;
-}
-
-function hasMilestoneRows(timeline: ReadyTimeline): boolean {
-  return (
-    timeline.ungroupedMilestones.length > 0 ||
-    timeline.periods.some((period) => period.milestones.length > 0)
-  );
-}
-
 function milestoneAccessibilityLabel(milestone: TimelineMilestone): string {
   if (milestone.title !== undefined && milestone.title.length > 0) {
     return milestone.title;
@@ -111,20 +93,6 @@ function milestoneAccessibilityLabel(milestone: TimelineMilestone): string {
   }
 
   return copy.treatment.milestoneDetailTitle;
-}
-
-function flattenVisibleMilestones(
-  previousPeriods: readonly TimelinePeriod[],
-  currentPeriod: TimelinePeriod | undefined,
-  ungroupedDated: readonly TimelineMilestone[],
-  ungroupedUndated: readonly TimelineMilestone[],
-): readonly TimelineMilestone[] {
-  return [
-    ...previousPeriods.flatMap((period) => period.milestones),
-    ...(currentPeriod?.milestones ?? []),
-    ...ungroupedDated,
-    ...ungroupedUndated,
-  ];
 }
 
 function MilestoneRow({
@@ -231,21 +199,17 @@ function MilestoneRow({
   );
 }
 
-function PeriodBlock({
-  header,
+function MilestoneList({
   milestones,
   onDate,
   visibleSequence,
 }: {
-  header?: ReactNode;
   milestones: readonly TimelineMilestone[];
   onDate: CalendarDate;
   visibleSequence: readonly TimelineMilestone[];
 }) {
   return (
     <Stack gap="sm">
-      {header}
-
       {milestones.map((milestone) => {
         const index = visibleSequence.findIndex(
           (item) => item.id === milestone.id,
@@ -282,80 +246,16 @@ function ReadyContent({
   timeline: ReadyTimeline;
   onDate: CalendarDate;
 }) {
-  const currentPeriod = currentTimelinePeriod(timeline.periods);
-
-  const previousPeriods = previousPeriodsChronological(timeline.periods).map(
-    (period) => ({
-      ...period,
-      milestones: sortMilestonesChronologically(period.milestones),
-    }),
-  );
-
-  const currentPeriodMilestones =
-    currentPeriod === undefined
-      ? []
-      : sortMilestonesChronologically(currentPeriod.milestones);
-
-  const ungrouped = sortMilestonesChronologically(timeline.ungroupedMilestones);
-
-  const ungroupedDated = ungrouped.filter(
-    (milestone) => milestone.occurredOn !== undefined,
-  );
-
-  const ungroupedUndated = ungrouped.filter(
-    (milestone) => milestone.occurredOn === undefined,
-  );
-
-  const visibleSequence = flattenVisibleMilestones(
-    previousPeriods,
-    currentPeriod === undefined
-      ? undefined
-      : { ...currentPeriod, milestones: currentPeriodMilestones },
-    ungroupedDated,
-    ungroupedUndated,
-  );
-
-  const showEmpty = !hasMilestoneRows(timeline);
+  const milestones = chronologicalTimelineMilestones(timeline);
+  const showEmpty = milestones.length === 0;
 
   return (
     <Stack gap="lg">
-      {previousPeriods.map((period) => (
-        <PeriodBlock
-          key={period.id}
-          onDate={onDate}
-          milestones={period.milestones}
-          visibleSequence={visibleSequence}
-          header={
-            <AppText variant="caption" tone="secondary">
-              {formatPeriodRange(period)}
-            </AppText>
-          }
-        />
-      ))}
-
-      {currentPeriod !== undefined ? (
-        <PeriodBlock
-          onDate={onDate}
-          milestones={currentPeriodMilestones}
-          visibleSequence={visibleSequence}
-        />
-      ) : null}
-
-      {ungroupedDated.length > 0 ? (
-        <PeriodBlock
-          onDate={onDate}
-          milestones={ungroupedDated}
-          visibleSequence={visibleSequence}
-        />
-      ) : null}
-
-      {ungroupedUndated.length > 0 ? (
-        <PeriodBlock
-          onDate={onDate}
-          milestones={ungroupedUndated}
-          visibleSequence={visibleSequence}
-        />
-      ) : null}
+      <MilestoneList
+        onDate={onDate}
+        milestones={milestones}
+        visibleSequence={milestones}
+      />
 
       {showEmpty ? (
         <Card variant="elevated">
