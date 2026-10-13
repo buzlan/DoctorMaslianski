@@ -42,6 +42,8 @@ describe('patient web shell', () => {
     );
     expect(html).toContain('src="/splash-screen.png"');
     expect(html).toContain('object-fit: cover');
+    expect(html).toContain("this.classList.add('is-ready')");
+    expect(html).toContain('onerror="this.remove()"');
     expect(html).not.toContain('background-size');
     expect(html.toLowerCase()).not.toContain('prefers-color-scheme');
   });

@@ -79,6 +79,10 @@
         height: 100%;
         object-fit: cover;
         object-position: center;
+        opacity: 0;
+      }
+      #boot-splash img.is-ready {
+        opacity: 1;
       }
       /* iOS 27 standalone blurs the header unless a solid bar sits on the top edge. */
       #status-bar-fill {
@@ -104,7 +108,7 @@
   <body>
     <div id="status-bar-fill" aria-hidden="true"></div>
     <div id="boot-splash" aria-hidden="true">
-      <img src="/splash-screen.png" alt="" decoding="async" fetchpriority="high" />
+      <img src="/splash-screen.png" alt="" decoding="async" fetchpriority="high" onload="this.classList.add('is-ready')" onerror="this.remove()" />
     </div>
     <noscript>You need to enable JavaScript to run this app.</noscript>
     <div id="document-scroll"></div>
