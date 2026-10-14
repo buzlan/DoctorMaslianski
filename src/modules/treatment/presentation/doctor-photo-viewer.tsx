@@ -1,7 +1,15 @@
 import { Image } from "expo-image";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-  ActivityIndicator,
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+import {
+  Animated,
+  Easing,
   Modal,
   PanResponder,
   Platform,
@@ -23,6 +31,8 @@ import { getColors } from "@/shared/theme";
 
 type PhotoSize = { width: number; height: number };
 type PhotoTransform = { scale: number; x: number; y: number };
+
+const PHOTO_SLIDE_DURATION_MS = 300;
 
 const INITIAL_PHOTO_TRANSFORM: PhotoTransform = { scale: 1, x: 0, y: 0 };
 
@@ -67,17 +77,44 @@ export function DoctorPhotoViewer({
 }: DoctorPhotoViewerProps) {
   const insets = useSafeAreaInsets();
   const colors = getColors(useColorScheme());
-  const [index, setIndex] = useState(initialIndex);
-  const safeIndex = Math.max(0, Math.min(index, items.length - 1));
+  const [navigation, setNavigation] = useState<{
+    index: number;
+    outgoing: MilestoneDoctorPhotoItem | null;
+    direction: number;
+  }>({ index: initialIndex, outgoing: null, direction: 1 });
+  const safeIndex = Math.max(0, Math.min(navigation.index, items.length - 1));
   const photo = items[safeIndex];
+  const changingPhoto = useRef(false);
+  const finishPhotoChange = useCallback(() => {
+    changingPhoto.current = false;
+    setNavigation((current) =>
+      current.outgoing ? { ...current, outgoing: null } : current,
+    );
+  }, []);
+
+  useEffect(() => {
+    const neighbors = [items[safeIndex - 1], items[safeIndex + 1]]
+      .filter((item) => item !== undefined)
+      .map((item) => item.displayUri);
+    if (neighbors.length > 0) {
+      void Image.prefetch(neighbors, { cachePolicy: "memory-disk" }).catch(
+        () => {},
+      );
+    }
+  }, [items, safeIndex]);
 
   const changePhoto = useCallback(
     (offset: number) => {
-      setIndex((current) =>
-        Math.max(0, Math.min(current + offset, items.length - 1)),
-      );
+      const next = Math.max(0, Math.min(safeIndex + offset, items.length - 1));
+      if (changingPhoto.current || next === safeIndex) return;
+      changingPhoto.current = true;
+      setNavigation({
+        index: next,
+        outgoing: photo ?? null,
+        direction: next > safeIndex ? 1 : -1,
+      });
     },
-    [items.length],
+    [items.length, photo, safeIndex],
   );
 
   useEffect(() => {
@@ -137,10 +174,12 @@ export function DoctorPhotoViewer({
         </View>
 
         <PhotoCanvas
-          key={`${photo.id}:${photo.displayUri}`}
           photo={photo}
           photoNumber={safeIndex + 1}
+          outgoing={navigation.outgoing}
+          direction={navigation.direction}
           onSwipe={changePhoto}
+          onTransitionEnd={finishPhotoChange}
         />
 
         {items.length > 1 ? (
@@ -167,11 +206,17 @@ export function DoctorPhotoViewer({
 function PhotoCanvas({
   photo,
   photoNumber,
+  outgoing,
+  direction,
   onSwipe,
+  onTransitionEnd,
 }: {
   photo: MilestoneDoctorPhotoItem;
   photoNumber: number;
+  outgoing: MilestoneDoctorPhotoItem | null;
+  direction: number;
   onSwipe: (offset: number) => void;
+  onTransitionEnd: () => void;
 }) {
   const colors = getColors(useColorScheme());
   const [imageSize, setImageSize] = useState({ width: 0, height: 0 });
@@ -179,8 +224,23 @@ function PhotoCanvas({
     "loading",
   );
   const [attempt, setAttempt] = useState(0);
-  const { photoSize, transform, onLayout, zoomBy, panHandlers } =
-    usePhotoViewerGestures(imageSize, onSwipe);
+  const [slide] = useState(() => new Animated.Value(0));
+  const photoKey = `${photo.id}:${photo.displayUri}:${photoNumber}`;
+  const { viewport, transform, onLayout, zoomBy, panHandlers } =
+    usePhotoViewerGestures(imageSize, onSwipe, photoKey);
+  const slideDistance = outgoing ? direction * viewport.width : 0;
+  const outgoingTranslateX = slide.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, -slideDistance],
+  });
+  const incomingTranslateX = slide.interpolate({
+    inputRange: [0, 1],
+    outputRange: [slideDistance, 0],
+  });
+  useLayoutEffect(() => {
+    slide.setValue(0);
+    return () => slide.stopAnimation();
+  }, [photoKey, slide]);
 
   useEffect(() => {
     if (Platform.OS !== "web") return;
@@ -199,36 +259,89 @@ function PhotoCanvas({
   return (
     <>
       <View style={styles.viewport} onLayout={onLayout} {...panHandlers}>
-        <Image
-          key={attempt}
-          source={{ uri: photo.displayUri }}
-          contentFit="contain"
-          accessibilityLabel={`${copy.treatment.doctorPhotoAccessibilityLabel} ${photoNumber}`}
-          style={{
-            ...photoSize,
-            transform: [
-              { translateX: transform.x },
-              { translateY: transform.y },
-              { scale: transform.scale },
-            ],
-          }}
-          onLoad={(event) => {
-            setImageSize({
-              width: event.source.width,
-              height: event.source.height,
-            });
-            setStatus("ready");
-          }}
-          onError={() => setStatus("error")}
-        />
-        {status === "loading" ? (
-          <ActivityIndicator style={StyleSheet.absoluteFill} color={colors.accent} />
+        {outgoing ? (
+          <Animated.View
+            pointerEvents="none"
+            accessibilityElementsHidden
+            importantForAccessibility="no-hide-descendants"
+            style={[
+              StyleSheet.absoluteFill,
+              {
+                transform: [
+                  {
+                    translateX: outgoingTranslateX,
+                  },
+                ],
+              },
+            ]}
+          >
+            <Image
+              source={{ uri: outgoing.displayUri }}
+              cachePolicy="memory-disk"
+              contentFit="contain"
+              style={StyleSheet.absoluteFill}
+            />
+          </Animated.View>
         ) : null}
+        <Animated.View
+          style={[
+            StyleSheet.absoluteFill,
+            {
+              transform: [
+                {
+                  translateX: incomingTranslateX,
+                },
+              ],
+            },
+          ]}
+        >
+          <Image
+            key={`${photoKey}:${attempt}`}
+            source={{ uri: photo.displayUri }}
+            cachePolicy="memory-disk"
+            contentFit="contain"
+            accessibilityLabel={`${copy.treatment.doctorPhotoAccessibilityLabel} ${photoNumber}`}
+            style={[
+              StyleSheet.absoluteFill,
+              {
+                transform: [
+                  { translateX: transform.x },
+                  { translateY: transform.y },
+                  { scale: transform.scale },
+                ],
+              },
+            ]}
+            onLoadStart={() => setStatus("loading")}
+            onLoad={(event) => {
+              setImageSize({
+                width: event.source.width,
+                height: event.source.height,
+              });
+              setStatus("ready");
+              Animated.timing(slide, {
+                toValue: 1,
+                duration: outgoing ? PHOTO_SLIDE_DURATION_MS : 0,
+                easing: Easing.out(Easing.cubic),
+                useNativeDriver: Platform.OS !== "web",
+              }).start(({ finished }) => {
+                if (finished) {
+                  onTransitionEnd();
+                }
+              });
+            }}
+            onError={() => {
+              setStatus("error");
+              onTransitionEnd();
+            }}
+          />
+        </Animated.View>
       </View>
 
       {status === "error" ? (
         <View style={styles.error}>
-          <Text style={[styles.label, { color: colors.textPrimary }]}>{copy.treatment.photoLoadError}</Text>
+          <Text style={[styles.label, { color: colors.textPrimary }]}>
+            {copy.treatment.photoLoadError}
+          </Text>
           <ViewerButton
             label={copy.treatment.photoRetryLoading}
             text="↻"
@@ -253,10 +366,19 @@ function pinchDistance(event: GestureResponderEvent) {
 function usePhotoViewerGestures(
   imageSize: PhotoSize,
   onSwipe: (offset: number) => void,
+  photoUri: string,
 ) {
   const [viewport, setViewport] = useState<PhotoSize>({ width: 0, height: 0 });
   const [transform, setTransform] = useState(INITIAL_PHOTO_TRANSFORM);
+  const [previousPhotoUri, setPreviousPhotoUri] = useState(photoUri);
+  if (previousPhotoUri !== photoUri) {
+    setPreviousPhotoUri(photoUri);
+    setTransform(INITIAL_PHOTO_TRANSFORM);
+  }
   const current = useRef(transform);
+  useEffect(() => {
+    current.current = INITIAL_PHOTO_TRANSFORM;
+  }, [photoUri]);
   const hadMultipleTouches = useRef(false);
   const start = useRef({
     ...INITIAL_PHOTO_TRANSFORM,
@@ -370,7 +492,7 @@ function usePhotoViewerGestures(
   }, [responder, onGrant, onMove, onRelease]);
 
   return {
-    photoSize,
+    viewport,
     transform,
     onLayout,
     zoomBy,
