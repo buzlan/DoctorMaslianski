@@ -87,6 +87,10 @@ export type AppCopy = {
     nextPhoto: string;
     photoLoading: string;
     photoLoadError: string;
+    photoOpenHint: string;
+    photoOpenAccessibilityLabel: string;
+    photoClose: string;
+    photoRetryLoading: string;
   };
   appointment: {
     label: string;

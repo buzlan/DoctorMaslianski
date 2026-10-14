@@ -93,6 +93,10 @@ export const copy: AppCopy = {
     nextPhoto: "Следующее фото",
     photoLoading: "Загрузка фото…",
     photoLoadError: "Не удалось загрузить фото.",
+    photoOpenHint: "Нажмите на фото, чтобы открыть на весь экран",
+    photoOpenAccessibilityLabel: "Открыть фото врача {number} на весь экран",
+    photoClose: "Закрыть фото",
+    photoRetryLoading: "Повторить загрузку",
   },
   appointment: {
     label: "Ближайший приём",
