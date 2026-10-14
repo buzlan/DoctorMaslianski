@@ -8,6 +8,7 @@ import {
   Pressable,
   StyleSheet,
   Text,
+  useColorScheme,
   View,
   type GestureResponderEvent,
   type LayoutChangeEvent,
@@ -18,6 +19,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import type { MilestoneDoctorPhotoItem } from "@/modules/treatment/application";
 import { copy } from "@/shared/copy";
+import { getColors } from "@/shared/theme";
 
 type PhotoSize = { width: number; height: number };
 type PhotoTransform = { scale: number; x: number; y: number };
@@ -64,6 +66,7 @@ export function DoctorPhotoViewer({
   onClose,
 }: DoctorPhotoViewerProps) {
   const insets = useSafeAreaInsets();
+  const colors = getColors(useColorScheme());
   const [index, setIndex] = useState(initialIndex);
   const safeIndex = Math.max(0, Math.min(index, items.length - 1));
   const photo = items[safeIndex];
@@ -115,13 +118,14 @@ export function DoctorPhotoViewer({
         style={[
           styles.root,
           {
+            backgroundColor: colors.background,
             paddingTop: Math.max(insets.top, 12),
             paddingBottom: Math.max(insets.bottom, 12),
           },
         ]}
       >
         <View style={styles.toolbar}>
-          <Text style={styles.label}>
+          <Text style={[styles.label, { color: colors.textPrimary }]}>
             {copy.treatment.doctorPhotoCount} · {safeIndex + 1}{" "}
             {copy.treatment.photoCounterOf} {items.length}
           </Text>
@@ -169,6 +173,7 @@ function PhotoCanvas({
   photoNumber: number;
   onSwipe: (offset: number) => void;
 }) {
+  const colors = getColors(useColorScheme());
   const [imageSize, setImageSize] = useState({ width: 0, height: 0 });
   const [status, setStatus] = useState<"loading" | "ready" | "error">(
     "loading",
@@ -217,13 +222,13 @@ function PhotoCanvas({
           onError={() => setStatus("error")}
         />
         {status === "loading" ? (
-          <ActivityIndicator style={StyleSheet.absoluteFill} color="#fff" />
+          <ActivityIndicator style={StyleSheet.absoluteFill} color={colors.accent} />
         ) : null}
       </View>
 
       {status === "error" ? (
         <View style={styles.error}>
-          <Text style={styles.label}>{copy.treatment.photoLoadError}</Text>
+          <Text style={[styles.label, { color: colors.textPrimary }]}>{copy.treatment.photoLoadError}</Text>
           <ViewerButton
             label={copy.treatment.photoRetryLoading}
             text="↻"
@@ -405,6 +410,8 @@ function ViewerButton({
   onPress: () => void;
   disabled?: boolean;
 }) {
+  const colors = getColors(useColorScheme());
+
   return (
     <Pressable
       accessibilityRole="button"
@@ -413,23 +420,27 @@ function ViewerButton({
       onPress={onPress}
       style={({ pressed }) => [
         styles.button,
-        { opacity: disabled ? 0.3 : pressed ? 0.6 : 1 },
+        {
+          backgroundColor: colors.surface,
+          borderColor: colors.border,
+          opacity: disabled ? 0.3 : pressed ? 0.6 : 1,
+        },
       ]}
     >
-      <Text style={styles.buttonText}>{text}</Text>
+      <Text style={[styles.buttonText, { color: colors.accent }]}>{text}</Text>
     </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: "#090b10" },
+  root: { flex: 1 },
   toolbar: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     paddingHorizontal: 16,
   },
-  label: { color: "#fff", fontSize: 16 },
+  label: { fontSize: 16 },
   viewport: {
     flex: 1,
     overflow: "hidden",
@@ -446,11 +457,11 @@ const styles = StyleSheet.create({
     minWidth: 44,
     minHeight: 44,
     paddingHorizontal: 10,
-    backgroundColor: "#252832",
+    borderWidth: StyleSheet.hairlineWidth,
     borderRadius: 12,
     alignItems: "center",
     justifyContent: "center",
   },
-  buttonText: { color: "#fff", fontSize: 22 },
+  buttonText: { fontSize: 22 },
   error: { alignItems: "center", gap: 8 },
 });
