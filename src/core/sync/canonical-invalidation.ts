@@ -9,6 +9,7 @@ export const INVALIDATION_TARGETS = [
   'diary',
   'treatment',
   'milestone-detail',
+  'assignment-detail',
 ] as const;
 
 export type InvalidationTarget = (typeof INVALIDATION_TARGETS)[number];
@@ -25,9 +26,9 @@ export const INVALIDATION_HINTS = [
 export type InvalidationHint = (typeof INVALIDATION_HINTS)[number];
 
 export const HINT_TARGETS: Record<InvalidationHint, readonly InvalidationTarget[]> = {
-  treatments: ['treatment-shell', 'today', 'treatment'],
+  treatments: ['treatment-shell', 'today', 'treatment', 'assignment-detail'],
   treatment_periods: ['today', 'treatment'],
-  action_assignments: ['today', 'treatment'],
+  action_assignments: ['today', 'treatment', 'assignment-detail'],
   appointments: ['today', 'treatment'],
   treatment_milestones: ['treatment'],
   doctor_milestone_photos: ['treatment', 'milestone-detail'],

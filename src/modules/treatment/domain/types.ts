@@ -31,12 +31,19 @@ export type TreatmentMilestone = {
   occurredOn?: CalendarDate;
 };
 
+export type DetailedInstruction = {
+  heading: string;
+  text: string;
+  photoPaths: readonly string[];
+};
+
 export type ActionAssignment = {
   id: string;
   catalogItemId: string;
   iconStoragePath?: string;
   title?: string;
   instruction?: string;
+  detailedInstruction?: DetailedInstruction;
   startDate: CalendarDate;
   endDate: CalendarDate;
   status: ActionAssignmentStatus;

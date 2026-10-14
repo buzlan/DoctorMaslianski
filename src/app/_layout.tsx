@@ -106,6 +106,7 @@ function ClinicalStack({ onRouteReady }: { onRouteReady: () => void }) {
     <Stack screenOptions={{ headerShown: false }}>
       <Stack.Protected guard={!treatmentCompleted}>
         <Stack.Screen name="(tabs)" />
+        <Stack.Screen name="assignment/[assignmentId]" />
         <Stack.Screen
           name="treatment/[milestoneId]"
           options={{

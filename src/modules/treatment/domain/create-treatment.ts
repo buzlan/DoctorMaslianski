@@ -74,6 +74,13 @@ function copyAssignment(assignment: ActionAssignment): ActionAssignment {
     copied.instruction = assignment.instruction;
   }
 
+  if (assignment.detailedInstruction !== undefined) {
+    copied.detailedInstruction = {
+      ...assignment.detailedInstruction,
+      photoPaths: [...assignment.detailedInstruction.photoPaths],
+    };
+  }
+
   return copied;
 }
 

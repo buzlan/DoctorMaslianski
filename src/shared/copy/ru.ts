@@ -36,6 +36,14 @@ export const copy: AppCopy = {
     photoAdded2: "Фото добавлено: 2 из 3",
     photoAdded3: "Добавлено 3 из 3 фото",
   },
+  assignmentInstruction: {
+    title: "Подробная инструкция",
+    open: "Открыть подробную инструкцию",
+    notFound: "Инструкция недоступна.",
+    photosUnavailable: "Некоторые фотографии не удалось загрузить.",
+    photoLabel: "Фото к инструкции",
+    photosTitle: "Фотографии",
+  },
   diary: {
     title: "Дневник",
     subtitle: "Отметьте своё состояние, чтобы видеть динамику.",

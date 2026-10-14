@@ -7,11 +7,9 @@ import { AppIcon, AppText, CompletionMark, Stack } from "@/shared/ui";
 
 import { CatalogAssignmentIcon } from "./catalog-assignment-icon";
 
-
 export type TodayAssignmentRowProps = {
   assignment: TodayAssignmentItem;
   onToggle: (assignment: TodayAssignmentItem) => void;
-  /** When set, shows a chevron and opens detail. Omit until detail exists. */
   onOpenDetail?: (assignment: TodayAssignmentItem) => void;
   showDivider: boolean;
 };
@@ -30,7 +28,7 @@ export function TodayAssignmentRow({
   showDivider,
 }: TodayAssignmentRowProps) {
   const colors = getColors(useColorScheme());
-  const openDetail = onOpenDetail;
+  const openDetail = assignment.detailedInstruction ? onOpenDetail : undefined;
 
   const textColumn = (
     <Stack gap="xs" style={styles.copy}>
@@ -54,44 +52,44 @@ export function TodayAssignmentRow({
 
   return (
     <View>
-      <Pressable
-        accessibilityRole="checkbox"
-        accessibilityLabel={assignmentLabel(assignment)}
-        accessibilityHint={
-          assignment.completed
-            ? copy.today.markIncomplete
-            : copy.today.markComplete
-        }
-        accessibilityState={{ checked: assignment.completed }}
-        onPress={() => onToggle(assignment)}
-        style={({ pressed }) => [
-          styles.row,
-          pressed ? { backgroundColor: colors.accentSoft } : null,
-        ]}
-      >
-        <CompletionMark completed={assignment.completed} />
-        <CatalogAssignmentIcon path={assignment.iconStoragePath} />
+      <View style={styles.container}>
+        <Pressable
+          accessibilityRole="checkbox"
+          accessibilityLabel={assignmentLabel(assignment)}
+          accessibilityHint={
+            assignment.completed
+              ? copy.today.markIncomplete
+              : copy.today.markComplete
+          }
+          accessibilityState={{ checked: assignment.completed }}
+          onPress={() => onToggle(assignment)}
+          style={({ pressed }) => [
+            styles.row,
+            pressed ? { backgroundColor: colors.accentSoft } : null,
+          ]}
+        >
+          <CompletionMark completed={assignment.completed} />
+          <CatalogAssignmentIcon path={assignment.iconStoragePath} />
+          {textColumn}
+        </Pressable>
         {openDetail !== undefined ? (
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel={assignmentLabel(assignment)}
+            accessibilityLabel={`${copy.assignmentInstruction.open}: ${assignmentLabel(assignment)}`}
             onPress={() => openDetail(assignment)}
             style={({ pressed }) => [
               styles.detailHit,
-              { opacity: pressed ? 0.84 : 1 },
+              { opacity: pressed ? 0.6 : 1 },
             ]}
           >
-            {textColumn}
             <AppIcon
               name="chevron-right"
-              color={colors.textSecondary}
-              size={16}
+              color={colors.accent}
+              size={20}
             />
           </Pressable>
-        ) : (
-          textColumn
-        )}
-      </Pressable>
+        ) : null}
+      </View>
       {showDivider ? (
         <View style={[styles.divider, { backgroundColor: colors.border }]} />
       ) : null}
@@ -100,12 +98,14 @@ export function TodayAssignmentRow({
 }
 
 const styles = StyleSheet.create({
+  container: { flexDirection: "row", alignItems: "center" },
   row: {
+    flex: 1,
     flexDirection: "row",
     alignItems: "center",
     gap: theme.spacing.sm,
     paddingVertical: theme.spacing.sm,
-    marginHorizontal: -theme.spacing.sm,
+    marginLeft: -theme.spacing.sm,
     paddingHorizontal: theme.spacing.sm,
     borderRadius: theme.radii.md,
   },
@@ -116,10 +116,11 @@ const styles = StyleSheet.create({
     fontFamily: "Inter_600SemiBold",
   },
   detailHit: {
-    flex: 1,
-    flexDirection: "row",
+    width: 44,
+    minHeight: 44,
+    alignSelf: "stretch",
     alignItems: "center",
-    gap: theme.spacing.sm,
+    justifyContent: "center",
   },
   divider: {
     height: StyleSheet.hairlineWidth,

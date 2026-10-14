@@ -79,7 +79,7 @@ export function createSupabaseTreatmentGateway(
         client
           .from("action_assignments")
           .select(
-            "id, catalog_item_id, title, instruction, start_date, end_date, status",
+            "id, catalog_item_id, title, instruction, detailed_instruction, start_date, end_date, status",
           )
           .eq("treatment_id", treatmentId),
         loadAssignmentIconPaths(client, treatmentId),

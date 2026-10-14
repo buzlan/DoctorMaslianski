@@ -1,11 +1,6 @@
 import { useFocusEffect, useRouter } from "expo-router";
 import { useCallback, useRef, useState } from "react";
-import {
-  Pressable,
-  StyleSheet,
-  useColorScheme,
-  View,
-} from "react-native";
+import { Pressable, StyleSheet, useColorScheme, View } from "react-native";
 
 import { DevResetLocalSessionControl } from "@/core/auth/dev-reset-local-session-control";
 import { HomeScreenInstallOffer } from "@/modules/pwa";
@@ -75,7 +70,9 @@ function applyAssignmentCompletion(
   const assignments = overview.assignments.map((item) =>
     item.id === assignmentId ? { ...item, completed } : item,
   );
-  const completedAssignments = assignments.filter((item) => item.completed).length;
+  const completedAssignments = assignments.filter(
+    (item) => item.completed,
+  ).length;
 
   return {
     ...overview,
@@ -154,9 +151,7 @@ function PhotoControlCard({
       <View style={styles.ctaRow}>
         <IconWell name="camera-outline" />
         <Stack gap="xs" style={styles.ctaCopy}>
-          <AppText variant="title">
-            {copy.today.photoControlTitle}
-          </AppText>
+          <AppText variant="title">{copy.today.photoControlTitle}</AppText>
           <AppText variant="caption" tone="secondary">
             {copy.today.photoControlBody}
           </AppText>
@@ -195,11 +190,13 @@ function ReadyContent({
   onToggle,
   onFillDiary,
   onAddPhoto,
+  onOpenDetail,
 }: {
   overview: ReadyOverview;
   onToggle: (assignment: TodayAssignmentItem) => void;
   onFillDiary: () => void;
   onAddPhoto: () => void;
+  onOpenDetail: (assignment: TodayAssignmentItem) => void;
 }) {
   const hasAssignments = overview.assignments.length > 0;
 
@@ -219,6 +216,7 @@ function ReadyContent({
                 key={assignment.id}
                 assignment={assignment}
                 onToggle={onToggle}
+                onOpenDetail={onOpenDetail}
                 showDivider={index < overview.assignments.length - 1}
               />
             ))
@@ -254,7 +252,8 @@ function ReadyContent({
 
 export function TodayScreen() {
   const router = useRouter();
-  const [viewState, setViewState] = useState<TodayViewState>(rememberedTodayView);
+  const [viewState, setViewState] =
+    useState<TodayViewState>(rememberedTodayView);
   const viewStateRef = useRef(viewState);
   const showView = useCallback((next: TodayViewState) => {
     viewStateRef.current = next;
@@ -290,7 +289,11 @@ export function TodayScreen() {
     const completed = !assignment.completed;
     const optimistic: TodayViewState = {
       status: "ready",
-      overview: applyAssignmentCompletion(current.overview, assignment.id, completed),
+      overview: applyAssignmentCompletion(
+        current.overview,
+        assignment.id,
+        completed,
+      ),
     };
     viewStateRef.current = optimistic;
     showView(optimistic);
@@ -358,6 +361,12 @@ export function TodayScreen() {
                 <ReadyContent
                   overview={viewState.overview}
                   onToggle={toggleAssignment}
+                  onOpenDetail={(assignment) =>
+                    router.push({
+                      pathname: "/assignment/[assignmentId]",
+                      params: { assignmentId: assignment.id },
+                    })
+                  }
                   onFillDiary={() => {
                     router.navigate("/diary");
                   }}
@@ -378,7 +387,8 @@ export function TodayScreen() {
           <SupportContactCard />
         </PinnedFooter>
       </View>
-      {viewState.status === "ready" || viewState.status === "no_active_treatment" ? (
+      {viewState.status === "ready" ||
+      viewState.status === "no_active_treatment" ? (
         <HomeScreenInstallOffer />
       ) : null}
     </Screen>

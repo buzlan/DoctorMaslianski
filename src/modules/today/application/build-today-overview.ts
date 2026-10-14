@@ -6,6 +6,7 @@ import {
   isActiveTreatment,
   isAssignmentCompletedOnDate,
   toCurrentAppointmentView,
+  type DetailedInstruction,
   type CalendarDate,
   type CurrentAppointmentView,
   type Treatment,
@@ -16,6 +17,7 @@ export type TodayAssignmentItem = {
   completed: boolean;
   title?: string;
   instruction?: string;
+  detailedInstruction?: DetailedInstruction;
   iconStoragePath?: string;
 };
 
@@ -52,6 +54,7 @@ function mapAssignment(
     id: string;
     title?: string;
     instruction?: string;
+    detailedInstruction?: DetailedInstruction;
     iconStoragePath?: string;
   },
   completed: boolean,
@@ -68,6 +71,10 @@ function mapAssignment(
 
   if (assignment.iconStoragePath !== undefined) {
     item.iconStoragePath = assignment.iconStoragePath;
+  }
+
+  if (assignment.detailedInstruction !== undefined) {
+    item.detailedInstruction = assignment.detailedInstruction;
   }
 
   return item;
