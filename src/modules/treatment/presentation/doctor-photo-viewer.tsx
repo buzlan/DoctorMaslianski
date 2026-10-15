@@ -39,7 +39,15 @@ type PhotoTransform = {
   y: number;
 };
 
-const PHOTO_SLIDE_DURATION_MS = 300;
+type PhotoSlot = "a" | "b";
+
+type PhotoLayers = {
+  a: MilestoneDoctorPhotoItem | null;
+  b: MilestoneDoctorPhotoItem | null;
+  activeSlot: PhotoSlot;
+};
+
+const PHOTO_SLIDE_DURATION_MS = 280;
 const SWIPE_THRESHOLD = 50;
 const MAX_PHOTO_SCALE = 5;
 
@@ -117,8 +125,6 @@ export function DoctorPhotoViewer({
   const changingPhoto = useRef(false);
 
   const finishPhotoChange = useCallback(() => {
-    changingPhoto.current = false;
-
     setNavigation((current) => {
       if (!current.outgoing) {
         return current;
@@ -129,6 +135,8 @@ export function DoctorPhotoViewer({
         outgoing: null,
       };
     });
+
+    changingPhoto.current = false;
   }, []);
 
   useEffect(() => {
@@ -175,40 +183,6 @@ export function DoctorPhotoViewer({
     },
     [items, safeIndex],
   );
-
-  useEffect(() => {
-    if (Platform.OS !== "web") {
-      return;
-    }
-
-    const onKeyDown = (event: KeyboardEvent) => {
-      switch (event.key) {
-        case "Escape":
-          event.preventDefault();
-          onClose();
-          break;
-
-        case "ArrowLeft":
-          event.preventDefault();
-          changePhoto(-1);
-          break;
-
-        case "ArrowRight":
-          event.preventDefault();
-          changePhoto(1);
-          break;
-
-        default:
-          break;
-      }
-    };
-
-    window.addEventListener("keydown", onKeyDown);
-
-    return () => {
-      window.removeEventListener("keydown", onKeyDown);
-    };
-  }, [changePhoto, onClose]);
 
   if (!photo) {
     return null;
@@ -297,6 +271,29 @@ function PhotoCanvas({
   onTransitionEnd,
 }: PhotoCanvasProps) {
   const colors = getColors(useColorScheme());
+  const photoKey = `${photo.id}:${photo.displayUri}`;
+
+  const [layers, setLayers] = useState<PhotoLayers>(() => ({
+    a: photo,
+    b: null,
+    activeSlot: "a",
+  }));
+
+  const layersRef = useRef(layers);
+
+  const transitionFromSlotRef = useRef<PhotoSlot>("a");
+  const transitionToSlotRef = useRef<PhotoSlot>("a");
+
+  const [transitionFromSlot, setTransitionFromSlot] = useState<PhotoSlot>("a");
+
+  const [transitionToSlot, setTransitionToSlot] = useState<PhotoSlot>("a");
+
+  const preparedPhotoKey = useRef(photoKey);
+  const currentPhotoKeyRef = useRef(photoKey);
+
+  const transitionId = useRef(0);
+  const transitionStarted = useRef(false);
+  const outgoingRef = useRef(outgoing);
 
   const [imageSize, setImageSize] = useState<PhotoSize>({
     width: 0,
@@ -308,12 +305,7 @@ function PhotoCanvas({
   );
 
   const [attempt, setAttempt] = useState(0);
-
   const [slide] = useState(() => new Animated.Value(0));
-
-  const photoKey = `${photo.id}:${photo.displayUri}`;
-
-  const transitionStarted = useRef(false);
 
   const {
     viewport,
@@ -321,27 +313,38 @@ function PhotoCanvas({
     animatedX,
     animatedY,
     onLayout,
-    zoomBy,
     panHandlers,
   } = usePhotoViewerGestures(imageSize, onSwipe, photoKey);
 
-  const slideDistance = outgoing ? direction * viewport.width : 0;
-
-  const outgoingTranslateX = slide.interpolate({
-    inputRange: [0, 1],
-    outputRange: [0, -slideDistance],
-  });
-
-  const incomingTranslateX = slide.interpolate({
-    inputRange: [0, 1],
-    outputRange: [slideDistance, 0],
-  });
+  const updateLayers = useCallback((next: PhotoLayers) => {
+    layersRef.current = next;
+    setLayers(next);
+  }, []);
 
   useLayoutEffect(() => {
+    currentPhotoKeyRef.current = photoKey;
+    outgoingRef.current = outgoing;
+
+    if (preparedPhotoKey.current === photoKey) {
+      return;
+    }
+
+    transitionId.current += 1;
+    preparedPhotoKey.current = photoKey;
     transitionStarted.current = false;
 
     slide.stopAnimation();
     slide.setValue(0);
+
+    const currentLayers = layersRef.current;
+    const fromSlot = currentLayers.activeSlot;
+    const toSlot: PhotoSlot = fromSlot === "a" ? "b" : "a";
+
+    transitionFromSlotRef.current = fromSlot;
+    transitionToSlotRef.current = toSlot;
+
+    setTransitionFromSlot(fromSlot);
+    setTransitionToSlot(toSlot);
 
     setImageSize({
       width: 0,
@@ -351,57 +354,92 @@ function PhotoCanvas({
     setStatus("loading");
     setAttempt(0);
 
+    updateLayers({
+      ...currentLayers,
+      [toSlot]: photo,
+    });
+  }, [photoKey, photo, outgoing, slide, updateLayers]);
+
+  useEffect(() => {
     return () => {
+      transitionId.current += 1;
       slide.stopAnimation();
     };
-  }, [photoKey, slide]);
+  }, [slide]);
+
+  const isRelevantImage = useCallback(
+    (slot: PhotoSlot, expectedPhotoKey: string) => {
+      if (
+        preparedPhotoKey.current !== expectedPhotoKey ||
+        currentPhotoKeyRef.current !== expectedPhotoKey
+      ) {
+        return false;
+      }
+
+      if (outgoingRef.current) {
+        return slot === transitionToSlotRef.current;
+      }
+
+      return slot === layersRef.current.activeSlot;
+    },
+    [],
+  );
 
   const startTransition = useCallback(() => {
-    if (transitionStarted.current) {
+    if (
+      transitionStarted.current ||
+      preparedPhotoKey.current !== photoKey ||
+      currentPhotoKeyRef.current !== photoKey
+    ) {
       return;
     }
 
     transitionStarted.current = true;
 
+    const currentTransitionId = transitionId.current;
+    const shouldAnimate = Boolean(outgoingRef.current);
+    const fromSlot = transitionFromSlotRef.current;
+    const toSlot = transitionToSlotRef.current;
+
     Animated.timing(slide, {
       toValue: 1,
-      duration: outgoing ? PHOTO_SLIDE_DURATION_MS : 0,
+      duration: shouldAnimate ? PHOTO_SLIDE_DURATION_MS : 0,
       easing: Easing.out(Easing.cubic),
       useNativeDriver: Platform.OS !== "web",
     }).start(({ finished }) => {
-      if (finished) {
-        onTransitionEnd();
+      if (
+        !finished ||
+        transitionId.current !== currentTransitionId ||
+        preparedPhotoKey.current !== photoKey ||
+        currentPhotoKeyRef.current !== photoKey
+      ) {
+        return;
       }
+
+      if (shouldAnimate) {
+        const currentLayers = layersRef.current;
+
+        updateLayers({
+          ...currentLayers,
+          activeSlot: toSlot,
+          [fromSlot]: null,
+        });
+      }
+
+      onTransitionEnd();
     });
-  }, [onTransitionEnd, outgoing, slide]);
-
-  useEffect(() => {
-    if (Platform.OS !== "web") {
-      return;
-    }
-
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (status !== "ready") {
-        return;
-      }
-
-      if (!["+", "=", "-"].includes(event.key)) {
-        return;
-      }
-
-      event.preventDefault();
-      zoomBy(event.key === "-" ? -0.5 : 0.5);
-    };
-
-    window.addEventListener("keydown", onKeyDown);
-
-    return () => {
-      window.removeEventListener("keydown", onKeyDown);
-    };
-  }, [status, zoomBy]);
+  }, [onTransitionEnd, photoKey, slide, updateLayers]);
 
   const handleImageLoad = useCallback(
-    (event: { source: { width: number; height: number } }) => {
+    (
+      slot: PhotoSlot,
+      expectedPhotoKey: string,
+      event: { source: { width: number; height: number } },
+    ) => {
+      if (!isRelevantImage(slot, expectedPhotoKey)) {
+        return;
+      }
+
       setImageSize({
         width: event.source.width,
         height: event.source.height,
@@ -410,93 +448,132 @@ function PhotoCanvas({
       setStatus("ready");
       startTransition();
     },
-    [startTransition],
+    [isRelevantImage, startTransition],
   );
 
-  const handleImageError = useCallback(() => {
-    setStatus("error");
+  const handleImageError = useCallback(
+    (slot: PhotoSlot, expectedPhotoKey: string) => {
+      if (!isRelevantImage(slot, expectedPhotoKey)) {
+        return;
+      }
 
-    startTransition();
-  }, [startTransition]);
+      setStatus("error");
+      startTransition();
+    },
+    [isRelevantImage, startTransition],
+  );
 
   const retryLoading = useCallback(() => {
-    if (outgoing) {
+    if (outgoingRef.current) {
       return;
     }
 
+    transitionId.current += 1;
     transitionStarted.current = false;
+
     slide.stopAnimation();
     slide.setValue(0);
 
     setStatus("loading");
     setAttempt((value) => value + 1);
-  }, [outgoing, slide]);
+  }, [slide]);
 
-  return (
-    <>
-      <View style={styles.viewport} onLayout={onLayout} {...panHandlers}>
-        {outgoing ? (
-          <Animated.View
-            pointerEvents="none"
-            accessibilityElementsHidden
-            importantForAccessibility="no-hide-descendants"
-            style={[
-              StyleSheet.absoluteFill,
-              {
-                transform: [
-                  {
-                    translateX: outgoingTranslateX,
-                  },
-                ],
-              },
-            ]}
-          >
-            <Image
-              source={{ uri: outgoing.displayUri }}
-              cachePolicy="memory-disk"
-              contentFit="contain"
-              style={StyleSheet.absoluteFill}
-            />
-          </Animated.View>
-        ) : null}
+  const outgoingTranslateX = slide.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, -direction * viewport.width],
+  });
 
-        <Animated.View
+  const incomingTranslateX = slide.interpolate({
+    inputRange: [0, 1],
+    outputRange: [direction * viewport.width, 0],
+  });
+
+  const renderLayer = (slot: PhotoSlot) => {
+    const layerPhoto = layers[slot];
+
+    if (!layerPhoto) {
+      return null;
+    }
+
+    const isOutgoing = Boolean(outgoing) && slot === transitionFromSlot;
+
+    const isIncoming = Boolean(outgoing) && slot === transitionToSlot;
+
+    const isActiveWithoutTransition = !outgoing && slot === layers.activeSlot;
+
+    const translateX = isOutgoing
+      ? outgoingTranslateX
+      : isIncoming
+        ? incomingTranslateX
+        : 0;
+
+    const shouldApplyGestureTransform = isIncoming || isActiveWithoutTransition;
+
+    const isCurrentImage = isIncoming || isActiveWithoutTransition;
+
+    const expectedPhotoKey = `${layerPhoto.id}:${layerPhoto.displayUri}`;
+
+    const imageKey = `${slot}:${layerPhoto.id}:${layerPhoto.displayUri}:${
+      isCurrentImage ? attempt : 0
+    }`;
+
+    return (
+      <Animated.View
+        key={slot}
+        pointerEvents={isOutgoing ? "none" : "auto"}
+        accessibilityElementsHidden={isOutgoing}
+        importantForAccessibility={isOutgoing ? "no-hide-descendants" : "auto"}
+        style={[
+          StyleSheet.absoluteFill,
+          {
+            backgroundColor: colors.background,
+            zIndex: isIncoming ? 2 : 1,
+            transform: [{ translateX }],
+          },
+        ]}
+      >
+        <Image
+          key={imageKey}
+          source={{ uri: layerPhoto.displayUri }}
+          cachePolicy="memory-disk"
+          contentFit="contain"
+          accessibilityLabel={`${
+            photoLabel ?? copy.treatment.doctorPhotoAccessibilityLabel
+          } ${photoNumber}`}
           style={[
             StyleSheet.absoluteFill,
             {
-              transform: [
-                {
-                  translateX: incomingTranslateX,
-                },
-              ],
+              backgroundColor: colors.background,
+              transform: shouldApplyGestureTransform
+                ? [
+                    { translateX: animatedX },
+                    { translateY: animatedY },
+                    { scale: animatedScale },
+                  ]
+                : undefined,
             },
           ]}
-        >
-          <Image
-            key={`${photoKey}:${attempt}`}
-            source={{ uri: photo.displayUri }}
-            cachePolicy="memory-disk"
-            contentFit="contain"
-            accessibilityLabel={`${
-              photoLabel ?? copy.treatment.doctorPhotoAccessibilityLabel
-            } ${photoNumber}`}
-            style={[
-              StyleSheet.absoluteFill,
-              {
-                transform: [
-                  { translateX: animatedX },
-                  { translateY: animatedY },
-                  { scale: animatedScale },
-                ],
-              },
-            ]}
-            onLoadStart={() => {
+          onLoadStart={() => {
+            if (isRelevantImage(slot, expectedPhotoKey)) {
               setStatus("loading");
-            }}
-            onLoad={handleImageLoad}
-            onError={handleImageError}
-          />
-        </Animated.View>
+            }
+          }}
+          onLoad={(event) => handleImageLoad(slot, expectedPhotoKey, event)}
+          onError={() => handleImageError(slot, expectedPhotoKey)}
+        />
+      </Animated.View>
+    );
+  };
+
+  return (
+    <>
+      <View
+        style={[styles.viewport, { backgroundColor: colors.background }]}
+        onLayout={onLayout}
+        {...panHandlers}
+      >
+        {renderLayer("a")}
+        {renderLayer("b")}
       </View>
 
       {status === "error" ? (
@@ -521,24 +598,9 @@ function pinchDistance(event: GestureResponderEvent): number {
   const [first, second] = event.nativeEvent.touches;
 
   return first && second
-    ? Math.hypot(first.pageX - second.pageX, first.pageY - second.pageY)
+    ? Math.hypot(second.pageX - first.pageX, second.pageY - first.pageY)
     : 0;
 }
-
-type PhotoGestureHandlers = {
-  onGrant: (
-    event: GestureResponderEvent,
-    gesture: PanResponderGestureState,
-  ) => void;
-  onMove: (
-    event: GestureResponderEvent,
-    gesture: PanResponderGestureState,
-  ) => void;
-  onRelease: (
-    event: GestureResponderEvent,
-    gesture: PanResponderGestureState,
-  ) => void;
-};
 
 function usePhotoViewerGestures(
   imageSize: PhotoSize,
@@ -550,20 +612,19 @@ function usePhotoViewerGestures(
     height: 0,
   });
 
-  const animatedScale = useRef(
-    new Animated.Value(INITIAL_PHOTO_TRANSFORM.scale),
-  ).current;
+  const [animatedScale] = useState(
+    () => new Animated.Value(INITIAL_PHOTO_TRANSFORM.scale),
+  );
 
-  const animatedX = useRef(
-    new Animated.Value(INITIAL_PHOTO_TRANSFORM.x),
-  ).current;
+  const [animatedX] = useState(
+    () => new Animated.Value(INITIAL_PHOTO_TRANSFORM.x),
+  );
 
-  const animatedY = useRef(
-    new Animated.Value(INITIAL_PHOTO_TRANSFORM.y),
-  ).current;
+  const [animatedY] = useState(
+    () => new Animated.Value(INITIAL_PHOTO_TRANSFORM.y),
+  );
 
   const current = useRef<PhotoTransform>(INITIAL_PHOTO_TRANSFORM);
-
   const hadMultipleTouches = useRef(false);
 
   const start = useRef({
@@ -610,16 +671,6 @@ function usePhotoViewerGestures(
       animatedY.setValue(value.y);
     },
     [animatedScale, animatedX, animatedY, photoSize, viewport],
-  );
-
-  const zoomBy = useCallback(
-    (amount: number) => {
-      apply({
-        ...current.current,
-        scale: current.current.scale + amount,
-      });
-    },
-    [apply],
   );
 
   const onLayout = useCallback(
@@ -720,40 +771,18 @@ function usePhotoViewerGestures(
     [onSwipe],
   );
 
-  const handlers = useRef<PhotoGestureHandlers>({
-    onGrant,
-    onMove,
-    onRelease,
-  });
-
-  handlers.current = {
-    onGrant,
-    onMove,
-    onRelease,
-  };
-
-  const responder = useMemo(() => {
-    const panResponder = PanResponder.create({
-      onStartShouldSetPanResponder: () => true,
-      onMoveShouldSetPanResponder: () => true,
-
-      onPanResponderTerminationRequest: () => false,
-
-      onPanResponderGrant: (event, gesture) => {
-        handlers.current.onGrant(event, gesture);
-      },
-
-      onPanResponderMove: (event, gesture) => {
-        handlers.current.onMove(event, gesture);
-      },
-
-      onPanResponderRelease: (event, gesture) => {
-        handlers.current.onRelease(event, gesture);
-      },
-    });
-
-    return panResponder;
-  }, []);
+  const responder = useMemo(
+    () =>
+      PanResponder.create({
+        onStartShouldSetPanResponder: () => true,
+        onMoveShouldSetPanResponder: () => true,
+        onPanResponderTerminationRequest: () => false,
+        onPanResponderGrant: onGrant,
+        onPanResponderMove: onMove,
+        onPanResponderRelease: onRelease,
+      }),
+    [onGrant, onMove, onRelease],
+  );
 
   return {
     viewport,
@@ -761,7 +790,6 @@ function usePhotoViewerGestures(
     animatedX,
     animatedY,
     onLayout,
-    zoomBy,
     panHandlers: responder.panHandlers,
   };
 }
