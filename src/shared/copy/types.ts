@@ -30,6 +30,14 @@ export type AppCopy = {
     photoAdded2: string;
     photoAdded3: string;
   };
+  assignmentInstruction: {
+    title: string;
+    open: string;
+    notFound: string;
+    photosUnavailable: string;
+    photoLabel: string;
+    photosTitle: string;
+  };
   diary: {
     title: string;
     subtitle: string;

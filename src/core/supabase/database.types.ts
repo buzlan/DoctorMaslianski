@@ -53,6 +53,7 @@ export type Database = {
           created_at: string;
           end_date: string;
           id: string;
+          detailed_instruction: Json | null;
           instruction: string | null;
           start_date: string;
           status: Database["public"]["Enums"]["assignment_status"];
@@ -66,6 +67,7 @@ export type Database = {
           created_at?: string;
           end_date: string;
           id?: string;
+          detailed_instruction?: Json | null;
           instruction?: string | null;
           start_date: string;
           status?: Database["public"]["Enums"]["assignment_status"];
@@ -79,6 +81,7 @@ export type Database = {
           created_at?: string;
           end_date?: string;
           id?: string;
+          detailed_instruction?: Json | null;
           instruction?: string | null;
           start_date?: string;
           status?: Database["public"]["Enums"]["assignment_status"];
@@ -116,6 +119,7 @@ export type Database = {
           created_at: string;
           icon_storage_path: string | null;
           id: string;
+          detailed_instruction: Json | null;
           instruction: string | null;
           sort_order: number;
           status: Database["public"]["Enums"]["catalog_item_status"];
@@ -127,6 +131,7 @@ export type Database = {
           created_at?: string;
           icon_storage_path?: string | null;
           id?: string;
+          detailed_instruction?: Json | null;
           instruction?: string | null;
           sort_order?: number;
           status?: Database["public"]["Enums"]["catalog_item_status"];
@@ -138,6 +143,7 @@ export type Database = {
           created_at?: string;
           icon_storage_path?: string | null;
           id?: string;
+          detailed_instruction?: Json | null;
           instruction?: string | null;
           sort_order?: number;
           status?: Database["public"]["Enums"]["catalog_item_status"];
@@ -652,6 +658,7 @@ export type Database = {
           consent_document_version: string | null;
           created_at: string;
           id: string;
+          is_test: boolean;
           pilot_cohort: Database["public"]["Enums"]["pilot_cohort"] | null;
           pilot_consent_accepted_at: string | null;
           privacy_accepted_at: string | null;
@@ -664,6 +671,7 @@ export type Database = {
           consent_document_version?: string | null;
           created_at?: string;
           id?: string;
+          is_test?: boolean;
           pilot_cohort?: Database["public"]["Enums"]["pilot_cohort"] | null;
           pilot_consent_accepted_at?: string | null;
           privacy_accepted_at?: string | null;
@@ -676,6 +684,7 @@ export type Database = {
           consent_document_version?: string | null;
           created_at?: string;
           id?: string;
+          is_test?: boolean;
           pilot_cohort?: Database["public"]["Enums"]["pilot_cohort"] | null;
           pilot_consent_accepted_at?: string | null;
           privacy_accepted_at?: string | null;
@@ -946,6 +955,7 @@ export type Database = {
       create_unactivated_patient: {
         Args: {
           p_clinic_label: string;
+          p_is_test?: boolean;
           p_started_on: string;
         };
         Returns: Json;
@@ -961,6 +971,18 @@ export type Database = {
       current_staff_clinic_id: {
         Args: Record<PropertyKey, never>;
         Returns: string;
+      };
+      delete_catalog_item: {
+        Args: {
+          p_item_id: string;
+        };
+        Returns: Json;
+      };
+      delete_patient: {
+        Args: {
+          p_patient_id: string;
+        };
+        Returns: Json;
       };
       get_assignment_icons: {
         Args: {

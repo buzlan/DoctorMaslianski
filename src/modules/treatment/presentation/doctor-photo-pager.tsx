@@ -17,11 +17,13 @@ import { DoctorPhotoViewer } from "./doctor-photo-viewer";
 
 type DoctorPhotoPagerProps = {
   items: readonly MilestoneDoctorPhotoItem[];
+  photoLabel?: string;
 };
 
 type PhotoSlideProps = {
   photo: MilestoneDoctorPhotoItem;
   photoIndex: number;
+  photoLabel?: string;
   single: boolean;
   onOpen: () => void;
 };
@@ -29,6 +31,7 @@ type PhotoSlideProps = {
 function PhotoSlide({
   photo,
   photoIndex,
+  photoLabel,
   single,
   onOpen,
 }: PhotoSlideProps) {
@@ -45,15 +48,30 @@ function PhotoSlide({
   return (
     <View
       onLayout={(event) => setWidth(event.nativeEvent.layout.width)}
-      style={single
-        ? { width: "100%", height: width > 0 ? Math.min(width / aspectRatio, windowHeight * 0.55) : 280 }
-        : styles.thumbnail}
+      style={
+        single
+          ? {
+              width: "100%",
+              height:
+                width > 0
+                  ? Math.min(width / aspectRatio, windowHeight * 0.55)
+                  : 280,
+            }
+          : styles.thumbnail
+      }
     >
       <View style={styles.frame}>
         {status !== "error" ? (
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel={copy.treatment.photoOpenAccessibilityLabel.replace("{number}", String(photoIndex + 1))}
+            accessibilityLabel={
+              photoLabel
+                ? `${photoLabel} ${photoIndex + 1}`
+                : copy.treatment.photoOpenAccessibilityLabel.replace(
+                    "{number}",
+                    String(photoIndex + 1),
+                  )
+            }
             onPress={onOpen}
             style={styles.photo}
           >
@@ -63,7 +81,7 @@ function PhotoSlide({
               style={styles.photo}
               contentFit={single ? "contain" : "cover"}
               accessibilityLabel={
-                `${copy.treatment.doctorPhotoAccessibilityLabel} ` +
+                `${photoLabel ?? copy.treatment.doctorPhotoAccessibilityLabel} ` +
                 `${photoIndex + 1}`
               }
               onLoad={({ source }) => {
@@ -130,7 +148,7 @@ function PhotoSlide({
   );
 }
 
-export function DoctorPhotoPager({ items }: DoctorPhotoPagerProps) {
+export function DoctorPhotoPager({ items, photoLabel }: DoctorPhotoPagerProps) {
   const [viewerIndex, setViewerIndex] = useState<number | null>(null);
 
   if (items.length === 0) {
@@ -145,6 +163,7 @@ export function DoctorPhotoPager({ items }: DoctorPhotoPagerProps) {
             key={`${photo.id}:${photo.displayUri}`}
             photo={photo}
             photoIndex={photoIndex}
+            photoLabel={photoLabel}
             single={items.length === 1}
             onOpen={() => setViewerIndex(photoIndex)}
           />
@@ -157,11 +176,11 @@ export function DoctorPhotoPager({ items }: DoctorPhotoPagerProps) {
       {viewerIndex !== null && items[viewerIndex] ? (
         <DoctorPhotoViewer
           items={items}
+          photoLabel={photoLabel}
           initialIndex={viewerIndex}
           onClose={() => setViewerIndex(null)}
         />
       ) : null}
-
     </Stack>
   );
 }

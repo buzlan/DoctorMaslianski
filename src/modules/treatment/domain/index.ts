@@ -28,6 +28,7 @@ export type {
 } from './complete-assignment';
 
 export type {
+  DetailedInstruction,
   ActionAssignment,
   ActionAssignmentStatus,
   ActionCompletion,

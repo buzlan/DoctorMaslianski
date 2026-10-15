@@ -1,3 +1,5 @@
+import type { Json } from "@/core/supabase/database.types";
+import { parseDetailedInstruction } from "./parse-detailed-instruction";
 import {
   calendarDate,
   completionIdFor,
@@ -42,6 +44,7 @@ export type RemoteAssignmentRow = {
   icon_storage_path?: string | null;
   title: string;
   instruction: string | null;
+  detailed_instruction?: Json | null;
   start_date: string;
   end_date: string;
   status: "active" | "disabled";
@@ -164,6 +167,9 @@ function mapAssignment(row: RemoteAssignmentRow): ActionAssignment {
   if (row.instruction !== null && row.instruction.length > 0) {
     assignment.instruction = row.instruction;
   }
+
+  const detail = parseDetailedInstruction(row.detailed_instruction);
+  if (detail) assignment.detailedInstruction = detail;
 
   return assignment;
 }
