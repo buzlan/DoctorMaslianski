@@ -1,5 +1,5 @@
 {
-  "buildCommand": "npx expo export --platform web && node scripts/copy-web-splash.mjs",
+  "buildCommand": "node scripts/build-web.mjs",
   "outputDirectory": "dist",
   "headers": [
     {
