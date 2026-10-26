@@ -1,8 +1,11 @@
+import "@/core/sentry/init";
+
 import { Redirect, Stack, usePathname, useRouter, useSegments } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
 import { useCallback, useEffect, useState } from "react";
 import { Appearance, AppState, Platform, StyleSheet } from "react-native";
+import * as Sentry from "@sentry/react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 
 import { resolveAuthGate, signOut, useAuthSession } from "@/core/auth";
@@ -251,7 +254,7 @@ function RemoteRealtimeBridge() {
   return null;
 }
 
-export default function RootLayout() {
+function RootLayout() {
   const [fontsLoaded, fontError] = useFonts({
     Inter_400Regular,
     Inter_500Medium,
@@ -368,6 +371,8 @@ export default function RootLayout() {
     </GestureHandlerRootView>
   );
 }
+
+export default Platform.OS === "web" ? Sentry.wrap(RootLayout) : RootLayout;
 
 const styles = StyleSheet.create({
   root: {
